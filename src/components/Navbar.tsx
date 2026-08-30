@@ -1,16 +1,15 @@
 import React from 'react';
-import { Layers, Brain, Timer, Box } from 'lucide-react';
+import { Layers, Timer, Box } from 'lucide-react';
 
 interface NavbarProps {
-  activeTab: 'reference' | 'timer' | 'trainer';
-  setActiveTab: (tab: 'reference' | 'timer' | 'trainer') => void;
+  activeTab: 'timer' | 'reference';
+  setActiveTab: (tab: 'timer' | 'reference') => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
   const navItems = [
     { id: 'timer', label: 'Speedsolving Timer', icon: Timer },
     { id: 'reference', label: 'Alg Reference', icon: Layers },
-    { id: 'trainer', label: 'Flashcard Trainer', icon: Brain },
   ] as const;
 
   return (
