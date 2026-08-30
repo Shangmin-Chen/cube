@@ -215,7 +215,14 @@ export const PLL_2LOOK_CASES: AlgCase[] = [
     description: 'Swaps 2 right corners & 2 edges. Headlights on left.',
     tips: 'Hold headlights on left side.',
     why: "Pops out two F2L pairs (R U R' U'), swaps right 2 corners and 2 edges, then restores both F2L pairs.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['R', 'G_GREEN', 'O'],
+      right: ['B', 'R', 'B'],
+      bottom: ['O', 'B', 'R'],
+      left: ['O', 'O', 'O'],
+    }
   },
   {
     id: 'pll-2look-yperm',
@@ -228,7 +235,14 @@ export const PLL_2LOOK_CASES: AlgCase[] = [
     description: 'Swaps diagonal corners when no headlights exist.',
     tips: 'Flows from F (R U R\' U\') F\' setup.',
     why: "Combines an edge setup trigger F (R U R' U') F' with a corner swap insert to resolve diagonal corner misalignment.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['R', 'O', 'B'],
+      right: ['B', 'R', 'O'],
+      bottom: ['O', 'G_GREEN', 'R'],
+      left: ['O', 'B', 'R'],
+    }
   },
   // Edge Permutation (Look 2)
   {
@@ -243,7 +257,14 @@ export const PLL_2LOOK_CASES: AlgCase[] = [
     description: 'Cycles 3 edges counter-clockwise. Back side solved.',
     tips: 'Hold solved side on back.',
     why: "R U' lifts right F2L pair, cycles 3 top edges through right slot, and R' U' R2 re-locks F2L.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'B', 'B'],
+      right: ['R', 'G_GREEN', 'R'],
+      bottom: ['G_GREEN', 'O', 'G_GREEN'],
+      left: ['O', 'R', 'O'],
+    }
   },
   {
     id: 'pll-2look-ub',
@@ -257,7 +278,14 @@ export const PLL_2LOOK_CASES: AlgCase[] = [
     description: 'Cycles 3 edges clockwise. Back side solved.',
     tips: 'Hold solved side on back.',
     why: "Clockwise mirror of Ua perm, cycling 3 edges through right slot in reverse.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'B', 'B'],
+      right: ['R', 'O', 'R'],
+      bottom: ['G_GREEN', 'R', 'G_GREEN'],
+      left: ['O', 'G_GREEN', 'O'],
+    }
   },
   {
     id: 'pll-2look-hperm',
@@ -271,7 +299,14 @@ export const PLL_2LOOK_CASES: AlgCase[] = [
     description: 'Swaps opposite edge pairs (Front/Back & Left/Right).',
     tips: 'Fast slice moves (M2 U M2...).',
     why: "M2 swaps opposite edge pairs across middle slice, U aligns top layer, and M2 U M2 restores F2L.",
-    probability: '1/72'
+    probability: '1/72',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'G_GREEN', 'B'],
+      right: ['R', 'O', 'R'],
+      bottom: ['G_GREEN', 'B', 'G_GREEN'],
+      left: ['O', 'R', 'O'],
+    }
   },
   {
     id: 'pll-2look-zperm',
@@ -285,7 +320,14 @@ export const PLL_2LOOK_CASES: AlgCase[] = [
     description: 'Swaps adjacent edge pairs (Front/Right & Back/Left).',
     tips: 'Hold swap edges on Front & Right.',
     why: "M' slice moves isolate adjacent edge pairs, cycling them in an X-pattern without disturbing corners.",
-    probability: '1/36'
+    probability: '1/36',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'O', 'B'],
+      right: ['R', 'G_GREEN', 'R'],
+      bottom: ['G_GREEN', 'R', 'G_GREEN'],
+      left: ['O', 'B', 'O'],
+    }
   }
 ];
 
@@ -301,7 +343,14 @@ export const FULL_PLL_CASES: AlgCase[] = [
     alternativeAlgs: ["l' U R' D2 R U' R' D2 R2"],
     description: 'Cycles 3 corners counter-clockwise.',
     why: "Rotates right layer x' and uses D slice turns to cycle 3 corners counter-clockwise.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'O', 'B'],
+      right: ['R', 'R', 'O'],
+      bottom: ['G_GREEN', 'G_GREEN', 'G_GREEN'],
+      left: ['O', 'B', 'R'],
+    }
   },
   {
     id: 'pll-ab',
@@ -313,7 +362,14 @@ export const FULL_PLL_CASES: AlgCase[] = [
     alternativeAlgs: ["x' R2 D2 R' U' R D2 R' U R' x"],
     description: 'Cycles 3 corners clockwise.',
     why: "Mirror of Aa perm using D slice turns to cycle 3 corners clockwise.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'R', 'B'],
+      right: ['R', 'B', 'O'],
+      bottom: ['G_GREEN', 'G_GREEN', 'G_GREEN'],
+      left: ['O', 'O', 'R'],
+    }
   },
   {
     id: 'pll-e',
@@ -324,7 +380,14 @@ export const FULL_PLL_CASES: AlgCase[] = [
     primaryAlg: "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
     description: 'Swaps two pairs of adjacent corners simultaneously.',
     why: "Uses D slice turns to swap front-left with front-right and back-left with back-right simultaneously.",
-    probability: '1/36'
+    probability: '1/36',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'G_GREEN', 'O'],
+      right: ['R', 'R', 'B'],
+      bottom: ['G_GREEN', 'G_GREEN', 'R'],
+      left: ['O', 'O', 'G_GREEN'],
+    }
   },
   {
     id: 'pll-f',
@@ -335,7 +398,14 @@ export const FULL_PLL_CASES: AlgCase[] = [
     primaryAlg: "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
     description: 'Swaps 2 corners and 2 edges on one side.',
     why: "Executes a T-Perm corner swap wrapped inside a 1x3 bar setup move.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'B', 'B'],
+      right: ['R', 'O', 'R'],
+      bottom: ['G_GREEN', 'R', 'O'],
+      left: ['O', 'G_GREEN', 'G_GREEN'],
+    }
   },
   {
     id: 'pll-ga',
@@ -347,7 +417,14 @@ export const FULL_PLL_CASES: AlgCase[] = [
     alternativeAlgs: ["R2 U R' U R' U' R U' R2 D U' R' U R D'"],
     description: 'Headlights on left, block on front-right.',
     why: "Uses wide u slice moves to rotate 3 corners and 3 edges around an anchored 1x2 F2L block.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'G_GREEN', 'B'],
+      right: ['R', 'R', 'R'],
+      bottom: ['G_GREEN', 'O', 'O'],
+      left: ['O', 'B', 'G_GREEN'],
+    }
   },
   {
     id: 'pll-gb',
@@ -359,7 +436,14 @@ export const FULL_PLL_CASES: AlgCase[] = [
     alternativeAlgs: ["R' U' R U D' R2 U R' U R U' R U' R2 D"],
     description: 'Headlights on left, block on back-right.',
     why: "F' U' F sets up block, wide u rotates 3 corners and 3 edges clockwise.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'B', 'O'],
+      right: ['R', 'G_GREEN', 'R'],
+      bottom: ['G_GREEN', 'R', 'G_GREEN'],
+      left: ['O', 'O', 'O'],
+    }
   },
   {
     id: 'pll-gc',
@@ -371,7 +455,14 @@ export const FULL_PLL_CASES: AlgCase[] = [
     alternativeAlgs: ["R2 U' R U' R U R' U R2 D' U R U' R' D"],
     description: 'Headlights on left, block on front-left.',
     why: "Wide u' counter-clockwise slice rotates 3 corners & edges around front-left block.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'O', 'B'],
+      right: ['R', 'B', 'R'],
+      bottom: ['G_GREEN', 'G_GREEN', 'G_GREEN'],
+      left: ['O', 'R', 'O'],
+    }
   },
   {
     id: 'pll-gd',
@@ -382,7 +473,14 @@ export const FULL_PLL_CASES: AlgCase[] = [
     primaryAlg: "R U R' U' D R2 U' R U' R' U R' U R2 D'",
     description: 'Headlights on left, block on back-left.',
     why: "D slice step isolates back-left block while cycling remaining top pieces.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'R', 'B'],
+      right: ['R', 'O', 'R'],
+      bottom: ['G_GREEN', 'B', 'G_GREEN'],
+      left: ['O', 'O', 'O'],
+    }
   },
   {
     id: 'pll-ja',
@@ -394,7 +492,14 @@ export const FULL_PLL_CASES: AlgCase[] = [
     alternativeAlgs: ["R' U L' U2 R U' R' U2 R L"],
     description: '1x2 block on front-left.',
     why: "x tilt with wide r' slice swaps front-left adjacent corners and edges.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'B', 'B'],
+      right: ['R', 'R', 'O'],
+      bottom: ['G_GREEN', 'O', 'G_GREEN'],
+      left: ['O', 'G_GREEN', 'R'],
+    }
   },
   {
     id: 'pll-jb',
@@ -405,7 +510,14 @@ export const FULL_PLL_CASES: AlgCase[] = [
     primaryAlg: "R U R' F' R U R' U' R' F R2 U' R'",
     description: '1x2 block on front-right.',
     why: "Pops out right F2L pair and reinserts in offset slot, swapping front-right corners and edges.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'B', 'B'],
+      right: ['R', 'G_GREEN', 'O'],
+      bottom: ['G_GREEN', 'R', 'G_GREEN'],
+      left: ['O', 'O', 'R'],
+    }
   },
   {
     id: 'pll-na',
@@ -417,7 +529,14 @@ export const FULL_PLL_CASES: AlgCase[] = [
     alternativeAlgs: ["z U R' D R2 U' R D' U R' D R2 U' R D' z'"],
     description: 'Swaps opposite corners & edges.',
     why: "Executes a double corner-and-edge diagonal swap along opposing faces.",
-    probability: '1/72'
+    probability: '1/72',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'G_GREEN', 'B'],
+      right: ['R', 'O', 'R'],
+      bottom: ['G_GREEN', 'B', 'G_GREEN'],
+      left: ['O', 'R', 'O'],
+    }
   },
   {
     id: 'pll-nb',
@@ -429,7 +548,14 @@ export const FULL_PLL_CASES: AlgCase[] = [
     alternativeAlgs: ["R' U L' U2 R U' L R' U L' U2 R U' L"],
     description: 'Mirror of Na perm.',
     why: "Mirror diagonal corner and edge swap using F' U' F triggers.",
-    probability: '1/72'
+    probability: '1/72',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'O', 'B'],
+      right: ['R', 'B', 'R'],
+      bottom: ['G_GREEN', 'R', 'G_GREEN'],
+      left: ['O', 'G_GREEN', 'O'],
+    }
   },
   {
     id: 'pll-ra',
@@ -441,7 +567,14 @@ export const FULL_PLL_CASES: AlgCase[] = [
     alternativeAlgs: ["R U2 R' U2 R B' R' U' R U R B R2"],
     description: 'Headlights on left, bar on front.',
     why: "Sets up front 1x2 bar with F', swaps left corners, and restores F2L.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'B', 'B'],
+      right: ['R', 'O', 'O'],
+      bottom: ['G_GREEN', 'R', 'G_GREEN'],
+      left: ['O', 'G_GREEN', 'R'],
+    }
   },
   {
     id: 'pll-rb',
@@ -452,7 +585,14 @@ export const FULL_PLL_CASES: AlgCase[] = [
     primaryAlg: "R' U2 R U2 R' F R U R' U' R' F' R2",
     description: 'Headlights on left, bar on back.',
     why: "Sets up back 1x2 bar with F, swaps left corners, and restores F2L.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'B', 'B'],
+      right: ['R', 'G_GREEN', 'R'],
+      bottom: ['G_GREEN', 'O', 'G_GREEN'],
+      left: ['O', 'R', 'O'],
+    }
   },
   {
     id: 'pll-v',
@@ -464,7 +604,14 @@ export const FULL_PLL_CASES: AlgCase[] = [
     alternativeAlgs: ["R' U R' U' B' R' B2 U' R' U R' B R B"],
     description: 'Diagonal swap with 2x2 block on back-left.',
     why: "Combines y rotation with F-trigger corner swap to solve diagonal displacement.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'O', 'B'],
+      right: ['R', 'R', 'G_GREEN'],
+      bottom: ['G_GREEN', 'B', 'R'],
+      left: ['O', 'G_GREEN', 'O'],
+    }
   },
   {
     id: 'pll-w',
@@ -476,7 +623,14 @@ export const FULL_PLL_CASES: AlgCase[] = [
     alternativeAlgs: ["R U R' F' R U R' U' R' F R U' R' F R F'"],
     description: 'Staircase pattern of matching colors.',
     why: "Uses D' slice steps to shift staircase corner and edge patterns into solved spots.",
-    probability: '1/18'
+    probability: '1/18',
+    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
+    borderColors: {
+      top: ['B', 'R', 'B'],
+      right: ['R', 'G_GREEN', 'O'],
+      bottom: ['G_GREEN', 'O', 'G_GREEN'],
+      left: ['O', 'B', 'R'],
+    }
   }
 ];
 
@@ -490,7 +644,14 @@ export const F2L_HIGHLIGHTS: AlgCase[] = [
     primaryAlg: "U R U' R'",
     description: 'Corner and edge are connected in top layer.',
     tips: 'Align pair above slot, then insert.',
-    why: "Direct slot insertion (U R U' R') taking advantage of pre-aligned corner and edge."
+    why: "Direct slot insertion (U R U' R') taking advantage of pre-aligned corner and edge.",
+    topGrid: ['G', 'G', 'W', 'G', 'G', 'G', 'G', 'G', 'G'],
+    borderColors: {
+      top: ['G', 'R', 'G'],
+      right: ['G_GREEN', 'R', 'G'],
+      bottom: ['G', 'G', 'G'],
+      left: ['G', 'G', 'G'],
+    }
   },
   {
     id: 'f2l-basic-2',
@@ -501,7 +662,14 @@ export const F2L_HIGHLIGHTS: AlgCase[] = [
     primaryAlg: "R U2 R' U' R U R'",
     description: 'White sticker points UP on top layer.',
     tips: 'Align edge, push corner away, pair & insert.',
-    why: "R U2 R' separates corner and edge, matches side colors, then inserts pair."
+    why: "R U2 R' separates corner and edge, matches side colors, then inserts pair.",
+    topGrid: ['G', 'G', 'W', 'G', 'G', 'G', 'G', 'G', 'G'],
+    borderColors: {
+      top: ['G', 'G_GREEN', 'G'],
+      right: ['R', 'R', 'G'],
+      bottom: ['G', 'G', 'G'],
+      left: ['G', 'G', 'G'],
+    }
   },
   {
     id: 'f2l-basic-3',
@@ -512,7 +680,14 @@ export const F2L_HIGHLIGHTS: AlgCase[] = [
     primaryAlg: "R U R'",
     description: 'White sticker faces side, different top colors.',
     tips: 'Hide corner, match edge, bring back.',
-    why: "R U R' hides corner in back slot to match edge orientation before inserting."
+    why: "R U R' hides corner in back slot to match edge orientation before inserting.",
+    topGrid: ['G', 'G', 'W', 'G', 'G', 'G', 'G', 'G', 'G'],
+    borderColors: {
+      top: ['G', 'R', 'G'],
+      right: ['G_GREEN', 'G_GREEN', 'G'],
+      bottom: ['G', 'G', 'G'],
+      left: ['G', 'G', 'G'],
+    }
   },
   {
     id: 'f2l-basic-4',
@@ -523,6 +698,13 @@ export const F2L_HIGHLIGHTS: AlgCase[] = [
     primaryAlg: "U' R U2 R' U2 R U' R'",
     description: 'Both top stickers have SAME color.',
     tips: 'Form connected pair then insert.',
-    why: "U' R U2 R' sets up connected pair in top layer, then inserts cleanly."
+    why: "U' R U2 R' sets up connected pair in top layer, then inserts cleanly.",
+    topGrid: ['G', 'G', 'W', 'G', 'G', 'G', 'G', 'G', 'G'],
+    borderColors: {
+      top: ['G', 'G_GREEN', 'G'],
+      right: ['G_GREEN', 'R', 'G'],
+      bottom: ['G', 'G', 'G'],
+      left: ['G', 'G', 'G'],
+    }
   }
 ];
