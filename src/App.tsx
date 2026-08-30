@@ -5,7 +5,7 @@ import { TrainerTab } from './components/TrainerTab';
 import { TimerTab } from './components/TimerTab';
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<'reference' | 'timer' | 'trainer'>('reference');
+  const [activeTab, setActiveTab] = useState<'timer' | 'reference' | 'trainer'>('timer');
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-amber-500 selection:text-slate-950 font-sans">

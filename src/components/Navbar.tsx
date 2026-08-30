@@ -8,8 +8,8 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
   const navItems = [
-    { id: 'reference', label: 'Alg Reference', icon: Layers },
     { id: 'timer', label: 'Speedsolving Timer', icon: Timer },
+    { id: 'reference', label: 'Alg Reference', icon: Layers },
     { id: 'trainer', label: 'Flashcard Trainer', icon: Brain },
   ] as const;
 
@@ -17,7 +17,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
     <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80 px-4 py-3">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         {/* Brand Logo */}
-        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setActiveTab('reference')}>
+        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setActiveTab('timer')}>
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
             <Box className="w-5 h-5 text-slate-950 stroke-[2.5]" />
           </div>
