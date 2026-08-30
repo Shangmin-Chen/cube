@@ -24,8 +24,8 @@ export const AlgDiagram: React.FC<AlgDiagramProps> = ({
   title,
 }) => {
   const COLOR_MAP: Record<string, string> = {
-    Y: '#facc15', // Yellow
-    G: '#334155', // Slate gray (unoriented/dim)
+    Y: '#eab308', // Warm Yellow
+    G: '#2d2d2d', // Notion dark gray (unoriented/dim)
     W: '#f8fafc', // White
     R: '#ef4444', // Red
     O: '#f97316', // Orange
@@ -33,7 +33,7 @@ export const AlgDiagram: React.FC<AlgDiagramProps> = ({
     G_GREEN: '#22c55e', // Green
   };
 
-  const getColor = (code: string) => COLOR_MAP[code] || '#334155';
+  const getColor = (code: string) => COLOR_MAP[code] || '#2d2d2d';
 
   const innerSize = size * 0.7;
   const offset = (size - innerSize) / 2;
@@ -42,7 +42,7 @@ export const AlgDiagram: React.FC<AlgDiagramProps> = ({
 
   return (
     <div className="flex flex-col items-center">
-      <svg width={size} height={size} className="overflow-visible drop-shadow-md">
+      <svg width={size} height={size} className="overflow-visible">
         {/* Outer background frame */}
         <rect
           x={0}
@@ -50,8 +50,8 @@ export const AlgDiagram: React.FC<AlgDiagramProps> = ({
           width={size}
           height={size}
           rx={6}
-          fill="#0f172a"
-          stroke="#1e293b"
+          fill="#191919"
+          stroke="#2d2d2d"
           strokeWidth={2}
         />
 
@@ -65,7 +65,7 @@ export const AlgDiagram: React.FC<AlgDiagramProps> = ({
             height={borderThickness}
             rx={2}
             fill={getColor(c)}
-            stroke="#090d16"
+            stroke="#191919"
             strokeWidth={1}
           />
         ))}
@@ -80,7 +80,7 @@ export const AlgDiagram: React.FC<AlgDiagramProps> = ({
             height={borderThickness}
             rx={2}
             fill={getColor(c)}
-            stroke="#090d16"
+            stroke="#191919"
             strokeWidth={1}
           />
         ))}
@@ -95,7 +95,7 @@ export const AlgDiagram: React.FC<AlgDiagramProps> = ({
             height={cellSize - 4}
             rx={2}
             fill={getColor(c)}
-            stroke="#090d16"
+            stroke="#191919"
             strokeWidth={1}
           />
         ))}
@@ -110,7 +110,7 @@ export const AlgDiagram: React.FC<AlgDiagramProps> = ({
             height={cellSize - 4}
             rx={2}
             fill={getColor(c)}
-            stroke="#090d16"
+            stroke="#191919"
             strokeWidth={1}
           />
         ))}
@@ -128,13 +128,13 @@ export const AlgDiagram: React.FC<AlgDiagramProps> = ({
               height={cellSize - 4}
               rx={3}
               fill={getColor(c)}
-              stroke="#090d16"
+              stroke="#191919"
               strokeWidth={1.5}
             />
           );
         })}
       </svg>
-      {title && <span className="text-xs text-slate-400 mt-2 font-medium">{title}</span>}
+      {title && <span className="text-xs text-[#888888] mt-2 font-medium">{title}</span>}
     </div>
   );
 };

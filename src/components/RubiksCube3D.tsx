@@ -1,24 +1,24 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Play, Pause, RotateCcw, SkipBack, SkipForward, Shuffle } from 'lucide-react';
 import { parseMoveString, generateScramble } from '../utils/cubeLogic';
 
-// Cube Colors
+// Notion Dark Aligned 3D Palette
 const COLOR_CODES = {
-  U: 0xffd500, // Yellow (Top)
-  D: 0xffffff, // White (Bottom)
-  F: 0x009b48, // Green (Front)
-  B: 0x0045ad, // Blue (Back)
-  R: 0xb71234, // Red (Right)
-  L: 0xff5800, // Orange (Left)
-  INNER: 0x111827, // Dark slate inner plastic
+  U: 0xeab308, // Notion Warm Yellow (Top)
+  D: 0xf3f0e8, // Warm Cream White (Bottom)
+  F: 0x22c55e, // Emerald Green (Front)
+  B: 0x6366f1, // Indigo Blue (Back)
+  R: 0xef4444, // Crimson Red (Right)
+  L: 0xf97316, // Warm Orange (Left)
+  INNER: 0x191919, // Notion Dark Inner Plastic (#191919)
+  DIM_SURFACE: 0x2d2d2d, // Muted Notion Border Gray (#2d2d2d)
 };
 
 interface RubiksCube3DProps {
   initialAlgorithm?: string;
   autoPlay?: boolean;
   highlightMode?: 'all' | 'cross' | 'f2l' | 'oll' | 'pll';
-  interactive?: boolean;
   showControls?: boolean;
   size?: string;
 }
@@ -27,15 +27,16 @@ export const RubiksCube3D: React.FC<RubiksCube3DProps> = ({
   initialAlgorithm = '',
   autoPlay = false,
   highlightMode = 'all',
-  interactive = true,
   showControls = true,
   size = 'h-[360px]',
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cubeGroupRef = useRef<THREE.Group | null>(null);
+  const pivotRef = useRef<THREE.Group | null>(null);
   const cubiesRef = useRef<THREE.Mesh[]>([]);
   const isAnimatingRef = useRef<boolean>(false);
+  const animFrameRef = useRef<number | null>(null);
 
   const [moves, setMoves] = useState<string[]>([]);
   const [currentMoveIndex, setCurrentMoveIndex] = useState<number>(0);
@@ -44,6 +45,7 @@ export const RubiksCube3D: React.FC<RubiksCube3DProps> = ({
 
   // Parse move string whenever initialAlgorithm changes
   useEffect(() => {
+    resetCubiePositions();
     if (initialAlgorithm) {
       const parsed = parseMoveString(initialAlgorithm);
       setMoves(parsed);
@@ -55,6 +57,38 @@ export const RubiksCube3D: React.FC<RubiksCube3DProps> = ({
       setIsPlaying(false);
     }
   }, [initialAlgorithm, autoPlay]);
+
+  // Safely stop animations & detach pivot cubies back to cube group
+  const stopActiveAnimation = () => {
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+
+    if (pivotRef.current && cubeGroupRef.current) {
+      const children = [...pivotRef.current.children];
+      children.forEach(child => {
+        cubeGroupRef.current?.attach(child);
+      });
+      sceneRef.current?.remove(pivotRef.current);
+      pivotRef.current = null;
+    }
+
+    isAnimatingRef.current = false;
+  };
+
+  // Reset 3D cubies to initial solved layout
+  const resetCubiePositions = () => {
+    stopActiveAnimation();
+    cubiesRef.current.forEach(cubie => {
+      if (cubie.userData.origPos) {
+        cubie.position.copy(cubie.userData.origPos);
+        cubie.quaternion.identity();
+        cubie.updateMatrix();
+        cubie.updateMatrixWorld(true);
+      }
+    });
+  };
 
   // Set up Three.js Scene
   useEffect(() => {
@@ -80,15 +114,15 @@ export const RubiksCube3D: React.FC<RubiksCube3DProps> = ({
     renderer.shadowMap.enabled = true;
     container.appendChild(renderer.domElement);
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+    // Notion Studio Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
     scene.add(ambientLight);
 
-    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+    const dirLight1 = new THREE.DirectionalLight(0xfffbeb, 1.0);
     dirLight1.position.set(10, 15, 10);
     scene.add(dirLight1);
 
-    const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+    const dirLight2 = new THREE.DirectionalLight(0xd4d4d4, 0.4);
     dirLight2.position.set(-10, -10, -10);
     scene.add(dirLight2);
 
@@ -97,105 +131,89 @@ export const RubiksCube3D: React.FC<RubiksCube3DProps> = ({
     scene.add(cubeGroup);
     cubeGroupRef.current = cubeGroup;
 
+    // Shared geometry instance to optimize GPU memory
+    const cubieSize = 0.95;
+    const sharedBoxGeometry = new THREE.BoxGeometry(cubieSize, cubieSize, cubieSize);
+    const sharedEdgesGeometry = new THREE.EdgesGeometry(sharedBoxGeometry);
+
     // Create 27 Cubies
     const cubies: THREE.Mesh[] = [];
-    const geometry = new THREE.BoxGeometry(0.94, 0.94, 0.94);
 
     for (let x = -1; x <= 1; x++) {
       for (let y = -1; y <= 1; y++) {
         for (let z = -1; z <= 1; z++) {
-          const materials = [
-            new THREE.MeshStandardMaterial({ color: x === 1 ? COLOR_CODES.R : COLOR_CODES.INNER, roughness: 0.2 }),
-            new THREE.MeshStandardMaterial({ color: x === -1 ? COLOR_CODES.L : COLOR_CODES.INNER, roughness: 0.2 }),
-            new THREE.MeshStandardMaterial({ color: y === 1 ? COLOR_CODES.U : COLOR_CODES.INNER, roughness: 0.2 }),
-            new THREE.MeshStandardMaterial({ color: y === -1 ? COLOR_CODES.D : COLOR_CODES.INNER, roughness: 0.2 }),
-            new THREE.MeshStandardMaterial({ color: z === 1 ? COLOR_CODES.F : COLOR_CODES.INNER, roughness: 0.2 }),
-            new THREE.MeshStandardMaterial({ color: z === -1 ? COLOR_CODES.B : COLOR_CODES.INNER, roughness: 0.2 }),
+          const isTargetLayer =
+            highlightMode === 'all' ||
+            (highlightMode === 'oll' && y === 1) ||
+            (highlightMode === 'pll' && y === 1) ||
+            (highlightMode === 'cross' && y === -1) ||
+            (highlightMode === 'f2l' && y <= 0);
+
+          const plasticColor = isTargetLayer ? COLOR_CODES.INNER : COLOR_CODES.DIM_SURFACE;
+
+          // Face material mapping (Standard 3D Camera Front = +Z)
+          const materials: THREE.MeshStandardMaterial[] = [
+            new THREE.MeshStandardMaterial({
+              color: x === 1 && isTargetLayer ? COLOR_CODES.R : plasticColor,
+              roughness: 0.35,
+              metalness: 0.05,
+            }),
+            new THREE.MeshStandardMaterial({
+              color: x === -1 && isTargetLayer ? COLOR_CODES.L : plasticColor,
+              roughness: 0.35,
+              metalness: 0.05,
+            }),
+            new THREE.MeshStandardMaterial({
+              color: y === 1 && isTargetLayer ? COLOR_CODES.U : plasticColor,
+              roughness: 0.35,
+              metalness: 0.05,
+            }),
+            new THREE.MeshStandardMaterial({
+              color: y === -1 && isTargetLayer ? COLOR_CODES.D : plasticColor,
+              roughness: 0.35,
+              metalness: 0.05,
+            }),
+            new THREE.MeshStandardMaterial({
+              color: z === 1 && isTargetLayer ? COLOR_CODES.F : plasticColor, // Front (+Z)
+              roughness: 0.35,
+              metalness: 0.05,
+            }),
+            new THREE.MeshStandardMaterial({
+              color: z === -1 && isTargetLayer ? COLOR_CODES.B : plasticColor, // Back (-Z)
+              roughness: 0.35,
+              metalness: 0.05,
+            }),
           ];
 
-          const mesh = new THREE.Mesh(geometry, materials);
-          mesh.position.set(x * 1.0, y * 1.0, z * 1.0);
-          mesh.userData = { initialPos: new THREE.Vector3(x, y, z) };
-
-          const shouldDim =
-            (highlightMode === 'cross' && y !== -1) ||
-            (highlightMode === 'f2l' && y === 1) ||
-            ((highlightMode === 'oll' || highlightMode === 'pll') && y !== 1);
-
-          if (shouldDim) {
+          if (!isTargetLayer) {
             materials.forEach(mat => {
               mat.transparent = true;
-              mat.opacity = 0.35;
+              mat.opacity = 0.3;
             });
           }
 
-          cubeGroup.add(mesh);
-          cubies.push(mesh);
+          const cubie = new THREE.Mesh(sharedBoxGeometry, materials);
+          cubie.position.set(x, y, z);
+          cubie.userData = { origPos: new THREE.Vector3(x, y, z) };
+
+          // Add crisp Notion border wireframes to each cubie
+          const lineMaterial = new THREE.LineBasicMaterial({
+            color: isTargetLayer ? 0x2d2d2d : 0x383838,
+            linewidth: 1,
+          });
+          const wireframe = new THREE.LineSegments(sharedEdgesGeometry, lineMaterial);
+          wireframe.userData = { isWireframe: true };
+          cubie.add(wireframe);
+
+          cubeGroup.add(cubie);
+          cubies.push(cubie);
         }
       }
     }
     cubiesRef.current = cubies;
+    isAnimatingRef.current = false;
 
-    // Orbit Drag Rotation Variables
-    let isDragging = false;
-    let previousMousePosition = { x: 0, y: 0 };
-
-    const onMouseDown = (e: MouseEvent) => {
-      if (!interactive) return;
-      isDragging = true;
-      previousMousePosition = { x: e.clientX, y: e.clientY };
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging || !cubeGroupRef.current) return;
-
-      const deltaMove = {
-        x: e.clientX - previousMousePosition.x,
-        y: e.clientY - previousMousePosition.y,
-      };
-
-      const deltaRotationQuaternion = new THREE.Quaternion().setFromEuler(
-        new THREE.Euler((deltaMove.y * Math.PI) / 180 * 0.5, (deltaMove.x * Math.PI) / 180 * 0.5, 0, 'XYZ')
-      );
-
-      cubeGroupRef.current.quaternion.multiplyQuaternions(deltaRotationQuaternion, cubeGroupRef.current.quaternion);
-
-      previousMousePosition = { x: e.clientX, y: e.clientY };
-    };
-
-    const onMouseUp = () => {
-      isDragging = false;
-    };
-
-    // Touch support for mobile
-    const onTouchStart = (e: TouchEvent) => {
-      if (!interactive || e.touches.length === 0) return;
-      isDragging = true;
-      previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      if (!isDragging || !cubeGroupRef.current || e.touches.length === 0) return;
-      const deltaMove = {
-        x: e.touches[0].clientX - previousMousePosition.x,
-        y: e.touches[0].clientY - previousMousePosition.y,
-      };
-      const deltaRotationQuaternion = new THREE.Quaternion().setFromEuler(
-        new THREE.Euler((deltaMove.y * Math.PI) / 180 * 0.5, (deltaMove.x * Math.PI) / 180 * 0.5, 0, 'XYZ')
-      );
-      cubeGroupRef.current.quaternion.multiplyQuaternions(deltaRotationQuaternion, cubeGroupRef.current.quaternion);
-      previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    };
-
-    const domElement = renderer.domElement;
-    domElement.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-    domElement.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
-    window.addEventListener('touchend', onMouseUp);
-
-    // Animation Loop
+    // Render loop
     let animationFrameId: number;
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
@@ -203,7 +221,7 @@ export const RubiksCube3D: React.FC<RubiksCube3DProps> = ({
     };
     animate();
 
-    // Resize Handler
+    // Handle Resize
     const handleResize = () => {
       if (!containerRef.current) return;
       const w = containerRef.current.clientWidth;
@@ -214,86 +232,98 @@ export const RubiksCube3D: React.FC<RubiksCube3DProps> = ({
     };
     window.addEventListener('resize', handleResize);
 
+    // Unmount Cleanup: Dispose GPU Geometries & Materials
     return () => {
-      cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
-      domElement.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      domElement.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('touchend', onMouseUp);
+      cancelAnimationFrame(animationFrameId);
+      stopActiveAnimation();
+
+      sharedBoxGeometry.dispose();
+      sharedEdgesGeometry.dispose();
+
+      cubies.forEach(cubie => {
+        if (Array.isArray(cubie.material)) {
+          cubie.material.forEach(m => m.dispose());
+        }
+        cubie.children.forEach(child => {
+          if (child instanceof THREE.LineSegments) {
+            if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+            else child.material.dispose();
+          }
+        });
+      });
+
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
       renderer.dispose();
     };
-  }, [highlightMode, interactive]);
+  }, [highlightMode]);
 
-  // Execute a single move animation on 3D Cubies
-  const animateMove = useCallback((moveStr: string, reverse = false): Promise<void> => {
-    return new Promise((resolve) => {
+  // Snap position & quaternion to exact 90-degree grid to prevent drift
+  const snapCubieTransform = (cubie: THREE.Mesh) => {
+    cubie.position.x = Math.round(cubie.position.x);
+    cubie.position.y = Math.round(cubie.position.y);
+    cubie.position.z = Math.round(cubie.position.z);
+
+    const euler = new THREE.Euler().setFromQuaternion(cubie.quaternion, 'XYZ');
+    const halfPi = Math.PI / 2;
+    euler.x = Math.round(euler.x / halfPi) * halfPi;
+    euler.y = Math.round(euler.y / halfPi) * halfPi;
+    euler.z = Math.round(euler.z / halfPi) * halfPi;
+    cubie.quaternion.setFromEuler(euler);
+
+    cubie.updateMatrix();
+    cubie.updateMatrixWorld(true);
+  };
+
+  // Execute a single move animation on 3D cube
+  const animateMove = (move: string, reverse: boolean = false): Promise<void> => {
+    return new Promise(resolve => {
       if (!cubeGroupRef.current || isAnimatingRef.current) {
         resolve();
         return;
       }
 
       isAnimatingRef.current = true;
+      const face = move[0].toUpperCase();
+      const isPrime = move.includes("'");
+      const isDouble = move.includes('2');
 
-      const baseMove = moveStr.replace(/['2]/g, '');
-      const isDouble = moveStr.includes('2');
-      let isPrime = moveStr.includes("'");
-      if (reverse) isPrime = !isPrime;
+      let angle = isDouble ? Math.PI : Math.PI / 2;
+      if (isPrime) angle = -angle;
+      if (reverse) angle = -angle;
 
       let axis = new THREE.Vector3(0, 1, 0);
-      let angle = (isPrime ? 1 : -1) * (Math.PI / 2) * (isDouble ? 2 : 1);
-      let filterFn = (_pos: THREE.Vector3) => true;
+      let condition = (p: THREE.Vector3) => Math.round(p.y) === 1;
 
-      // Map move notation to axis & cubies selection
-      switch (baseMove) {
+      switch (face) {
         case 'U':
           axis = new THREE.Vector3(0, 1, 0);
-          filterFn = pos => pos.y > 0.5;
+          condition = p => Math.round(p.y) === 1;
+          angle = -angle;
           break;
         case 'D':
-          axis = new THREE.Vector3(0, -1, 0);
-          filterFn = pos => pos.y < -0.5;
+          axis = new THREE.Vector3(0, 1, 0);
+          condition = p => Math.round(p.y) === -1;
           break;
         case 'R':
           axis = new THREE.Vector3(1, 0, 0);
-          filterFn = pos => pos.x > 0.5;
+          condition = p => Math.round(p.x) === 1;
+          angle = -angle;
           break;
         case 'L':
-          axis = new THREE.Vector3(-1, 0, 0);
-          filterFn = pos => pos.x < -0.5;
+          axis = new THREE.Vector3(1, 0, 0);
+          condition = p => Math.round(p.x) === -1;
           break;
         case 'F':
           axis = new THREE.Vector3(0, 0, 1);
-          filterFn = pos => pos.z > 0.5;
+          condition = p => Math.round(p.z) === 1;
+          angle = -angle;
           break;
         case 'B':
-          axis = new THREE.Vector3(0, 0, -1);
-          filterFn = pos => pos.z < -0.5;
-          break;
-        case 'M':
-          axis = new THREE.Vector3(-1, 0, 0);
-          filterFn = pos => Math.abs(pos.x) < 0.5;
-          break;
-        case 'r':
-          axis = new THREE.Vector3(1, 0, 0);
-          filterFn = pos => pos.x > -0.5;
-          break;
-        case 'x':
-          axis = new THREE.Vector3(1, 0, 0);
-          filterFn = () => true;
-          break;
-        case 'y':
-          axis = new THREE.Vector3(0, 1, 0);
-          filterFn = () => true;
-          break;
-        case 'z':
           axis = new THREE.Vector3(0, 0, 1);
-          filterFn = () => true;
+          condition = p => Math.round(p.z) === -1;
           break;
         default:
           isAnimatingRef.current = false;
@@ -301,130 +331,134 @@ export const RubiksCube3D: React.FC<RubiksCube3DProps> = ({
           return;
       }
 
-      // Group matching cubies under pivot group
-      const pivotGroup = new THREE.Group();
-      sceneRef.current?.add(pivotGroup);
+      const pivot = new THREE.Group();
+      pivotRef.current = pivot;
+      sceneRef.current?.add(pivot);
 
-      const targetCubies: THREE.Mesh[] = [];
-      cubiesRef.current.forEach(mesh => {
+      const movingCubies: THREE.Mesh[] = [];
+      cubiesRef.current.forEach(cubie => {
         const worldPos = new THREE.Vector3();
-        mesh.getWorldPosition(worldPos);
-        if (filterFn(worldPos)) {
-          targetCubies.push(mesh);
+        cubie.getWorldPosition(worldPos);
+        if (condition(worldPos)) {
+          pivot.attach(cubie);
+          movingCubies.push(cubie);
         }
       });
 
-      targetCubies.forEach(mesh => pivotGroup.attach(mesh));
-
       const startTime = performance.now();
-      const duration = speed * 0.7;
+      const animDuration = Math.min(speed * 0.85, 300);
 
-      const animateStep = (now: number) => {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const currentAngle = angle * progress;
+      const updateRotation = () => {
+        const now = performance.now();
+        const rawProgress = Math.min((now - startTime) / animDuration, 1);
+        // Smooth Sine Easing
+        const easedProgress = Math.sin((rawProgress * Math.PI) / 2);
+        const currentAngle = angle * easedProgress;
 
-        pivotGroup.setRotationFromAxisAngle(axis, currentAngle);
+        if (pivotRef.current) {
+          pivotRef.current.setRotationFromAxisAngle(axis, currentAngle);
+        }
 
-        if (progress < 1) {
-          requestAnimationFrame(animateStep);
+        if (rawProgress < 1) {
+          animFrameRef.current = requestAnimationFrame(updateRotation);
         } else {
-          // Finalize rotation matrix
-          pivotGroup.setRotationFromAxisAngle(axis, angle);
-          pivotGroup.updateMatrixWorld();
+          if (pivotRef.current) {
+            pivotRef.current.setRotationFromAxisAngle(axis, angle);
+            pivotRef.current.updateMatrixWorld();
+          }
 
-          targetCubies.forEach(mesh => {
-            cubeGroupRef.current?.attach(mesh);
-            mesh.position.x = Math.round(mesh.position.x);
-            mesh.position.y = Math.round(mesh.position.y);
-            mesh.position.z = Math.round(mesh.position.z);
+          movingCubies.forEach(cubie => {
+            cubeGroupRef.current?.attach(cubie);
+            snapCubieTransform(cubie);
           });
 
-          sceneRef.current?.remove(pivotGroup);
+          if (pivotRef.current) {
+            sceneRef.current?.remove(pivotRef.current);
+            pivotRef.current = null;
+          }
+
+          animFrameRef.current = null;
           isAnimatingRef.current = false;
           resolve();
         }
       };
 
-      requestAnimationFrame(animateStep);
+      animFrameRef.current = requestAnimationFrame(updateRotation);
     });
-  }, [speed]);
+  };
 
-  // Handle playing moves automatically
-  useEffect(() => {
-    if (isPlaying && currentMoveIndex < moves.length) {
-      animateMove(moves[currentMoveIndex]).then(() => {
-        setCurrentMoveIndex(prev => {
-          const next = prev + 1;
-          if (next >= moves.length) {
-            setIsPlaying(false);
-          }
-          return next;
-        });
-      });
-    }
-  }, [isPlaying, currentMoveIndex, moves, animateMove]);
-
+  // Step Controls
   const handleNextMove = async () => {
-    if (currentMoveIndex < moves.length) {
-      setIsPlaying(false);
-      await animateMove(moves[currentMoveIndex]);
+    if (currentMoveIndex < moves.length && !isAnimatingRef.current) {
+      const move = moves[currentMoveIndex];
+      await animateMove(move, false);
       setCurrentMoveIndex(prev => prev + 1);
     }
   };
 
   const handlePrevMove = async () => {
-    if (currentMoveIndex > 0) {
-      setIsPlaying(false);
-      const prevIdx = currentMoveIndex - 1;
-      await animateMove(moves[prevIdx], true);
-      setCurrentMoveIndex(prevIdx);
+    if (currentMoveIndex > 0 && !isAnimatingRef.current) {
+      const move = moves[currentMoveIndex - 1];
+      await animateMove(move, true);
+      setCurrentMoveIndex(prev => prev - 1);
     }
   };
 
   const handleReset = () => {
     setIsPlaying(false);
     setCurrentMoveIndex(0);
-    // Reset cubies rotation
-    if (cubeGroupRef.current) {
-      cubeGroupRef.current.rotation.set(0, 0, 0);
-      cubeGroupRef.current.quaternion.set(0, 0, 0, 1);
-    }
+    resetCubiePositions();
   };
 
-  const handleScrambleNew = async () => {
-    const newScramble = generateScramble(15);
+  const handleScrambleNew = () => {
+    const newScramble = generateScramble(21);
     const parsed = parseMoveString(newScramble);
     setMoves(parsed);
     setCurrentMoveIndex(0);
-    setIsPlaying(true);
+    setIsPlaying(false);
+    resetCubiePositions();
   };
 
+  // Auto-play interval
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    if (isPlaying && currentMoveIndex < moves.length && !isAnimatingRef.current) {
+      timeoutId = setTimeout(async () => {
+        await handleNextMove();
+      }, speed);
+    } else if (currentMoveIndex >= moves.length) {
+      setIsPlaying(false);
+    }
+
+    return () => clearTimeout(timeoutId);
+  }, [isPlaying, currentMoveIndex, moves, speed]);
+
   return (
-    <div className="relative flex flex-col items-center justify-center w-full bg-slate-900/60 rounded-2xl border border-slate-800/80 backdrop-blur-md p-4 shadow-xl">
+    <div className="relative flex flex-col items-center justify-center w-full bg-[#202020] rounded-xl border border-[#2d2d2d] p-4 shadow-none">
       {/* 3D Canvas Container */}
-      <div ref={containerRef} className={`w-full ${size} cursor-grab active:cursor-grabbing select-none`} />
+      <div ref={containerRef} className={`w-full ${size} cursor-default select-none`} />
 
       {/* Current Scramble/Algorithm Display */}
       {moves.length > 0 && (
-        <div className="w-full flex items-center justify-between bg-slate-950/70 border border-slate-800 rounded-xl px-4 py-2 mt-2 font-mono text-sm">
+        <div className="w-full flex items-center justify-between bg-[#191919] border border-[#2d2d2d] rounded-lg px-4 py-2 mt-2 font-mono text-sm">
           <div className="flex flex-wrap gap-1.5 items-center max-w-[80%]">
             {moves.map((m, idx) => (
               <span
                 key={idx}
                 className={`px-2 py-0.5 rounded text-xs transition-colors ${
                   idx === currentMoveIndex
-                    ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
+                    ? 'bg-[#eab308] text-black font-bold border border-[#eab308]'
                     : idx < currentMoveIndex
-                    ? 'text-slate-500 line-through'
-                    : 'text-slate-200'
+                    ? 'text-[#888888] line-through'
+                    : 'text-[#d4d4d4]'
                 }`}
               >
                 {m}
               </span>
             ))}
           </div>
-          <span className="text-xs text-slate-500 font-sans">
+          <span className="text-xs text-[#888888] font-sans">
             {currentMoveIndex} / {moves.length}
           </span>
         </div>
@@ -435,15 +469,17 @@ export const RubiksCube3D: React.FC<RubiksCube3DProps> = ({
         <div className="flex items-center justify-between w-full mt-3 gap-2">
           <div className="flex items-center gap-1.5">
             <button
+              type="button"
               onClick={handleReset}
-              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+              className="p-2 rounded-lg bg-[#2d2d2d] hover:bg-[#383838] border border-[#383838] text-[#d4d4d4] transition-colors"
               title="Reset Cube"
             >
               <RotateCcw className="w-4 h-4" />
             </button>
             <button
+              type="button"
               onClick={handleScrambleNew}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium flex items-center gap-1 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-[#2d2d2d] hover:bg-[#383838] border border-[#383838] text-[#d4d4d4] text-xs font-medium flex items-center gap-1 transition-colors"
               title="Generate New Scramble"
             >
               <Shuffle className="w-3.5 h-3.5" /> Scramble
@@ -453,24 +489,27 @@ export const RubiksCube3D: React.FC<RubiksCube3DProps> = ({
           {moves.length > 0 && (
             <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={handlePrevMove}
                 disabled={currentMoveIndex === 0}
-                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-slate-300 transition-colors"
+                className="p-2 rounded-lg bg-[#2d2d2d] hover:bg-[#383838] disabled:opacity-40 border border-[#383838] text-[#d4d4d4] transition-colors"
               >
                 <SkipBack className="w-4 h-4" />
               </button>
 
               <button
+                type="button"
                 onClick={() => setIsPlaying(!isPlaying)}
-                className="p-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold transition-all shadow-md shadow-amber-500/20"
+                className="p-2.5 rounded-lg bg-[#eab308] hover:bg-[#facc15] text-black font-semibold transition-all"
               >
-                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-slate-950" />}
+                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-black" />}
               </button>
 
               <button
+                type="button"
                 onClick={handleNextMove}
                 disabled={currentMoveIndex >= moves.length}
-                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-slate-300 transition-colors"
+                className="p-2 rounded-lg bg-[#2d2d2d] hover:bg-[#383838] disabled:opacity-40 border border-[#383838] text-[#d4d4d4] transition-colors"
               >
                 <SkipForward className="w-4 h-4" />
               </button>
@@ -478,12 +517,12 @@ export const RubiksCube3D: React.FC<RubiksCube3DProps> = ({
           )}
 
           {/* Playback speed selector */}
-          <div className="flex items-center gap-1 text-xs text-slate-400 font-mono">
+          <div className="flex items-center gap-1 text-xs text-[#888888] font-mono">
             <span>Speed:</span>
             <select
               value={speed}
               onChange={e => setSpeed(Number(e.target.value))}
-              className="bg-slate-800 border border-slate-700 text-slate-300 rounded px-1.5 py-0.5 text-xs focus:outline-none"
+              className="bg-[#2d2d2d] border border-[#383838] text-[#d4d4d4] rounded px-1.5 py-0.5 text-xs focus:outline-none"
             >
               <option value={700}>Slow</option>
               <option value={400}>Normal</option>

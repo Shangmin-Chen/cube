@@ -3,11 +3,14 @@ import { OLL_2LOOK_CASES, PLL_2LOOK_CASES, FULL_PLL_CASES, F2L_HIGHLIGHTS } from
 import type { AlgCase } from '../types/cube';
 import { AlgDiagram } from './AlgDiagram';
 import { RubiksCube3D } from './RubiksCube3D';
+import { Card } from './ui/card';
+import { Badge } from './ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 import {
   Search,
   Bookmark,
   Play,
-  X,
   Sparkles,
   Lightbulb,
   Compass,
@@ -26,16 +29,16 @@ interface AlgCollection {
   description: string;
   badge: string;
   isAvailable: boolean;
-  color: string;
+  colorVariant: 'amber' | 'indigo' | 'purple' | 'emerald' | 'default';
 }
 
 export const AlgReferenceTab: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>('cfop'); // Default inside CFOP
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>('cfop');
   const [selectedCfopStep, setSelectedCfopStep] = useState<'cross' | 'f2l' | 'oll' | 'pll' | null>(null);
   const [pllMode, setPllMode] = useState<'2look' | 'full'>('2look');
   const [selectedCase, setSelectedCase] = useState<AlgCase | null>(null);
-  
+
   // Safe localStorage deserialization
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
     try {
@@ -85,7 +88,7 @@ export const AlgReferenceTab: React.FC = () => {
         description: 'The standard speedsolving method used by world record holders. Divided into 4 steps.',
         badge: '16-21 Algorithms',
         isAvailable: true,
-        color: 'from-amber-500/20 to-indigo-500/20 text-amber-300 border-amber-500/30',
+        colorVariant: 'amber',
       },
       {
         id: 'roux',
@@ -94,7 +97,7 @@ export const AlgReferenceTab: React.FC = () => {
         description: 'Block-building method with intuitive M-slice edge orientation.',
         badge: 'Coming Soon',
         isAvailable: false,
-        color: 'from-slate-800/40 to-slate-900/40 text-slate-500 border-slate-800',
+        colorVariant: 'default',
       },
       {
         id: 'zz',
@@ -103,7 +106,7 @@ export const AlgReferenceTab: React.FC = () => {
         description: 'Pre-orients all edges during inspection for rotationless F2L.',
         badge: 'Coming Soon',
         isAvailable: false,
-        color: 'from-slate-800/40 to-slate-900/40 text-slate-500 border-slate-800',
+        colorVariant: 'default',
       },
       {
         id: '2x2',
@@ -112,7 +115,7 @@ export const AlgReferenceTab: React.FC = () => {
         description: 'First face, OLL, and PBL layer permutation algorithms for 2x2 cubes.',
         badge: 'Coming Soon',
         isAvailable: false,
-        color: 'from-slate-800/40 to-slate-900/40 text-slate-500 border-slate-800',
+        colorVariant: 'default',
       },
       {
         id: 'bookmarked',
@@ -121,7 +124,7 @@ export const AlgReferenceTab: React.FC = () => {
         description: 'Quick reference list of algorithms you have saved for practice.',
         badge: `${bookmarkedIds.length} Saved`,
         isAvailable: true,
-        color: 'from-rose-500/20 to-pink-500/20 text-rose-300 border-rose-500/30',
+        colorVariant: 'purple',
       },
     ],
     [bookmarkedIds]
@@ -134,13 +137,12 @@ export const AlgReferenceTab: React.FC = () => {
       try {
         localStorage.setItem('cfop_bookmarks', JSON.stringify(next));
       } catch {
-        // Fallback if storage blocked
+        // Fallback
       }
       return next;
     });
   };
 
-  // Determine cases to show for Level 3 (Inside a specific CFOP step)
   const currentStepCases = useMemo(() => {
     if (selectedCollectionId === 'bookmarked') {
       return allCases.filter(c => bookmarkedIds.includes(c.id));
@@ -169,7 +171,6 @@ export const AlgReferenceTab: React.FC = () => {
     );
   }, [allCases, currentStepCases, searchQuery]);
 
-  // Group cases by subcategory/stage
   const groupedCases = useMemo(() => {
     const groups: Record<string, AlgCase[]> = {};
     filteredCases.forEach(c => {
@@ -180,63 +181,73 @@ export const AlgReferenceTab: React.FC = () => {
     return groups;
   }, [filteredCases]);
 
+  const handleSelectCollection = (id: string, isAvailable: boolean) => {
+    if (isAvailable) {
+      setSelectedCollectionId(id);
+      setSelectedCfopStep(null);
+      setSelectedCase(null);
+      setSearchQuery('');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 max-w-6xl mx-auto py-4">
       {/* Hero Banner */}
-      <div className="bg-gradient-to-r from-indigo-900/60 via-purple-900/40 to-slate-900 border border-indigo-500/30 rounded-3xl p-8 backdrop-blur-xl relative overflow-hidden">
-        <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
+      <Card className="p-8 relative overflow-hidden bg-[#202020]">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3">
-              <Sparkles className="w-3.5 h-3.5" /> Speedcubing Algorithm Collections
-            </div>
+            <Badge variant="amber" className="mb-3 flex items-center gap-1.5 w-fit">
+              <Sparkles className="w-3.5 h-3.5" /> Notion Dark Workspace Library
+            </Badge>
             <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
               Algorithm Library & Mechanics
             </h1>
-            <p className="text-slate-300 mt-2 max-w-xl text-sm md:text-base leading-relaxed">
+            <p className="text-[#888888] mt-2 max-w-xl text-sm md:text-base leading-relaxed">
               Explore algorithms by method and step. Open any step to view concise mechanics explanations and 3D move playback.
             </p>
           </div>
 
-          <div className="flex items-center gap-3 bg-slate-950/70 p-3 rounded-2xl border border-slate-800 backdrop-blur-md text-xs font-mono">
-            <div className="flex flex-col items-center px-3 border-r border-slate-800">
-              <span className="text-amber-400 font-bold text-lg">10</span>
-              <span className="text-slate-500 text-[10px]">2-Look OLL</span>
+          <div className="flex items-center gap-3 bg-[#191919] p-3 rounded-xl border border-[#2d2d2d] text-xs font-mono">
+            <div className="flex flex-col items-center px-3 border-r border-[#2d2d2d]">
+              <span className="text-[#eab308] font-bold text-lg">10</span>
+              <span className="text-[#888888] text-[10px]">2-Look OLL</span>
             </div>
             <div className="flex flex-col items-center px-3">
-              <span className="text-indigo-400 font-bold text-lg">6</span>
-              <span className="text-slate-500 text-[10px]">2-Look PLL</span>
+              <span className="text-[#818cf8] font-bold text-lg">6</span>
+              <span className="text-[#888888] text-[10px]">2-Look PLL</span>
             </div>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Navigation Breadcrumb Bar */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
-        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-300">
-          <Layers className="w-4 h-4 text-indigo-400 shrink-0" />
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-[#202020] p-4 rounded-xl border border-[#2d2d2d]">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[#d4d4d4]">
+          <Layers className="w-4 h-4 text-[#eab308] shrink-0" />
           <button
+            type="button"
             onClick={() => {
               setSelectedCollectionId(null);
               setSelectedCfopStep(null);
               setSelectedCase(null);
               setSearchQuery('');
             }}
-            className="hover:text-amber-400 transition-colors"
+            className="hover:text-[#eab308] transition-colors"
           >
             Collections
           </button>
 
           {selectedCollectionId && (
             <>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
+              <ChevronRight className="w-3.5 h-3.5 text-[#888888]" />
               <button
+                type="button"
                 onClick={() => {
                   setSelectedCfopStep(null);
                   setSelectedCase(null);
                   setSearchQuery('');
                 }}
-                className={`transition-colors ${!selectedCfopStep ? 'text-amber-400 font-bold' : 'hover:text-amber-400'}`}
+                className={`transition-colors ${!selectedCfopStep ? 'text-[#eab308] font-bold' : 'hover:text-[#eab308]'}`}
               >
                 {selectedCollectionId === 'cfop' ? 'CFOP Method' : 'Saved Bookmarks'}
               </button>
@@ -245,217 +256,242 @@ export const AlgReferenceTab: React.FC = () => {
 
           {selectedCfopStep && (
             <>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
-              <span className="text-amber-400 font-bold uppercase">{selectedCfopStep}</span>
+              <ChevronRight className="w-3.5 h-3.5 text-[#888888]" />
+              <span className="text-[#eab308] font-bold uppercase">{selectedCfopStep}</span>
             </>
           )}
         </div>
 
         {/* Search input */}
         <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#888888]" />
           <input
             type="text"
             placeholder="Search all algorithms & formulas..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+            className="w-full bg-[#191919] border border-[#2d2d2d] rounded-lg pl-10 pr-4 py-2 text-sm text-[#d4d4d4] placeholder-[#888888] focus:outline-none focus:border-[#eab308] transition-colors"
           />
         </div>
       </div>
 
-      {/* LEVEL 1: Collections View (Shown when no collection selected and no search) */}
+      {/* LEVEL 1: Collections View */}
       {!selectedCollectionId && !searchQuery.trim() && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {collections.map(col => (
-            <div
+            <Card
               key={col.id}
-              onClick={() => {
-                if (col.isAvailable) {
-                  setSelectedCollectionId(col.id);
-                  setSelectedCfopStep(null);
-                  setSelectedCase(null);
-                  setSearchQuery('');
+              role={col.isAvailable ? 'button' : undefined}
+              tabIndex={col.isAvailable ? 0 : undefined}
+              onClick={() => handleSelectCollection(col.id, col.isAvailable)}
+              onKeyDown={e => {
+                if ((e.key === 'Enter' || e.key === ' ') && col.isAvailable) {
+                  e.preventDefault();
+                  handleSelectCollection(col.id, col.isAvailable);
                 }
               }}
-              className={`group flex flex-col justify-between bg-slate-900/40 rounded-3xl p-6 border transition-all duration-200 ${
+              className={`group flex flex-col justify-between p-6 transition-all outline-none ${
                 col.isAvailable
-                  ? 'hover:bg-slate-900/80 border-slate-800/80 hover:border-amber-500/40 cursor-pointer hover:shadow-xl hover:shadow-amber-500/5'
-                  : 'border-slate-800/40 opacity-60 cursor-not-allowed'
+                  ? 'hover:border-[#eab308]/50 focus:border-[#eab308] cursor-pointer'
+                  : 'opacity-50 cursor-not-allowed'
               }`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-gradient-to-r border ${col.color} mb-2`}>
+                  <Badge variant={col.colorVariant} className="mb-2">
                     {col.badge}
-                  </span>
-                  <h2 className="text-xl font-bold text-white group-hover:text-amber-400 transition-colors flex items-center gap-2">
-                    {col.name} {!col.isAvailable && <Lock className="w-4 h-4 text-slate-500" />}
+                  </Badge>
+                  <h2 className="text-xl font-bold text-white group-hover:text-[#eab308] transition-colors flex items-center gap-2">
+                    {col.name} {!col.isAvailable && <Lock className="w-4 h-4 text-[#888888]" />}
                   </h2>
-                  <p className="text-xs text-indigo-300 font-medium mt-0.5">{col.subtitle}</p>
+                  <p className="text-xs text-[#818cf8] font-medium mt-0.5">{col.subtitle}</p>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-slate-400 group-hover:text-amber-400 group-hover:border-amber-500/30 transition-all">
+                <div className="p-3 rounded-lg bg-[#191919] border border-[#2d2d2d] text-[#888888] group-hover:text-[#eab308] group-hover:border-[#eab308]/30 transition-colors">
                   <Folder className="w-5 h-5" />
                 </div>
               </div>
 
-              <p className="text-xs text-slate-400 leading-relaxed mt-4 pt-4 border-t border-slate-800/60 flex items-center justify-between">
+              <p className="text-xs text-[#888888] leading-relaxed mt-4 pt-4 border-t border-[#2d2d2d] flex items-center justify-between">
                 <span>{col.description}</span>
                 {col.isAvailable && (
-                  <ChevronRight className="w-4 h-4 text-slate-500 group-hover:translate-x-1 transition-transform shrink-0 ml-2" />
+                  <ChevronRight className="w-4 h-4 text-[#888888] group-hover:translate-x-1 transition-transform shrink-0 ml-2" />
                 )}
               </p>
-            </div>
+            </Card>
           ))}
         </div>
       )}
 
-      {/* LEVEL 2: Inside CFOP Collection -> Render 4 Boxes for the 4 CFOP Steps (C, F, O, P) */}
+      {/* LEVEL 2: Inside CFOP Collection -> Render 4 Cards for C - F - O - P */}
       {selectedCollectionId === 'cfop' && !selectedCfopStep && !searchQuery.trim() && (
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Layers2 className="w-5 h-5 text-amber-400" /> CFOP Method Steps (Select a step to view algorithms)
+              <Layers2 className="w-5 h-5 text-[#eab308]" /> CFOP Method Steps (Select a step to view algorithms)
             </h2>
             <button
+              type="button"
               onClick={() => {
                 setSelectedCollectionId(null);
                 setSelectedCase(null);
                 setSearchQuery('');
               }}
-              className="text-xs text-slate-400 hover:text-white flex items-center gap-1 font-semibold"
+              className="text-xs text-[#888888] hover:text-white flex items-center gap-1 font-semibold"
             >
               <ArrowLeft className="w-3.5 h-3.5" /> Back to Collections
             </button>
           </div>
 
-          {/* 4 Clean Boxes for C - F - O - P */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Box 1: Cross (C) */}
-            <div
+            <Card
+              role="button"
+              tabIndex={0}
               onClick={() => setSelectedCfopStep('cross')}
-              className="group bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800 hover:border-amber-500/50 rounded-3xl p-6 cursor-pointer transition-all duration-200 flex flex-col justify-between"
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedCfopStep('cross');
+                }
+              }}
+              className="group hover:border-[#eab308]/50 focus:border-[#eab308] p-6 cursor-pointer flex flex-col justify-between outline-none"
             >
               <div className="flex items-center justify-between">
-                <span className="w-9 h-9 rounded-2xl bg-amber-500/20 text-amber-400 font-extrabold flex items-center justify-center border border-amber-500/30 text-base">
+                <span className="w-8 h-8 rounded-md bg-[#191919] text-[#eab308] font-bold flex items-center justify-center border border-[#eab308]/30 text-sm">
                   C
                 </span>
-                <span className="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-800 text-slate-400 text-xs font-mono">
-                  1 Case
-                </span>
+                <Badge variant="outline">1 Case</Badge>
               </div>
               <div className="mt-4">
-                <h3 className="text-xl font-bold text-white group-hover:text-amber-400 transition-colors">
+                <h3 className="text-xl font-bold text-white group-hover:text-[#eab308] transition-colors">
                   Step 1: Cross
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-[#888888] mt-1">
                   Build the four bottom cross edge pieces matching bottom center and side colors.
                 </p>
               </div>
-              <div className="mt-4 pt-4 border-t border-slate-800/60 flex items-center justify-between text-xs font-semibold text-amber-400">
+              <div className="mt-4 pt-4 border-t border-[#2d2d2d] flex items-center justify-between text-xs font-semibold text-[#eab308]">
                 <span>View Cross Mechanics</span>
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
-            </div>
+            </Card>
 
             {/* Box 2: F2L (F) */}
-            <div
+            <Card
+              role="button"
+              tabIndex={0}
               onClick={() => setSelectedCfopStep('f2l')}
-              className="group bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800 hover:border-amber-500/50 rounded-3xl p-6 cursor-pointer transition-all duration-200 flex flex-col justify-between"
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedCfopStep('f2l');
+                }
+              }}
+              className="group hover:border-[#eab308]/50 focus:border-[#eab308] p-6 cursor-pointer flex flex-col justify-between outline-none"
             >
               <div className="flex items-center justify-between">
-                <span className="w-9 h-9 rounded-2xl bg-indigo-500/20 text-indigo-400 font-extrabold flex items-center justify-center border border-indigo-500/30 text-base">
+                <span className="w-8 h-8 rounded-md bg-[#191919] text-[#818cf8] font-bold flex items-center justify-center border border-[#818cf8]/30 text-sm">
                   F
                 </span>
-                <span className="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-800 text-slate-400 text-xs font-mono">
-                  4 Cases
-                </span>
+                <Badge variant="outline">4 Cases</Badge>
               </div>
               <div className="mt-4">
-                <h3 className="text-xl font-bold text-white group-hover:text-amber-400 transition-colors">
+                <h3 className="text-xl font-bold text-white group-hover:text-[#eab308] transition-colors">
                   Step 2: F2L (First 2 Layers)
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-[#888888] mt-1">
                   Solve corner and edge pieces simultaneously into the bottom two layers.
                 </p>
               </div>
-              <div className="mt-4 pt-4 border-t border-slate-800/60 flex items-center justify-between text-xs font-semibold text-indigo-400">
+              <div className="mt-4 pt-4 border-t border-[#2d2d2d] flex items-center justify-between text-xs font-semibold text-[#818cf8]">
                 <span>View F2L Algorithms</span>
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
-            </div>
+            </Card>
 
             {/* Box 3: OLL (O) */}
-            <div
+            <Card
+              role="button"
+              tabIndex={0}
               onClick={() => setSelectedCfopStep('oll')}
-              className="group bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800 hover:border-amber-500/50 rounded-3xl p-6 cursor-pointer transition-all duration-200 flex flex-col justify-between"
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedCfopStep('oll');
+                }
+              }}
+              className="group hover:border-[#eab308]/50 focus:border-[#eab308] p-6 cursor-pointer flex flex-col justify-between outline-none"
             >
               <div className="flex items-center justify-between">
-                <span className="w-9 h-9 rounded-2xl bg-amber-500/20 text-amber-400 font-extrabold flex items-center justify-center border border-amber-500/30 text-base">
+                <span className="w-8 h-8 rounded-md bg-[#191919] text-[#eab308] font-bold flex items-center justify-center border border-[#eab308]/30 text-sm">
                   O
                 </span>
-                <span className="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-800 text-amber-400 font-bold text-xs font-mono">
-                  10 Cases (2-Look)
-                </span>
+                <Badge variant="amber">10 Cases (2-Look)</Badge>
               </div>
               <div className="mt-4">
-                <h3 className="text-xl font-bold text-white group-hover:text-amber-400 transition-colors">
+                <h3 className="text-xl font-bold text-white group-hover:text-[#eab308] transition-colors">
                   Step 3: OLL (Orientation)
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-[#888888] mt-1">
                   Orient the top face yellow stickers. 3 Edge orientation triggers + 7 Corner algorithms.
                 </p>
               </div>
-              <div className="mt-4 pt-4 border-t border-slate-800/60 flex items-center justify-between text-xs font-semibold text-amber-400">
+              <div className="mt-4 pt-4 border-t border-[#2d2d2d] flex items-center justify-between text-xs font-semibold text-[#eab308]">
                 <span>View OLL Algorithms</span>
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
-            </div>
+            </Card>
 
             {/* Box 4: PLL (P) */}
-            <div
+            <Card
+              role="button"
+              tabIndex={0}
               onClick={() => setSelectedCfopStep('pll')}
-              className="group bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800 hover:border-amber-500/50 rounded-3xl p-6 cursor-pointer transition-all duration-200 flex flex-col justify-between"
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedCfopStep('pll');
+                }
+              }}
+              className="group hover:border-[#eab308]/50 focus:border-[#eab308] p-6 cursor-pointer flex flex-col justify-between outline-none"
             >
               <div className="flex items-center justify-between">
-                <span className="w-9 h-9 rounded-2xl bg-purple-500/20 text-purple-400 font-extrabold flex items-center justify-center border border-purple-500/30 text-base">
+                <span className="w-8 h-8 rounded-md bg-[#191919] text-[#c084fc] font-bold flex items-center justify-center border border-[#c084fc]/30 text-sm">
                   P
                 </span>
-                <span className="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-800 text-indigo-400 font-bold text-xs font-mono">
-                  6-21 Cases (PLL)
-                </span>
+                <Badge variant="purple">6-21 Cases (PLL)</Badge>
               </div>
               <div className="mt-4">
-                <h3 className="text-xl font-bold text-white group-hover:text-amber-400 transition-colors">
+                <h3 className="text-xl font-bold text-white group-hover:text-[#eab308] transition-colors">
                   Step 4: PLL (Permutation)
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-[#888888] mt-1">
                   Permute top layer corners and edges to solve the cube. Toggle 2-Look or Full PLL.
                 </p>
               </div>
-              <div className="mt-4 pt-4 border-t border-slate-800/60 flex items-center justify-between text-xs font-semibold text-purple-400">
+              <div className="mt-4 pt-4 border-t border-[#2d2d2d] flex items-center justify-between text-xs font-semibold text-[#c084fc]">
                 <span>View PLL Algorithms</span>
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
-            </div>
+            </Card>
           </div>
         </div>
       )}
 
-      {/* LEVEL 3: Inside a Specific Step (or Search) -> List of Algorithms */}
+      {/* LEVEL 3: Inside a Specific Step -> List of Algorithms */}
       {(selectedCfopStep || selectedCollectionId === 'bookmarked' || searchQuery.trim()) && (
         <div className="flex flex-col gap-6">
-          {/* Controls Bar for Step View */}
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="flex items-center justify-between border-b border-[#2d2d2d] pb-3">
             <div className="flex items-center gap-3">
               {selectedCfopStep && (
                 <button
+                  type="button"
                   onClick={() => {
                     setSelectedCfopStep(null);
                     setSearchQuery('');
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#2d2d2d] hover:bg-[#383838] border border-[#383838] text-[#d4d4d4] text-xs font-semibold transition-colors"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" /> Back to CFOP Steps
                 </button>
@@ -466,69 +502,57 @@ export const AlgReferenceTab: React.FC = () => {
               </h2>
             </div>
 
-            {/* PLL Mode Toggle inside PLL step */}
             {selectedCfopStep === 'pll' && !searchQuery && (
-              <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                <button
-                  onClick={() => setPllMode('2look')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
-                    pllMode === '2look' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  2-Look PLL (6)
-                </button>
-                <button
-                  onClick={() => setPllMode('full')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
-                    pllMode === 'full' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  Full PLL (21)
-                </button>
-              </div>
+              <Tabs value={pllMode} onValueChange={v => setPllMode(v as '2look' | 'full')}>
+                <TabsList>
+                  <TabsTrigger value="2look">2-Look PLL (6)</TabsTrigger>
+                  <TabsTrigger value="full">Full PLL (21)</TabsTrigger>
+                </TabsList>
+              </Tabs>
             )}
           </div>
 
-          {/* Grouped List of Cases */}
           {Object.keys(groupedCases).length === 0 ? (
-            <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-12 text-center text-slate-500 text-sm">
+            <div className="bg-[#202020] border border-[#2d2d2d] rounded-xl p-12 text-center text-[#888888] text-sm">
               No matching algorithms found.
             </div>
           ) : (
             Object.entries(groupedCases).map(([groupTitle, cases]) => (
               <div key={groupTitle} className="flex flex-col gap-4">
-                {/* Group Header */}
-                <div className="flex items-center gap-3 border-b border-slate-800/80 pb-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-sm shadow-amber-400/50" />
+                <div className="flex items-center gap-3 border-b border-[#2d2d2d] pb-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#eab308]" />
                   <h3 className="text-base font-bold text-white uppercase tracking-wider">{groupTitle}</h3>
-                  <span className="text-xs font-mono text-slate-500 font-semibold">({cases.length} cases)</span>
+                  <span className="text-xs font-mono text-[#888888] font-semibold">({cases.length} cases)</span>
                 </div>
 
-                {/* Algorithms List */}
                 <div className="flex flex-col gap-3">
                   {cases.map(c => {
                     const isBookmarked = bookmarkedIds.includes(c.id);
                     return (
-                      <div
+                      <Card
                         key={c.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => setSelectedCase(c)}
-                        className="group flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800/80 hover:border-amber-500/50 rounded-2xl p-5 cursor-pointer transition-all duration-200 hover:shadow-xl hover:shadow-amber-500/5"
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setSelectedCase(c);
+                          }
+                        }}
+                        className="group flex flex-col md:flex-row items-start md:items-center justify-between gap-6 hover:border-[#eab308]/50 focus:border-[#eab308] p-5 cursor-pointer outline-none"
                       >
-                        {/* 2D Pattern Diagram */}
                         {c.topGrid && (
-                          <div className="shrink-0 bg-slate-950 p-2.5 rounded-2xl border border-slate-800 self-center md:self-auto">
+                          <div className="shrink-0 bg-[#191919] p-2.5 rounded-xl border border-[#2d2d2d] self-center md:self-auto">
                             <AlgDiagram topGrid={c.topGrid} borderColors={c.borderColors} size={80} />
                           </div>
                         )}
 
-                        {/* Details & Why Mechanics */}
                         <div className="flex-1 flex flex-col gap-2 w-full">
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-indigo-300">
-                                {c.subcategory}
-                              </span>
-                              <h4 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">
+                              <Badge variant="indigo">{c.subcategory}</Badge>
+                              <h4 className="text-base font-bold text-white group-hover:text-[#eab308] transition-colors">
                                 {c.name}
                               </h4>
                             </div>
@@ -538,48 +562,45 @@ export const AlgReferenceTab: React.FC = () => {
                               onClick={e => toggleBookmark(c.id, e)}
                               className={`p-1.5 rounded-lg transition-colors ${
                                 isBookmarked
-                                  ? 'text-amber-400 bg-amber-400/10'
-                                  : 'text-slate-600 hover:text-slate-400 hover:bg-slate-800'
+                                  ? 'text-[#eab308] bg-[#eab308]/10'
+                                  : 'text-[#888888] hover:text-white hover:bg-[#2d2d2d]'
                               }`}
                             >
-                              <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-amber-400' : ''}`} />
+                              <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-[#eab308]' : ''}`} />
                             </button>
                           </div>
 
-                          {/* Concise Why Explanation */}
                           {c.why && (
-                            <div className="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/80 text-xs text-slate-200 flex items-start gap-2">
-                              <Compass className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                            <div className="bg-[#191919] p-2.5 rounded-lg border border-[#2d2d2d] text-xs text-[#d4d4d4] flex items-start gap-2">
+                              <Compass className="w-3.5 h-3.5 text-[#eab308] shrink-0 mt-0.5" />
                               <p className="leading-relaxed">
-                                <strong className="text-amber-400">Why it works:</strong> {c.why}
+                                <strong className="text-[#eab308]">Why it works:</strong> {c.why}
                               </p>
                             </div>
                           )}
 
-                          {/* Recognition & Description */}
-                          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+                          <div className="flex flex-wrap items-center gap-4 text-xs text-[#888888]">
                             <span>{c.description}</span>
                             {c.tips && (
-                              <span className="text-amber-300/90 flex items-center gap-1">
-                                <Lightbulb className="w-3.5 h-3.5 text-amber-400" /> {c.tips}
+                              <span className="text-[#eab308]/90 flex items-center gap-1">
+                                <Lightbulb className="w-3.5 h-3.5 text-[#eab308]" /> {c.tips}
                               </span>
                             )}
                           </div>
                         </div>
 
-                        {/* Formula & 3D Playback Button */}
-                        <div className="shrink-0 flex flex-col items-end gap-2 w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 border-slate-800/60">
-                          <code className="text-xs font-mono font-bold text-amber-300 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+                        <div className="shrink-0 flex flex-col items-end gap-2 w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 border-[#2d2d2d]">
+                          <code className="text-xs font-mono font-bold text-[#eab308] bg-[#191919] px-2.5 py-1 rounded-md border border-[#2d2d2d]">
                             {c.primaryAlg}
                           </code>
                           <button
                             type="button"
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600/20 group-hover:bg-indigo-600 text-indigo-300 group-hover:text-white border border-indigo-500/30 text-xs font-bold transition-all"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2d2d2d] hover:bg-[#383838] border border-[#383838] text-white text-xs font-bold transition-all"
                           >
                             View Formula & 3D <Play className="w-3 h-3 fill-current" />
                           </button>
                         </div>
-                      </div>
+                      </Card>
                     );
                   })}
                 </div>
@@ -589,34 +610,18 @@ export const AlgReferenceTab: React.FC = () => {
         </div>
       )}
 
-      {/* 3D Algorithm Viewer Modal with Backdrop Click Handler */}
-      {selectedCase && (
-        <div
-          onClick={() => setSelectedCase(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200"
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col gap-6 max-h-[90vh] overflow-y-auto"
-          >
-            {/* Close Button */}
-            <button
-              type="button"
-              onClick={() => setSelectedCase(null)}
-              className="absolute right-4 top-4 p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Modal Title */}
-            <div>
-              <span className="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300">
+      {/* LEVEL 3: Radix UI Dialog Modal for 3D Move Inspection */}
+      <Dialog open={selectedCase !== null} onOpenChange={open => !open && setSelectedCase(null)}>
+        {selectedCase && (
+          <DialogContent>
+            <DialogHeader>
+              <Badge variant="indigo" className="w-fit mb-1">
                 {selectedCase.subcategory} • {selectedCase.group}
-              </span>
-              <h2 className="text-2xl font-extrabold text-white mt-1">{selectedCase.name}</h2>
-            </div>
+              </Badge>
+              <DialogTitle>{selectedCase.name}</DialogTitle>
+              <DialogDescription>{selectedCase.description}</DialogDescription>
+            </DialogHeader>
 
-            {/* 3D Cube Player */}
             <RubiksCube3D
               initialAlgorithm={selectedCase.primaryAlg}
               autoPlay={true}
@@ -624,19 +629,18 @@ export const AlgReferenceTab: React.FC = () => {
               size="h-[300px]"
             />
 
-            {/* Case Info & Mechanics */}
-            <div className="flex flex-col gap-3 bg-slate-950/60 rounded-2xl p-4 border border-slate-800">
+            <div className="flex flex-col gap-3 bg-[#191919] rounded-xl p-4 border border-[#2d2d2d]">
               <div>
-                <span className="text-xs text-slate-500 font-semibold block mb-1">Formula:</span>
-                <code className="text-base font-mono font-bold text-amber-300 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 inline-block">
+                <span className="text-xs text-[#888888] font-semibold block mb-1">Formula:</span>
+                <code className="text-base font-mono font-bold text-[#eab308] bg-[#202020] px-3 py-1.5 rounded-md border border-[#2d2d2d] inline-block">
                   {selectedCase.primaryAlg}
                 </code>
               </div>
 
               {selectedCase.why && (
-                <div className="bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-3 text-xs text-slate-200">
-                  <span className="font-bold text-amber-400 flex items-center gap-1.5 mb-1">
-                    <Compass className="w-4 h-4 text-amber-400" /> Why this is the formula:
+                <div className="bg-[#202020] border border-[#2d2d2d] rounded-lg p-3 text-xs text-[#d4d4d4]">
+                  <span className="font-bold text-[#eab308] flex items-center gap-1.5 mb-1">
+                    <Compass className="w-4 h-4 text-[#eab308]" /> Why this is the formula:
                   </span>
                   <p className="leading-relaxed">{selectedCase.why}</p>
                 </div>
@@ -644,10 +648,10 @@ export const AlgReferenceTab: React.FC = () => {
 
               {selectedCase.alternativeAlgs && selectedCase.alternativeAlgs.length > 0 && (
                 <div>
-                  <span className="text-xs text-slate-500 font-semibold block mb-1">Alternative Formulas:</span>
+                  <span className="text-xs text-[#888888] font-semibold block mb-1">Alternative Formulas:</span>
                   <div className="flex flex-wrap gap-2">
                     {selectedCase.alternativeAlgs.map((alt, idx) => (
-                      <code key={idx} className="text-xs font-mono text-slate-300 bg-slate-900 px-2 py-1 rounded border border-slate-800">
+                      <code key={idx} className="text-xs font-mono text-[#d4d4d4] bg-[#202020] px-2 py-1 rounded border border-[#2d2d2d]">
                         {alt}
                       </code>
                     ))}
@@ -656,15 +660,15 @@ export const AlgReferenceTab: React.FC = () => {
               )}
 
               {selectedCase.tips && (
-                <p className="text-xs text-amber-300 flex items-start gap-2">
-                  <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-[#eab308] flex items-start gap-2">
+                  <Lightbulb className="w-4 h-4 text-[#eab308] shrink-0 mt-0.5" />
                   <strong>Recognition Tip:</strong> {selectedCase.tips}
                 </p>
               )}
             </div>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   );
 };

@@ -7,7 +7,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<'timer' | 'reference'>('timer');
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-amber-500 selection:text-slate-950 font-sans">
+    <div className="min-h-screen bg-[#191919] text-[#d4d4d4] flex flex-col selection:bg-[#eab308] selection:text-black font-sans">
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <main className="flex-1 px-4 py-6">
@@ -16,10 +16,10 @@ export function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
+      <footer className="border-t border-[#2d2d2d] bg-[#191919] py-6 text-center text-xs text-[#888888]">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 px-4">
           <p>Cube • Speedcubing Timer & Interactive Algorithm Reference</p>
-          <p className="text-slate-600">2-Look OLL • 2-Look PLL • Full PLL • F2L</p>
+          <p className="text-[#888888]">2-Look OLL • 2-Look PLL • Full PLL • F2L</p>
         </div>
       </footer>
     </div>
