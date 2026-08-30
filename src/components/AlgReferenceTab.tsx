@@ -3,11 +3,12 @@ import { OLL_2LOOK_CASES, PLL_2LOOK_CASES, FULL_PLL_CASES, F2L_HIGHLIGHTS } from
 import type { AlgCase } from '../types/cube';
 import { AlgDiagram } from './AlgDiagram';
 import { RubiksCube3D } from './RubiksCube3D';
-import { Search, Bookmark, Play, X, Sparkles, Lightbulb, Compass } from 'lucide-react';
+import { Search, Bookmark, Play, X, Sparkles, Lightbulb, Compass, LayoutList, LayoutGrid } from 'lucide-react';
 
 export const AlgReferenceTab: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('2-Look CFOP');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [selectedCase, setSelectedCase] = useState<AlgCase | null>(null);
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('cfop_bookmarks');
@@ -50,19 +51,19 @@ export const AlgReferenceTab: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 max-w-6xl mx-auto py-4">
-      {/* Hero Banner for Algorithm Reference */}
+      {/* Hero Banner for Algorithm Tutorial List */}
       <div className="bg-gradient-to-r from-indigo-900/60 via-purple-900/40 to-slate-900 border border-indigo-500/30 rounded-3xl p-8 backdrop-blur-xl relative overflow-hidden">
         <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3">
-              <Sparkles className="w-3.5 h-3.5" /> 2-Look CFOP & Full Algorithm Library
+              <Sparkles className="w-3.5 h-3.5" /> Interactive Algorithm Tutorial & Reference
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
-              Algorithm Reference & Intuitive Mechanics
+              CFOP Algorithm List & Mechanics Guide
             </h1>
             <p className="text-slate-300 mt-2 max-w-xl text-sm md:text-base leading-relaxed">
-              Understand <i>why</i> each formula works with concise 1-2 sentence mechanics explanations and 3D move playback.
+              Every algorithm below acts as its own step-by-step tutorial. Read <i>why</i> the formula works and inspect the interactive 3D move execution!
             </p>
           </div>
 
@@ -83,14 +84,14 @@ export const AlgReferenceTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Search and Filters Bar */}
+      {/* Search, Filter, and View Mode Bar */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
         {/* Search input */}
         <div className="relative w-full md:w-80">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
-            placeholder="Search alg, trigger or explanation..."
+            placeholder="Search algorithm, trigger or mechanic..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
@@ -112,78 +113,183 @@ export const AlgReferenceTab: React.FC = () => {
               {cat}
             </button>
           ))}
+
+          {/* View Toggle (List vs Grid) */}
+          <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 ml-2 shrink-0">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-1.5 rounded-lg text-xs transition-colors ${
+                viewMode === 'list' ? 'bg-slate-800 text-amber-400' : 'text-slate-500 hover:text-slate-300'
+              }`}
+              title="List View (Tutorial Format)"
+            >
+              <LayoutList className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-lg text-xs transition-colors ${
+                viewMode === 'grid' ? 'bg-slate-800 text-amber-400' : 'text-slate-500 hover:text-slate-300'
+              }`}
+              title="Grid View"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Algorithm Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredCases.map(c => {
-          const isBookmarked = bookmarkedIds.includes(c.id);
-          return (
-            <div
-              key={c.id}
-              onClick={() => setSelectedCase(c)}
-              className="group relative flex flex-col justify-between bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800/80 hover:border-indigo-500/50 rounded-2xl p-5 cursor-pointer transition-all duration-200 hover:shadow-xl hover:shadow-indigo-500/5"
-            >
-              {/* Header */}
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-indigo-400 mb-1">
-                    {c.subcategory} • {c.group}
-                  </span>
-                  <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">
-                    {c.name}
-                  </h3>
-                </div>
-
-                <button
-                  onClick={e => toggleBookmark(c.id, e)}
-                  className={`p-2 rounded-lg transition-colors ${
-                    isBookmarked
-                      ? 'text-amber-400 bg-amber-400/10'
-                      : 'text-slate-600 hover:text-slate-400 hover:bg-slate-800'
-                  }`}
-                >
-                  <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-amber-400' : ''}`} />
-                </button>
-              </div>
-
-              {/* Middle Diagram + Primary Alg */}
-              <div className="flex items-center gap-4 my-4">
+      {/* Algorithm List View */}
+      {viewMode === 'list' ? (
+        <div className="flex flex-col gap-4">
+          {filteredCases.map(c => {
+            const isBookmarked = bookmarkedIds.includes(c.id);
+            return (
+              <div
+                key={c.id}
+                onClick={() => setSelectedCase(c)}
+                className="group flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800/80 hover:border-indigo-500/50 rounded-2xl p-6 cursor-pointer transition-all duration-200 hover:shadow-xl hover:shadow-indigo-500/5"
+              >
+                {/* 2D Diagram */}
                 {c.topGrid && (
-                  <div className="shrink-0 bg-slate-950 p-2 rounded-xl border border-slate-800">
-                    <AlgDiagram topGrid={c.topGrid} borderColors={c.borderColors} size={75} />
+                  <div className="shrink-0 bg-slate-950 p-2.5 rounded-2xl border border-slate-800 self-center md:self-auto">
+                    <AlgDiagram topGrid={c.topGrid} borderColors={c.borderColors} size={85} />
                   </div>
                 )}
-                <div className="flex flex-col gap-1 overflow-hidden">
-                  <span className="text-[11px] text-slate-500 font-medium">Formula:</span>
-                  <code className="text-sm font-mono font-bold text-amber-300 bg-slate-950/80 px-2.5 py-1.5 rounded-lg border border-slate-800 break-words">
-                    {c.primaryAlg}
-                  </code>
+
+                {/* Alg Details & Why Mechanics */}
+                <div className="flex-1 flex flex-col gap-2.5 w-full">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-indigo-400">
+                        {c.subcategory} • {c.group}
+                      </span>
+                      <h3 className="text-lg font-bold text-white group-hover:text-amber-400 transition-colors">
+                        {c.name}
+                      </h3>
+                    </div>
+
+                    <button
+                      onClick={e => toggleBookmark(c.id, e)}
+                      className={`p-2 rounded-lg transition-colors ${
+                        isBookmarked
+                          ? 'text-amber-400 bg-amber-400/10'
+                          : 'text-slate-600 hover:text-slate-400 hover:bg-slate-800'
+                      }`}
+                    >
+                      <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-amber-400' : ''}`} />
+                    </button>
+                  </div>
+
+                  {/* Primary Formula */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-slate-400 font-semibold">Formula:</span>
+                    <code className="text-base font-mono font-bold text-amber-300 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 tracking-wide">
+                      {c.primaryAlg}
+                    </code>
+                  </div>
+
+                  {/* Why this formula works (Tutorial Explanation) */}
+                  {c.why && (
+                    <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 text-xs text-slate-200 flex items-start gap-2">
+                      <Compass className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <p className="leading-relaxed">
+                        <strong className="text-amber-400">Why it works:</strong> {c.why}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Recognition & Description */}
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+                    <span>{c.description}</span>
+                    {c.tips && (
+                      <span className="text-amber-300/90 flex items-center gap-1">
+                        <Lightbulb className="w-3.5 h-3.5 text-amber-400" /> {c.tips}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 3D View Button */}
+                <div className="shrink-0 self-end md:self-center">
+                  <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition-all group-hover:scale-105">
+                    3D Inspector <Play className="w-3.5 h-3.5 fill-current" />
+                  </button>
                 </div>
               </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* Grid View */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredCases.map(c => {
+            const isBookmarked = bookmarkedIds.includes(c.id);
+            return (
+              <div
+                key={c.id}
+                onClick={() => setSelectedCase(c)}
+                className="group relative flex flex-col justify-between bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800/80 hover:border-indigo-500/50 rounded-2xl p-5 cursor-pointer transition-all duration-200 hover:shadow-xl hover:shadow-indigo-500/5"
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-indigo-400 mb-1">
+                      {c.subcategory} • {c.group}
+                    </span>
+                    <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">
+                      {c.name}
+                    </h3>
+                  </div>
 
-              {/* Concise Why Explanation */}
-              {c.why && (
-                <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 text-[11px] text-slate-300 mb-3 flex items-start gap-1.5">
-                  <Compass className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                  <span className="line-clamp-2">
-                    <strong className="text-amber-400">Why:</strong> {c.why}
+                  <button
+                    onClick={e => toggleBookmark(c.id, e)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      isBookmarked
+                        ? 'text-amber-400 bg-amber-400/10'
+                        : 'text-slate-600 hover:text-slate-400 hover:bg-slate-800'
+                    }`}
+                  >
+                    <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-amber-400' : ''}`} />
+                  </button>
+                </div>
+
+                {/* Middle Diagram + Primary Alg */}
+                <div className="flex items-center gap-4 my-4">
+                  {c.topGrid && (
+                    <div className="shrink-0 bg-slate-950 p-2 rounded-xl border border-slate-800">
+                      <AlgDiagram topGrid={c.topGrid} borderColors={c.borderColors} size={75} />
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-1 overflow-hidden">
+                    <span className="text-[11px] text-slate-500 font-medium">Formula:</span>
+                    <code className="text-sm font-mono font-bold text-amber-300 bg-slate-950/80 px-2.5 py-1.5 rounded-lg border border-slate-800 break-words">
+                      {c.primaryAlg}
+                    </code>
+                  </div>
+                </div>
+
+                {/* Concise Why Explanation */}
+                {c.why && (
+                  <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 text-[11px] text-slate-300 mb-3 flex items-start gap-1.5">
+                    <Compass className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                    <span className="line-clamp-2">
+                      <strong className="text-amber-400">Why:</strong> {c.why}
+                    </span>
+                  </div>
+                )}
+
+                {/* Bottom Details */}
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/60">
+                  <span className="truncate">{c.description}</span>
+                  <span className="flex items-center gap-1 text-indigo-400 group-hover:translate-x-1 transition-transform font-medium">
+                    3D View <Play className="w-3 h-3 fill-indigo-400" />
                   </span>
                 </div>
-              )}
-
-              {/* Bottom Details */}
-              <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/60">
-                <span className="truncate">{c.description}</span>
-                <span className="flex items-center gap-1 text-indigo-400 group-hover:translate-x-1 transition-transform font-medium">
-                  3D View <Play className="w-3 h-3 fill-indigo-400" />
-                </span>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* 3D Algorithm Viewer Modal */}
       {selectedCase && (
