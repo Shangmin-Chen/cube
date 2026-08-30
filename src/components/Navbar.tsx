@@ -9,7 +9,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
   const navItems = [
     { id: 'timer', label: 'Speedsolving Timer', icon: Timer },
-    { id: 'reference', label: 'Alg Reference', icon: Layers },
+    { id: 'reference', label: 'Algorithms', icon: Layers },
   ] as const;
 
   return (
