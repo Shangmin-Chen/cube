@@ -14,6 +14,7 @@ export interface AlgCase {
   probability?: string;
   description?: string;
   tips?: string;
+  why?: string;
   is2Look?: boolean;
   // Visual representation for 2D diagram (top layer 3x3 + borders)
   // topGrid: 9 colors ('Y' or 'G')

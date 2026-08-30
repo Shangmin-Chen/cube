@@ -3,11 +3,11 @@ import { OLL_2LOOK_CASES, PLL_2LOOK_CASES, FULL_PLL_CASES, F2L_HIGHLIGHTS } from
 import type { AlgCase } from '../types/cube';
 import { AlgDiagram } from './AlgDiagram';
 import { RubiksCube3D } from './RubiksCube3D';
-import { Search, Bookmark, Play, X, Info, Sparkles, Lightbulb } from 'lucide-react';
+import { Search, Bookmark, Play, X, Sparkles, Lightbulb, Compass } from 'lucide-react';
 
 export const AlgReferenceTab: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('All');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('2-Look CFOP');
   const [selectedCase, setSelectedCase] = useState<AlgCase | null>(null);
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('cfop_bookmarks');
@@ -32,10 +32,12 @@ export const AlgReferenceTab: React.FC = () => {
       const matchesSearch =
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.primaryAlg.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.group.toLowerCase().includes(searchQuery.toLowerCase());
+        c.group.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.why && c.why.toLowerCase().includes(searchQuery.toLowerCase()));
 
       if (!matchesSearch) return false;
 
+      if (selectedSubcategory === '2-Look CFOP') return c.is2Look === true;
       if (selectedSubcategory === 'Bookmarked') return bookmarkedIds.includes(c.id);
       if (selectedSubcategory === '2-Look OLL') return c.subcategory === '2-Look OLL';
       if (selectedSubcategory === '2-Look PLL') return c.subcategory === '2-Look PLL';
@@ -54,13 +56,13 @@ export const AlgReferenceTab: React.FC = () => {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3">
-              <Sparkles className="w-3.5 h-3.5" /> Complete CFOP Algorithm Library
+              <Sparkles className="w-3.5 h-3.5" /> 2-Look CFOP & Full Algorithm Library
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
-              Algorithm Reference & 3D Visualizer
+              Algorithm Reference & Intuitive Mechanics
             </h1>
             <p className="text-slate-300 mt-2 max-w-xl text-sm md:text-base leading-relaxed">
-              Explore 2-Look OLL, 2-Look PLL, Full PLL, and F2L algorithms. Click any card to inspect the interactive 3D move playback!
+              Understand <i>why</i> each formula works with concise 1-2 sentence mechanics explanations and 3D move playback.
             </p>
           </div>
 
@@ -88,7 +90,7 @@ export const AlgReferenceTab: React.FC = () => {
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
-            placeholder="Search alg (e.g. T Perm, Sune, R U R')..."
+            placeholder="Search alg, trigger or explanation..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
@@ -97,7 +99,7 @@ export const AlgReferenceTab: React.FC = () => {
 
         {/* Filter categories */}
         <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
-          {['All', '2-Look OLL', '2-Look PLL', 'Full PLL', 'F2L', 'Bookmarked'].map(cat => (
+          {['2-Look CFOP', 'All', '2-Look OLL', '2-Look PLL', 'Full PLL', 'F2L', 'Bookmarked'].map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedSubcategory(cat)}
@@ -127,7 +129,7 @@ export const AlgReferenceTab: React.FC = () => {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-indigo-400 mb-1">
-                    {c.subcategory}
+                    {c.subcategory} • {c.group}
                   </span>
                   <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">
                     {c.name}
@@ -150,20 +152,30 @@ export const AlgReferenceTab: React.FC = () => {
               <div className="flex items-center gap-4 my-4">
                 {c.topGrid && (
                   <div className="shrink-0 bg-slate-950 p-2 rounded-xl border border-slate-800">
-                    <AlgDiagram topGrid={c.topGrid} borderColors={c.borderColors} size={80} />
+                    <AlgDiagram topGrid={c.topGrid} borderColors={c.borderColors} size={75} />
                   </div>
                 )}
                 <div className="flex flex-col gap-1 overflow-hidden">
-                  <span className="text-[11px] text-slate-500 font-medium">Primary Alg:</span>
+                  <span className="text-[11px] text-slate-500 font-medium">Formula:</span>
                   <code className="text-sm font-mono font-bold text-amber-300 bg-slate-950/80 px-2.5 py-1.5 rounded-lg border border-slate-800 break-words">
                     {c.primaryAlg}
                   </code>
                 </div>
               </div>
 
+              {/* Concise Why Explanation */}
+              {c.why && (
+                <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 text-[11px] text-slate-300 mb-3 flex items-start gap-1.5">
+                  <Compass className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                  <span className="line-clamp-2">
+                    <strong className="text-amber-400">Why:</strong> {c.why}
+                  </span>
+                </div>
+              )}
+
               {/* Bottom Details */}
               <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/60">
-                <span className="truncate">{c.group}</span>
+                <span className="truncate">{c.description}</span>
                 <span className="flex items-center gap-1 text-indigo-400 group-hover:translate-x-1 transition-transform font-medium">
                   3D View <Play className="w-3 h-3 fill-indigo-400" />
                 </span>
@@ -176,7 +188,7 @@ export const AlgReferenceTab: React.FC = () => {
       {/* 3D Algorithm Viewer Modal */}
       {selectedCase && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col gap-6">
+          <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col gap-6 max-h-[90vh] overflow-y-auto">
             {/* Close Button */}
             <button
               onClick={() => setSelectedCase(null)}
@@ -198,21 +210,30 @@ export const AlgReferenceTab: React.FC = () => {
               initialAlgorithm={selectedCase.primaryAlg}
               autoPlay={true}
               highlightMode={selectedCase.category}
-              size="h-[320px]"
+              size="h-[300px]"
             />
 
-            {/* Case Info & Intuitive Notes */}
+            {/* Case Info & Concise Mechanics */}
             <div className="flex flex-col gap-3 bg-slate-950/60 rounded-2xl p-4 border border-slate-800">
               <div>
-                <span className="text-xs text-slate-500 font-semibold block mb-1">Algorithm:</span>
+                <span className="text-xs text-slate-500 font-semibold block mb-1">Formula:</span>
                 <code className="text-base font-mono font-bold text-amber-300 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 inline-block">
                   {selectedCase.primaryAlg}
                 </code>
               </div>
 
+              {selectedCase.why && (
+                <div className="bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-3 text-xs text-slate-200">
+                  <span className="font-bold text-amber-400 flex items-center gap-1.5 mb-1">
+                    <Compass className="w-4 h-4 text-amber-400" /> Why this is the formula:
+                  </span>
+                  <p className="leading-relaxed">{selectedCase.why}</p>
+                </div>
+              )}
+
               {selectedCase.alternativeAlgs && selectedCase.alternativeAlgs.length > 0 && (
                 <div>
-                  <span className="text-xs text-slate-500 font-semibold block mb-1">Alternative Algs:</span>
+                  <span className="text-xs text-slate-500 font-semibold block mb-1">Alternative Formulas:</span>
                   <div className="flex flex-wrap gap-2">
                     {selectedCase.alternativeAlgs.map((alt, idx) => (
                       <code key={idx} className="text-xs font-mono text-slate-300 bg-slate-900 px-2 py-1 rounded border border-slate-800">
@@ -223,17 +244,10 @@ export const AlgReferenceTab: React.FC = () => {
                 </div>
               )}
 
-              {selectedCase.description && (
-                <p className="text-xs text-slate-300 flex items-start gap-2 mt-1">
-                  <Info className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-                  {selectedCase.description}
-                </p>
-              )}
-
               {selectedCase.tips && (
                 <p className="text-xs text-amber-300 flex items-start gap-2">
                   <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                  <strong>Tip:</strong> {selectedCase.tips}
+                  <strong>Recognition Tip:</strong> {selectedCase.tips}
                 </p>
               )}
             </div>
