@@ -3,7 +3,7 @@ import { OLL_2LOOK_CASES, PLL_2LOOK_CASES, FULL_PLL_CASES, F2L_HIGHLIGHTS } from
 import type { AlgCase } from '../types/cube';
 import { AlgDiagram } from './AlgDiagram';
 import { RubiksCube3D } from './RubiksCube3D';
-import { Search, Bookmark, Play, X, Info } from 'lucide-react';
+import { Search, Bookmark, Play, X, Info, Sparkles, Lightbulb } from 'lucide-react';
 
 export const AlgReferenceTab: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,6 +48,39 @@ export const AlgReferenceTab: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 max-w-6xl mx-auto py-4">
+      {/* Hero Banner for Algorithm Reference */}
+      <div className="bg-gradient-to-r from-indigo-900/60 via-purple-900/40 to-slate-900 border border-indigo-500/30 rounded-3xl p-8 backdrop-blur-xl relative overflow-hidden">
+        <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3">
+              <Sparkles className="w-3.5 h-3.5" /> Complete CFOP Algorithm Library
+            </div>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+              Algorithm Reference & 3D Visualizer
+            </h1>
+            <p className="text-slate-300 mt-2 max-w-xl text-sm md:text-base leading-relaxed">
+              Explore 2-Look OLL, 2-Look PLL, Full PLL, and F2L algorithms. Click any card to inspect the interactive 3D move playback!
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 bg-slate-950/70 p-3 rounded-2xl border border-slate-800 backdrop-blur-md text-xs font-mono">
+            <div className="flex flex-col items-center px-3 border-r border-slate-800">
+              <span className="text-amber-400 font-bold text-lg">10</span>
+              <span className="text-slate-500 text-[10px]">2-Look OLL</span>
+            </div>
+            <div className="flex flex-col items-center px-3 border-r border-slate-800">
+              <span className="text-indigo-400 font-bold text-lg">6</span>
+              <span className="text-slate-500 text-[10px]">2-Look PLL</span>
+            </div>
+            <div className="flex flex-col items-center px-3">
+              <span className="text-emerald-400 font-bold text-lg">21</span>
+              <span className="text-slate-500 text-[10px]">Full PLL</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Search and Filters Bar */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
         {/* Search input */}
@@ -70,7 +103,7 @@ export const AlgReferenceTab: React.FC = () => {
               onClick={() => setSelectedSubcategory(cat)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                 selectedSubcategory === cat
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
                   : 'bg-slate-950/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               }`}
             >
@@ -131,7 +164,7 @@ export const AlgReferenceTab: React.FC = () => {
               {/* Bottom Details */}
               <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/60">
                 <span className="truncate">{c.group}</span>
-                <span className="flex items-center gap-1 text-indigo-400 group-hover:translate-x-1 transition-transform">
+                <span className="flex items-center gap-1 text-indigo-400 group-hover:translate-x-1 transition-transform font-medium">
                   3D View <Play className="w-3 h-3 fill-indigo-400" />
                 </span>
               </div>
@@ -168,7 +201,7 @@ export const AlgReferenceTab: React.FC = () => {
               size="h-[320px]"
             />
 
-            {/* Case Info */}
+            {/* Case Info & Intuitive Notes */}
             <div className="flex flex-col gap-3 bg-slate-950/60 rounded-2xl p-4 border border-slate-800">
               <div>
                 <span className="text-xs text-slate-500 font-semibold block mb-1">Algorithm:</span>
@@ -194,6 +227,13 @@ export const AlgReferenceTab: React.FC = () => {
                 <p className="text-xs text-slate-300 flex items-start gap-2 mt-1">
                   <Info className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
                   {selectedCase.description}
+                </p>
+              )}
+
+              {selectedCase.tips && (
+                <p className="text-xs text-amber-300 flex items-start gap-2">
+                  <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <strong>Tip:</strong> {selectedCase.tips}
                 </p>
               )}
             </div>
