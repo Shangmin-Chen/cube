@@ -24,7 +24,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
           </div>
           <div>
             <span className="font-extrabold text-lg text-white tracking-tight flex items-center gap-1.5">
-              CFOP <span className="text-amber-400 font-black">PRO</span>
+              CUBE <span className="text-amber-400 font-black">PRO</span>
             </span>
             <span className="text-[10px] text-slate-500 font-medium block -mt-1">
               Interactive Rubik's Cube Suite

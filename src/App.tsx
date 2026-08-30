@@ -22,7 +22,7 @@ export function App() {
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 px-4">
-          <p>CFOP Speedcubing Trainer & Algorithm Reference • Built for Cubers</p>
+          <p>Cube • Speedcubing Trainer & Algorithm Reference • Built for Cubers</p>
           <p className="text-slate-600">Cross • F2L • OLL • PLL</p>
         </div>
       </footer>
