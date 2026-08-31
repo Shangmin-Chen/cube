@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { OLL_2LOOK_CASES, PLL_2LOOK_CASES, F2L_HIGHLIGHTS } from '../data/cfopData';
 import type { AlgCase } from '../types/cube';
 import { AlgDiagram } from './AlgDiagram';
@@ -17,12 +18,27 @@ import {
 } from 'lucide-react';
 
 export const AlgReferenceTab: React.FC = () => {
+  const { step: routeStep, caseId: routeCaseId } = useParams<{ step?: string; caseId?: string }>();
+  const navigate = useNavigate();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMethod, setSelectedMethod] = useState<'cfop' | 'roux' | 'zz' | '2x2'>('cfop');
-  const [activeStep, setActiveStep] = useState<'cross' | 'f2l' | 'oll' | 'pll' | 'bookmarked'>('oll');
-  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  
+  const validSteps = ['cross', 'f2l', 'oll', 'pll', 'bookmarked'] as const;
+  const activeStep = useMemo(() => {
+    if (routeStep && validSteps.includes(routeStep as any)) {
+      return routeStep as typeof validSteps[number];
+    }
+    return 'oll';
+  }, [routeStep]);
+
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(routeCaseId || null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showTriggersHub, setShowTriggersHub] = useState(false);
+
+  useEffect(() => {
+    setSelectedCaseId(routeCaseId || null);
+  }, [routeCaseId]);
 
   // Safe localStorage deserialization
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
@@ -330,9 +346,9 @@ export const AlgReferenceTab: React.FC = () => {
                 type="button"
                 aria-current={isActive ? 'page' : undefined}
                 onClick={() => {
-                  setActiveStep(step.id);
                   setSearchQuery('');
                   setSelectedCaseId(null);
+                  navigate(`/algs/${step.id}`);
                 }}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all ${
                   isActive
@@ -372,11 +388,15 @@ export const AlgReferenceTab: React.FC = () => {
                   tabIndex={0}
                   aria-label={`Select ${c.name} algorithm`}
                   aria-pressed={isSelected}
-                  onClick={() => setSelectedCaseId(c.id)}
+                  onClick={() => {
+                    setSelectedCaseId(c.id);
+                    navigate(`/algs/${c.category}/${c.id}`);
+                  }}
                   onKeyDown={e => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       setSelectedCaseId(c.id);
+                      navigate(`/algs/${c.category}/${c.id}`);
                     }
                   }}
                   className={`group flex items-center justify-between p-4 cursor-pointer transition-all outline-none ${

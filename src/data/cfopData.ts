@@ -111,8 +111,8 @@ export const OLL_2LOOK_CASES: AlgCase[] = [
     primaryAlg: "R U R' U R U' R' U R U2 R'",
     alternativeAlgs: ["y F (R U R' U')3 F'"],
     description: '0 corners facing up. Headlights on left AND right side.',
-    tips: 'J Perm rule: Hold headlights on LEFT and RIGHT. R U R\' U R U\' R\' U R U2 R\'.',
-    why: "Executes double Sune corner-twist triggers to orient all 4 corners.",
+    tips: 'Double Sune: Two Sunes chained together where U2 R\' + R U cancels R\' R and combines U2 U into U\'.',
+    why: 'Double Sune combination: Chaining two Sunes (R U R\' U R U2 R\') cancels the middle R\' R and turns U2 U into U\', producing the seamless 11-move formula R U R\' U R U\' R\' U R U2 R\'.',
     topGrid: ['G', 'Y', 'G', 'Y', 'Y', 'Y', 'G', 'Y', 'G'],
     borderColors: {
       top: ['G', 'G', 'G'],

@@ -99,6 +99,18 @@ export function parseTriggers(movesStr: string): TriggerChunk[] {
   while (i < moves.length) {
     const remaining = moves.slice(i).join(' ');
 
+    // 11-move trigger: Double Sune (R U R' U R U' R' U R U2 R')
+    if (startsWithPattern(remaining, "R U R' U R U' R' U R U2 R'")) {
+      chunks.push({
+        text: "R U R' U R U' R' U R U2 R'",
+        name: 'Double Sune',
+        description: "Chained Sune trigger where U2 R' + R U cancels R' R and combines U2 U into U'.",
+        type: 'sune',
+      });
+      i += 11;
+      continue;
+    }
+
     // 7-move trigger: Sune (R U R' U R U2 R')
     if (startsWithPattern(remaining, "R U R' U R U2 R'")) {
       chunks.push({
@@ -168,18 +180,6 @@ export function parseTriggers(movesStr: string): TriggerChunk[] {
         type: 'hedge',
       });
       i += 4;
-      continue;
-    }
-
-    // 3-move trigger: Insert / Extract Pair (R U R')
-    if (startsWithPattern(remaining, "R U R'")) {
-      chunks.push({
-        text: "R U R'",
-        name: 'F2L Pair Extract',
-        description: 'Lifts Front-Right pair to top layer.',
-        type: 'insert',
-      });
-      i += 3;
       continue;
     }
 

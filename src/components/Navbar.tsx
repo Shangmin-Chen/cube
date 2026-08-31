@@ -1,16 +1,15 @@
 import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Layers, Timer, Box } from 'lucide-react';
 
-interface NavbarProps {
-  activeTab: 'timer' | 'reference';
-  setActiveTab: (tab: 'timer' | 'reference') => void;
-}
+export const Navbar: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
 
-export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
   const navItems = [
-    { id: 'timer', label: 'Speedsolving Timer', icon: Timer },
-    { id: 'reference', label: 'Algorithms', icon: Layers },
-  ] as const;
+    { id: 'timer', path: '/timer', label: 'Speedsolving Timer', icon: Timer, match: (p: string) => p.startsWith('/timer') || p === '/' },
+    { id: 'reference', path: '/algs', label: 'Algorithms', icon: Layers, match: (p: string) => p.startsWith('/algs') },
+  ];
 
   return (
     <header className="sticky top-0 z-40 bg-[#191919] border-b border-[#2d2d2d] px-4 py-3">
@@ -19,7 +18,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
         <button
           type="button"
           aria-label="Go to Speedsolving Timer"
-          onClick={() => setActiveTab('timer')}
+          onClick={() => navigate('/timer')}
           className="flex items-center gap-2.5 cursor-pointer outline-none group text-left bg-transparent border-0 p-0"
         >
           <div className="w-8 h-8 rounded-lg bg-[#202020] border border-[#2d2d2d] flex items-center justify-center text-[#eab308] group-hover:border-[#eab308]/40 transition-colors">
@@ -34,14 +33,14 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
         <nav className="flex items-center gap-1 bg-[#202020] p-1 rounded-xl border border-[#2d2d2d]">
           {navItems.map(item => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id;
+            const isActive = item.match(location.pathname);
             return (
               <button
                 key={item.id}
                 type="button"
                 aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => navigate(item.path)}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   isActive
                     ? 'bg-[#2d2d2d] text-[#eab308] border border-[#eab308]/30 shadow-none'
