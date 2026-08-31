@@ -326,6 +326,8 @@ export const TimerTab: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
+                      aria-pressed={s.penalty === '+2'}
+                      aria-label="Toggle +2 penalty"
                       onClick={() => handlePenalty(s.id, s.penalty === '+2' ? 'none' : '+2')}
                       className={`px-2 py-0.5 rounded font-bold transition-colors ${
                         s.penalty === '+2' ? 'bg-[#eab308] text-black' : 'bg-[#2d2d2d] text-[#888888]'
@@ -335,6 +337,8 @@ export const TimerTab: React.FC = () => {
                     </button>
                     <button
                       type="button"
+                      aria-pressed={s.penalty === 'DNF'}
+                      aria-label="Toggle DNF penalty"
                       onClick={() => handlePenalty(s.id, s.penalty === 'DNF' ? 'none' : 'DNF')}
                       className={`px-2 py-0.5 rounded font-bold transition-colors ${
                         s.penalty === 'DNF' ? 'bg-rose-500 text-white' : 'bg-[#2d2d2d] text-[#888888]'
@@ -344,6 +348,8 @@ export const TimerTab: React.FC = () => {
                     </button>
                     <button
                       type="button"
+                      aria-label="Delete solve record"
+                      title="Delete solve record"
                       onClick={() => handleDeleteSolve(s.id)}
                       className="p-1 text-[#888888] hover:text-rose-400 transition-colors"
                     >

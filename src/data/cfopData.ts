@@ -33,12 +33,12 @@ export const OLL_2LOOK_CASES: AlgCase[] = [
     description: 'Hold yellow line horizontally, then execute.',
     tips: 'Shortest edge orientation trigger.',
     why: "F turns front slot lifting edge stickers up, R U R' U' swaps top layer, and F' closes slot leaving 2 edges flipped.",
-    topGrid: ['G', 'Y', 'G', 'G', 'Y', 'G', 'G', 'Y', 'G'],
+    topGrid: ['G', 'G', 'G', 'Y', 'Y', 'Y', 'G', 'G', 'G'],
     borderColors: {
-      top: ['G', 'G', 'G'],
-      right: ['G', 'Y', 'G'],
-      bottom: ['G', 'G', 'G'],
-      left: ['G', 'Y', 'G'],
+      top: ['G', 'Y', 'G'],
+      right: ['G', 'G', 'G'],
+      bottom: ['G', 'Y', 'G'],
+      left: ['G', 'G', 'G'],
     }
   },
   {
@@ -75,8 +75,8 @@ export const OLL_2LOOK_CASES: AlgCase[] = [
     why: "R U lifts the FR F2L pair and orbits it 360° around top layer before reinserting with R U2 R', twisting 3 corners by 120° while keeping F2L intact.",
     topGrid: ['G', 'Y', 'G', 'Y', 'Y', 'Y', 'Y', 'Y', 'G'],
     borderColors: {
-      top: ['G', 'G', 'Y'],
-      right: ['G', 'G', 'G'],
+      top: ['Y', 'G', 'G'],
+      right: ['Y', 'G', 'G'],
       bottom: ['G', 'G', 'Y'],
       left: ['G', 'G', 'G'],
     }
@@ -93,12 +93,12 @@ export const OLL_2LOOK_CASES: AlgCase[] = [
     description: '1 yellow corner pointing UP at back-left.',
     tips: 'Reverse execution of Sune.',
     why: "Orbits the F2L pair in reverse direction (360° clockwise), twisting 3 corners opposite to Sune.",
-    topGrid: ['G', 'Y', 'Y', 'Y', 'Y', 'Y', 'G', 'Y', 'G'],
+    topGrid: ['Y', 'Y', 'G', 'Y', 'Y', 'Y', 'G', 'Y', 'G'],
     borderColors: {
-      top: ['Y', 'G', 'G'],
+      top: ['G', 'G', 'Y'],
       right: ['G', 'G', 'Y'],
-      bottom: ['G', 'G', 'G'],
-      left: ['Y', 'G', 'G'],
+      bottom: ['Y', 'G', 'G'],
+      left: ['G', 'G', 'G'],
     }
   },
   {
@@ -135,7 +135,7 @@ export const OLL_2LOOK_CASES: AlgCase[] = [
     topGrid: ['G', 'Y', 'G', 'Y', 'Y', 'Y', 'G', 'Y', 'G'],
     borderColors: {
       top: ['G', 'G', 'Y'],
-      right: ['Y', 'G', 'G'],
+      right: ['G', 'G', 'G'],
       bottom: ['G', 'G', 'Y'],
       left: ['Y', 'G', 'Y'],
     }
@@ -218,9 +218,9 @@ export const PLL_2LOOK_CASES: AlgCase[] = [
     probability: '1/18',
     topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
     borderColors: {
-      top: ['R', 'G_GREEN', 'O'],
-      right: ['B', 'R', 'B'],
-      bottom: ['O', 'B', 'R'],
+      top: ['B', 'G_GREEN', 'B'],
+      right: ['R', 'B', 'R'],
+      bottom: ['G_GREEN', 'R', 'G_GREEN'],
       left: ['O', 'O', 'O'],
     }
   },
@@ -238,10 +238,10 @@ export const PLL_2LOOK_CASES: AlgCase[] = [
     probability: '1/18',
     topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
     borderColors: {
-      top: ['R', 'O', 'B'],
-      right: ['B', 'R', 'O'],
-      bottom: ['O', 'G_GREEN', 'R'],
-      left: ['O', 'B', 'R'],
+      top: ['G_GREEN', 'B', 'B'],
+      right: ['R', 'G_GREEN', 'O'],
+      bottom: ['G_GREEN', 'R', 'B'],
+      left: ['R', 'O', 'O'],
     }
   },
   // Edge Permutation (Look 2)
@@ -645,11 +645,11 @@ export const F2L_HIGHLIGHTS: AlgCase[] = [
     description: 'Corner and edge are connected in top layer.',
     tips: 'Align pair above slot, then insert.',
     why: "Direct slot insertion (U R U' R') taking advantage of pre-aligned corner and edge.",
-    topGrid: ['G', 'G', 'W', 'G', 'G', 'G', 'G', 'G', 'G'],
+    topGrid: ['G', 'G', 'G', 'G', 'Y', 'R', 'G', 'G', 'R'],
     borderColors: {
-      top: ['G', 'R', 'G'],
-      right: ['G_GREEN', 'R', 'G'],
-      bottom: ['G', 'G', 'G'],
+      top: ['G', 'G', 'G'],
+      right: ['G', 'G_GREEN', 'W'],
+      bottom: ['G', 'G', 'G_GREEN'],
       left: ['G', 'G', 'G'],
     }
   },
@@ -661,13 +661,13 @@ export const F2L_HIGHLIGHTS: AlgCase[] = [
     group: 'White Up',
     primaryAlg: "R U2 R' U' R U R'",
     description: 'White sticker points UP on top layer.',
-    tips: 'Align edge, push corner away, pair & insert.',
+    tips: 'Align edge with side center, push corner away, pair & insert.',
     why: "R U2 R' separates corner and edge, matches side colors, then inserts pair.",
-    topGrid: ['G', 'G', 'W', 'G', 'G', 'G', 'G', 'G', 'G'],
+    topGrid: ['G', 'G', 'G', 'G', 'Y', 'G_GREEN', 'G', 'G', 'W'],
     borderColors: {
-      top: ['G', 'G_GREEN', 'G'],
-      right: ['R', 'R', 'G'],
-      bottom: ['G', 'G', 'G'],
+      top: ['G', 'G', 'G'],
+      right: ['G', 'R', 'G_GREEN'],
+      bottom: ['G', 'G', 'R'],
       left: ['G', 'G', 'G'],
     }
   },
@@ -681,12 +681,12 @@ export const F2L_HIGHLIGHTS: AlgCase[] = [
     description: 'White sticker faces side, different top colors.',
     tips: 'Hide corner, match edge, bring back.',
     why: "R U R' hides corner in back slot to match edge orientation before inserting.",
-    topGrid: ['G', 'G', 'W', 'G', 'G', 'G', 'G', 'G', 'G'],
+    topGrid: ['G', 'G', 'G', 'R', 'Y', 'G', 'G', 'G', 'G_GREEN'],
     borderColors: {
-      top: ['G', 'R', 'G'],
-      right: ['G_GREEN', 'G_GREEN', 'G'],
-      bottom: ['G', 'G', 'G'],
-      left: ['G', 'G', 'G'],
+      top: ['G', 'G', 'G'],
+      right: ['G', 'G', 'R'],
+      bottom: ['G', 'G', 'W'],
+      left: ['G', 'G_GREEN', 'G'],
     }
   },
   {
@@ -699,11 +699,11 @@ export const F2L_HIGHLIGHTS: AlgCase[] = [
     description: 'Both top stickers have SAME color.',
     tips: 'Form connected pair then insert.',
     why: "U' R U2 R' sets up connected pair in top layer, then inserts cleanly.",
-    topGrid: ['G', 'G', 'W', 'G', 'G', 'G', 'G', 'G', 'G'],
+    topGrid: ['G', 'R', 'G', 'G', 'Y', 'G', 'G', 'G', 'R'],
     borderColors: {
       top: ['G', 'G_GREEN', 'G'],
-      right: ['G_GREEN', 'R', 'G'],
-      bottom: ['G', 'G', 'G'],
+      right: ['G', 'G', 'W'],
+      bottom: ['G', 'G', 'G_GREEN'],
       left: ['G', 'G', 'G'],
     }
   }

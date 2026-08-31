@@ -40,9 +40,20 @@ export const AlgDiagram: React.FC<AlgDiagramProps> = ({
   const cellSize = innerSize / 3;
   const borderThickness = offset * 0.7;
 
+  const topBorders = borderColors?.top ?? ['G', 'G', 'G'];
+  const rightBorders = borderColors?.right ?? ['G', 'G', 'G'];
+  const bottomBorders = borderColors?.bottom ?? ['G', 'G', 'G'];
+  const leftBorders = borderColors?.left ?? ['G', 'G', 'G'];
+
   return (
     <div className="flex flex-col items-center">
-      <svg width={size} height={size} className="overflow-visible">
+      <svg
+        width={size}
+        height={size}
+        className="overflow-visible"
+        role="img"
+        aria-label={title || "Cube algorithm diagram"}
+      >
         {/* Outer background frame */}
         <rect
           x={0}
@@ -56,7 +67,7 @@ export const AlgDiagram: React.FC<AlgDiagramProps> = ({
         />
 
         {/* Top Border Stickers */}
-        {borderColors.top.map((c, i) => (
+        {topBorders.map((c, i) => (
           <rect
             key={`top-${i}`}
             x={offset + i * cellSize + 2}
@@ -71,7 +82,7 @@ export const AlgDiagram: React.FC<AlgDiagramProps> = ({
         ))}
 
         {/* Bottom Border Stickers */}
-        {borderColors.bottom.map((c, i) => (
+        {bottomBorders.map((c, i) => (
           <rect
             key={`bottom-${i}`}
             x={offset + i * cellSize + 2}
@@ -86,7 +97,7 @@ export const AlgDiagram: React.FC<AlgDiagramProps> = ({
         ))}
 
         {/* Left Border Stickers */}
-        {borderColors.left.map((c, i) => (
+        {leftBorders.map((c, i) => (
           <rect
             key={`left-${i}`}
             x={offset - borderThickness - 2}
@@ -101,7 +112,7 @@ export const AlgDiagram: React.FC<AlgDiagramProps> = ({
         ))}
 
         {/* Right Border Stickers */}
-        {borderColors.right.map((c, i) => (
+        {rightBorders.map((c, i) => (
           <rect
             key={`right-${i}`}
             x={offset + innerSize + 2}
@@ -116,7 +127,7 @@ export const AlgDiagram: React.FC<AlgDiagramProps> = ({
         ))}
 
         {/* Top Face 3x3 Grid */}
-        {topGrid.map((c, index) => {
+        {(topGrid ?? []).map((c, index) => {
           const row = Math.floor(index / 3);
           const col = index % 3;
           return (
