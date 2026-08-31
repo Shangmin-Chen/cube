@@ -390,13 +390,15 @@ export const AlgReferenceTab: React.FC = () => {
                   aria-pressed={isSelected}
                   onClick={() => {
                     setSelectedCaseId(c.id);
-                    navigate(`/algs/${c.category}/${c.id}`);
+                    const targetStep = activeStep === 'bookmarked' ? 'bookmarked' : c.category;
+                    navigate(`/algs/${targetStep}/${c.id}`);
                   }}
                   onKeyDown={e => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       setSelectedCaseId(c.id);
-                      navigate(`/algs/${c.category}/${c.id}`);
+                      const targetStep = activeStep === 'bookmarked' ? 'bookmarked' : c.category;
+                      navigate(`/algs/${targetStep}/${c.id}`);
                     }
                   }}
                   className={`group flex items-center justify-between p-4 cursor-pointer transition-all outline-none ${
