@@ -58,14 +58,15 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
 
   // Helper to determine axis and layer selection condition for normal and wide moves
   const getMoveParameters = (move: string) => {
-    if (!move) {
-      return { axis: new THREE.Vector3(0, 1, 0), condition: (p: THREE.Vector3) => Math.round(p.y) === 1, angle: Math.PI / 2 };
+    const cleanMove = (move || '').replace(/[\(\)\{\}]/g, '').trim();
+    if (!cleanMove) {
+      return { axis: new THREE.Vector3(0, 1, 0), condition: (_p: THREE.Vector3) => false, angle: 0 };
     }
 
-    const face = move[0];
-    const isWide = move.includes('w') || move[0] === move[0].toLowerCase();
-    const isPrime = move.includes("'");
-    const isDouble = move.includes('2');
+    const face = cleanMove[0];
+    const isWide = cleanMove.includes('w') || /^[a-z]$/.test(cleanMove[0]);
+    const isPrime = cleanMove.includes("'");
+    const isDouble = cleanMove.includes('2');
 
     let angle = isDouble ? Math.PI : Math.PI / 2;
     if (isPrime) angle = -angle;
@@ -636,6 +637,12 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
           {/* Single 1-Tap Toggle Button */}
           <button
             type="button"
+            aria-pressed={practicePhase === 'setup'}
+            aria-label={
+              practicePhase === 'solve'
+                ? 'Practice Mode: Solve Case. Click to switch to Setup Case.'
+                : 'Practice Mode: Create Case Setup. Click to switch to Solve Case.'
+            }
             onClick={() => setPracticePhase(prev => (prev === 'solve' ? 'setup' : 'solve'))}
             className="px-3 py-1.5 rounded-lg bg-[#191919] hover:bg-[#2d2d2d] border border-[#2d2d2d] hover:border-[#eab308]/50 text-xs font-bold text-[#eab308] flex items-center gap-2 transition-all shadow-sm cursor-pointer"
             title={
@@ -737,6 +744,7 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
             {/* Step 0: Setup / Solved Button */}
             <button
               type="button"
+              aria-label={practicePhase === 'setup' ? 'Start at Solved Cube' : 'Start at Case Setup Pattern'}
               aria-pressed={currentMoveIndex === 0}
               onClick={() => jumpToStateIndex(0)}
               className={`px-2 py-1 rounded font-bold transition-all flex items-center gap-1 ${
@@ -757,6 +765,7 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
                 <button
                   key={idx}
                   type="button"
+                  aria-label={`Jump to step ${stepIdx}: ${m}`}
                   aria-pressed={isActive}
                   onClick={() => jumpToStateIndex(stepIdx)}
                   className={`px-2 py-1 rounded font-mono font-bold text-xs transition-all ${
@@ -782,6 +791,7 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
           <div className="flex items-center gap-1.5">
             <button
               type="button"
+              aria-label="Reset 3D Cube to Start of Phase"
               onClick={handleReset}
               className="px-3 py-1.5 rounded-lg bg-[#2d2d2d] hover:bg-[#383838] border border-[#383838] text-[#eab308] text-xs font-semibold flex items-center gap-1.5 transition-colors"
               title="Reset 3D Cube to Start of Phase"
@@ -792,6 +802,7 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
             {mode === 'scramble' && (
               <button
                 type="button"
+                aria-label="Generate Random Scramble"
                 onClick={handleScrambleNew}
                 className="px-3 py-1.5 rounded-lg bg-[#2d2d2d] hover:bg-[#383838] border border-[#383838] text-[#d4d4d4] text-xs font-medium flex items-center gap-1 transition-colors"
                 title="Generate Random Scramble"
@@ -815,9 +826,10 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
 
               <button
                 type="button"
+                aria-pressed={isPlaying}
+                aria-label={isPlaying ? 'Pause Algorithm Animation' : 'Play Algorithm Animation'}
                 onClick={() => setIsPlaying(!isPlaying)}
                 className="p-2.5 rounded-lg bg-[#eab308] hover:bg-[#facc15] text-black font-semibold transition-all"
-                aria-label={isPlaying ? 'Pause Algorithm Animation' : 'Play Algorithm Animation'}
               >
                 {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-black" />}
               </button>

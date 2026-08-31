@@ -1,3 +1,5 @@
+import { Alg } from 'cubing/alg';
+
 // Helper functions for Rubik's Cube scrambles, move parsing, and state calculations
 
 const FACES = ['U', 'D', 'F', 'B', 'R', 'L'];
@@ -45,26 +47,40 @@ export function generateScramble(length = 20): string {
 }
 
 export function parseMoveString(movesStr: string): string[] {
-  // Clean up brackets, parentheses like (R U R' U')
-  const clean = movesStr.replace(/[\(\)\{\}]/g, ' ').trim();
-  if (!clean) return [];
-  return clean.split(/\s+/).filter(m => m.length > 0);
+  if (!movesStr || !movesStr.trim()) return [];
+  try {
+    const expanded = new Alg(movesStr).expand().toString();
+    return expanded.split(/\s+/).filter(Boolean);
+  } catch {
+    let cleanStr = movesStr;
+    cleanStr = cleanStr.replace(/\(([^)]+)\)(\d+)/g, (_, group, count) => {
+      return (group.trim() + ' ').repeat(parseInt(count, 10)).trim();
+    });
+    cleanStr = cleanStr.replace(/[\(\)\{\}]/g, ' ').trim();
+    return cleanStr.split(/\s+/).filter(m => Boolean(m) && !/^\d+$/.test(m));
+  }
 }
 
-// Invert an algorithm move sequence for case setup (supports lowercase and 'w'-suffix wide moves)
+// Invert an algorithm move sequence using WCA cubing/alg standard library
 export function invertMoveString(movesStr: string): string[] {
-  const parsed = parseMoveString(movesStr);
-  const reversed = [...parsed].reverse();
-  return reversed.map(move => {
-    if (!move) return move;
-    const isPrime = move.includes("'");
-    const isDouble = move.includes('2');
-    const baseMove = move.replace(/['2]/g, '');
+  try {
+    const alg = new Alg(movesStr);
+    const invertedStr = alg.expand().invert().toString();
+    return invertedStr.split(/\s+/).filter(Boolean);
+  } catch {
+    const parsed = parseMoveString(movesStr);
+    const reversed = [...parsed].reverse();
+    return reversed.map(move => {
+      if (!move) return move;
+      const isPrime = move.includes("'");
+      const isDouble = move.includes('2');
+      const baseMove = move.replace(/['2]/g, '');
 
-    if (isDouble) return `${baseMove}2`;
-    if (isPrime) return baseMove;
-    return `${baseMove}'`;
-  });
+      if (isDouble) return `${baseMove}2`;
+      if (isPrime) return baseMove;
+      return `${baseMove}'`;
+    });
+  }
 }
 
 // Identify intuitive building-block triggers in algorithm strings for human learners
@@ -195,12 +211,20 @@ export function formatTime(ms: number): string {
 export function calculateAO(times: number[], count: number): number | null {
   if (times.length < count) return null;
   const recent = times.slice(-count);
-  const validTimes = recent.filter(t => t > 0); // exclude DNF (-1)
-  if (validTimes.length < count - 1) return -1; // DNF for AO
+  const dnfCount = recent.filter(t => t < 0).length;
+  if (dnfCount >= 2) return -1;
 
-  // Remove min and max
-  const sorted = [...recent].sort((a, b) => a - b);
+  // Map DNF (-1) to Infinity for WCA sorting so DNF is treated as worst (maximum) time
+  const sorted = [...recent].sort((a, b) => {
+    const valA = a < 0 ? Infinity : a;
+    const valB = b < 0 ? Infinity : b;
+    if (valA === valB) return 0;
+    return valA - valB;
+  });
+
   const trimmed = sorted.slice(1, sorted.length - 1);
+  if (trimmed.some(t => t < 0)) return -1;
+
   const sum = trimmed.reduce((acc, curr) => acc + curr, 0);
   return Math.round(sum / trimmed.length);
 }

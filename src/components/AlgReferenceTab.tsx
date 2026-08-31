@@ -11,8 +11,6 @@ import {
   Search,
   Bookmark,
   Sparkles,
-  Lightbulb,
-  Compass,
   Maximize2,
   FolderGit2,
   Layers,
@@ -22,8 +20,6 @@ export const AlgReferenceTab: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMethod, setSelectedMethod] = useState<'cfop' | 'roux' | 'zz' | '2x2'>('cfop');
   const [activeStep, setActiveStep] = useState<'cross' | 'f2l' | 'oll' | 'pll' | 'bookmarked'>('oll');
-  const [pllSubFilter, setPllSubFilter] = useState<'all' | 'corners' | 'edges'>('all');
-  const [ollSubFilter, setOllSubFilter] = useState<'all' | 'edges' | 'corners'>('all');
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showTriggersHub, setShowTriggersHub] = useState(false);
@@ -81,11 +77,6 @@ export const AlgReferenceTab: React.FC = () => {
     });
   };
 
-  const ollEdgesCount = useMemo(() => OLL_2LOOK_CASES.filter(c => c.group.includes('EO') || c.group.includes('Edges')).length, []);
-  const ollCornersCount = useMemo(() => OLL_2LOOK_CASES.filter(c => c.group.includes('Corner') || c.group.includes('OCLL')).length, []);
-  const pllCornersCount = useMemo(() => PLL_2LOOK_CASES.filter(c => c.group.includes('Corner')).length, []);
-  const pllEdgesCount = useMemo(() => PLL_2LOOK_CASES.filter(c => c.group.includes('Edge')).length, []);
-
   // Get active cases list based on selected step & filters
   const currentStepCases = useMemo(() => {
     if (activeStep === 'bookmarked') {
@@ -93,18 +84,10 @@ export const AlgReferenceTab: React.FC = () => {
     }
     if (activeStep === 'cross') return crossCases;
     if (activeStep === 'f2l') return F2L_HIGHLIGHTS;
-    if (activeStep === 'oll') {
-      if (ollSubFilter === 'edges') return OLL_2LOOK_CASES.filter(c => c.group.includes('EO') || c.group.includes('Edges'));
-      if (ollSubFilter === 'corners') return OLL_2LOOK_CASES.filter(c => c.group.includes('Corner') || c.group.includes('OCLL'));
-      return OLL_2LOOK_CASES;
-    }
-    if (activeStep === 'pll') {
-      if (pllSubFilter === 'corners') return PLL_2LOOK_CASES.filter(c => c.group.includes('Corner'));
-      if (pllSubFilter === 'edges') return PLL_2LOOK_CASES.filter(c => c.group.includes('Edge'));
-      return PLL_2LOOK_CASES;
-    }
+    if (activeStep === 'oll') return OLL_2LOOK_CASES;
+    if (activeStep === 'pll') return PLL_2LOOK_CASES;
     return [];
-  }, [activeStep, ollSubFilter, pllSubFilter, crossCases, allCases, bookmarkedIds]);
+  }, [activeStep, crossCases, allCases, bookmarkedIds]);
 
   const filteredCases = useMemo(() => {
     if (!searchQuery.trim()) return currentStepCases;
@@ -365,87 +348,6 @@ export const AlgReferenceTab: React.FC = () => {
             );
           })}
         </div>
-
-        {/* Sub-Filters Pill Bar */}
-        {!searchQuery.trim() && (
-          <div className="flex items-center gap-1.5 px-2">
-            {activeStep === 'oll' && (
-              <div className="flex items-center gap-1 bg-[#191919] p-1 rounded-lg border border-[#2d2d2d] text-xs">
-                <button
-                  type="button"
-                  aria-pressed={ollSubFilter === 'all'}
-                  onClick={() => {
-                    setOllSubFilter('all');
-                    setSelectedCaseId(null);
-                  }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors ${ollSubFilter === 'all' ? 'bg-[#2d2d2d] text-[#eab308]' : 'text-[#888888] hover:text-white'}`}
-                >
-                  All 2-Look ({OLL_2LOOK_CASES.length})
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={ollSubFilter === 'edges'}
-                  onClick={() => {
-                    setOllSubFilter('edges');
-                    setSelectedCaseId(null);
-                  }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors ${ollSubFilter === 'edges' ? 'bg-[#2d2d2d] text-[#eab308]' : 'text-[#888888] hover:text-white'}`}
-                >
-                  Look 1: Edges ({ollEdgesCount})
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={ollSubFilter === 'corners'}
-                  onClick={() => {
-                    setOllSubFilter('corners');
-                    setSelectedCaseId(null);
-                  }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors ${ollSubFilter === 'corners' ? 'bg-[#2d2d2d] text-[#eab308]' : 'text-[#888888] hover:text-white'}`}
-                >
-                  Look 2: Corners ({ollCornersCount})
-                </button>
-              </div>
-            )}
-
-            {activeStep === 'pll' && (
-              <div className="flex items-center gap-1 bg-[#191919] p-1 rounded-lg border border-[#2d2d2d] text-xs">
-                <button
-                  type="button"
-                  aria-pressed={pllSubFilter === 'all'}
-                  onClick={() => {
-                    setPllSubFilter('all');
-                    setSelectedCaseId(null);
-                  }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors ${pllSubFilter === 'all' ? 'bg-[#2d2d2d] text-[#eab308]' : 'text-[#888888] hover:text-white'}`}
-                >
-                  All 2-Look ({PLL_2LOOK_CASES.length})
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={pllSubFilter === 'corners'}
-                  onClick={() => {
-                    setPllSubFilter('corners');
-                    setSelectedCaseId(null);
-                  }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors ${pllSubFilter === 'corners' ? 'bg-[#2d2d2d] text-[#eab308]' : 'text-[#888888] hover:text-white'}`}
-                >
-                  Look 1: Corners ({pllCornersCount})
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={pllSubFilter === 'edges'}
-                  onClick={() => {
-                    setPllSubFilter('edges');
-                    setSelectedCaseId(null);
-                  }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors ${pllSubFilter === 'edges' ? 'bg-[#2d2d2d] text-[#eab308]' : 'text-[#888888] hover:text-white'}`}
-                >
-                  Look 2: Edges ({pllEdgesCount})
-                </button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Main Master-Detail Workspace Grid */}
@@ -466,7 +368,10 @@ export const AlgReferenceTab: React.FC = () => {
               return (
                 <Card
                   key={c.id}
+                  role="button"
                   tabIndex={0}
+                  aria-label={`Select ${c.name} algorithm`}
+                  aria-pressed={isSelected}
                   onClick={() => setSelectedCaseId(c.id)}
                   onKeyDown={e => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -481,11 +386,13 @@ export const AlgReferenceTab: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    {c.topGrid && (
-                      <div className="shrink-0 bg-[#191919] p-1.5 rounded-lg border border-[#2d2d2d]">
-                        <AlgDiagram topGrid={c.topGrid} borderColors={c.borderColors} size={64} />
-                      </div>
-                    )}
+                    <div className="shrink-0 bg-[#191919] p-1.5 rounded-lg border border-[#2d2d2d]">
+                      <AlgDiagram
+                        primaryAlg={c.primaryAlg}
+                        category={c.category}
+                        size={64}
+                      />
+                    </div>
 
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
@@ -497,8 +404,6 @@ export const AlgReferenceTab: React.FC = () => {
 
                       {/* Color-coded trigger breakdown */}
                       {renderTriggerChunks(c.primaryAlg)}
-
-                      <p className="text-[11px] text-[#888888] line-clamp-1">{c.description}</p>
                     </div>
                   </div>
 
@@ -542,11 +447,20 @@ export const AlgReferenceTab: React.FC = () => {
           {activeCase ? (
             <Card className="p-5 flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <Badge variant="amber" className="mb-1">
-                    {activeCase.subcategory} • {activeCase.group}
-                  </Badge>
-                  <h3 className="text-lg font-bold text-white tracking-tight">{activeCase.name}</h3>
+                <div className="flex items-center gap-3">
+                  <div className="shrink-0 bg-[#191919] p-1.5 rounded-lg border border-[#2d2d2d]">
+                    <AlgDiagram
+                      primaryAlg={activeCase.primaryAlg}
+                      category={activeCase.category}
+                      size={56}
+                    />
+                  </div>
+                  <div>
+                    <Badge variant="amber" className="mb-1">
+                      {activeCase.subcategory} • {activeCase.group}
+                    </Badge>
+                    <h3 className="text-lg font-bold text-white tracking-tight">{activeCase.name}</h3>
+                  </div>
                 </div>
 
                 <button
@@ -576,25 +490,6 @@ export const AlgReferenceTab: React.FC = () => {
                   </span>
                   {renderTriggerChunks(activeCase.primaryAlg)}
                 </div>
-
-                {/* Human Pair Story Explanation */}
-                <div className="text-xs text-[#d4d4d4] pt-2.5 border-t border-[#2d2d2d]">
-                  <span className="font-bold text-[#eab308] flex items-center gap-1.5 mb-1">
-                    <Compass className="w-3.5 h-3.5 text-[#eab308]" /> F2L Pair Journey (Why this works):
-                  </span>
-                  <p className="leading-relaxed text-[11px] text-[#d4d4d4]">
-                    {activeCase.why || 'Extracts Front-Right F2L pair to top layer, executes trigger orientation, and slots pair cleanly back home.'}
-                  </p>
-                </div>
-
-                {activeCase.tips && (
-                  <div className="text-xs text-[#eab308] pt-2 border-t border-[#2d2d2d] flex items-start gap-1.5">
-                    <Lightbulb className="w-3.5 h-3.5 text-[#eab308] shrink-0 mt-0.5" />
-                    <span className="text-[11px] leading-relaxed">
-                      <strong>Recognition Tip:</strong> {activeCase.tips}
-                    </span>
-                  </div>
-                )}
               </div>
             </Card>
           ) : (
@@ -629,15 +524,6 @@ export const AlgReferenceTab: React.FC = () => {
                 <span className="text-xs text-[#888888] font-semibold block mb-1">Trigger Breakdown:</span>
                 {renderTriggerChunks(activeCase.primaryAlg)}
               </div>
-
-              {activeCase.why && (
-                <div className="bg-[#202020] border border-[#2d2d2d] rounded-lg p-3 text-xs text-[#d4d4d4]">
-                  <span className="font-bold text-[#eab308] flex items-center gap-1.5 mb-1">
-                    <Compass className="w-4 h-4 text-[#eab308]" /> Why this is the formula:
-                  </span>
-                  <p className="leading-relaxed">{activeCase.why}</p>
-                </div>
-              )}
             </div>
           </DialogContent>
         )}

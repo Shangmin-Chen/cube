@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
+import type { AlgCategory } from '../types/cube';
 
 interface AlgDiagramProps {
-  topGrid?: string[]; // 9 items: 'Y' (Yellow) or 'G' (Gray)
+  primaryAlg?: string;
+  category?: AlgCategory;
+  topGrid?: string[];
   borderColors?: {
     top: string[];
     right: string[];
@@ -13,138 +16,40 @@ interface AlgDiagramProps {
 }
 
 export const AlgDiagram: React.FC<AlgDiagramProps> = ({
-  topGrid = ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-  borderColors = {
-    top: ['G', 'G', 'G'],
-    right: ['G', 'G', 'G'],
-    bottom: ['G', 'G', 'G'],
-    left: ['G', 'G', 'G'],
-  },
+  primaryAlg = "R U R' U R U2 R'",
+  category = 'oll',
   size = 120,
   title,
 }) => {
-  const COLOR_MAP: Record<string, string> = {
-    Y: '#eab308', // Warm Yellow
-    G: '#2d2d2d', // Notion dark gray (unoriented/dim)
-    W: '#f8fafc', // White
-    R: '#ef4444', // Red
-    O: '#f97316', // Orange
-    B: '#3b82f6', // Blue
-    G_GREEN: '#22c55e', // Green
-  };
+  const [imageError, setImageError] = useState(false);
 
-  const getColor = (code: string) => COLOR_MAP[code] || '#2d2d2d';
+  // Encode move string for VisualCube API endpoint
+  const encodedAlg = encodeURIComponent(primaryAlg.replace(/[\(\)\{\}]/g, '').trim());
+  const visualCubeStage = category === 'cross' ? 'fl' : category;
 
-  const innerSize = size * 0.7;
-  const offset = (size - innerSize) / 2;
-  const cellSize = innerSize / 3;
-  const borderThickness = offset * 0.7;
-
-  const topBorders = borderColors?.top ?? ['G', 'G', 'G'];
-  const rightBorders = borderColors?.right ?? ['G', 'G', 'G'];
-  const bottomBorders = borderColors?.bottom ?? ['G', 'G', 'G'];
-  const leftBorders = borderColors?.left ?? ['G', 'G', 'G'];
+  // VisualCube API: Official WCA / SpeedCubeDB 2D vector diagram REST API
+  const visualCubeUrl = `https://visualcube.api.cubing.net/visualcube.php?fmt=svg&size=${size * 2}&view=plan&stage=${visualCubeStage}&case=${encodedAlg}`;
 
   return (
     <div className="flex flex-col items-center">
-      <svg
-        width={size}
-        height={size}
-        className="overflow-visible"
-        role="img"
-        aria-label={title || "Cube algorithm diagram"}
+      <div
+        style={{ width: size, height: size }}
+        className="relative bg-[#191919] border border-[#2d2d2d] rounded-lg overflow-hidden flex items-center justify-center p-1"
       >
-        {/* Outer background frame */}
-        <rect
-          x={0}
-          y={0}
-          width={size}
-          height={size}
-          rx={6}
-          fill="#191919"
-          stroke="#2d2d2d"
-          strokeWidth={2}
-        />
-
-        {/* Top Border Stickers */}
-        {topBorders.map((c, i) => (
-          <rect
-            key={`top-${i}`}
-            x={offset + i * cellSize + 2}
-            y={offset - borderThickness - 2}
-            width={cellSize - 4}
-            height={borderThickness}
-            rx={2}
-            fill={getColor(c)}
-            stroke="#191919"
-            strokeWidth={1}
+        {!imageError ? (
+          <img
+            src={visualCubeUrl}
+            alt={title || `2D Top-Down Diagram for ${primaryAlg}`}
+            className="w-full h-full object-contain"
+            onError={() => setImageError(true)}
+            loading="lazy"
           />
-        ))}
-
-        {/* Bottom Border Stickers */}
-        {bottomBorders.map((c, i) => (
-          <rect
-            key={`bottom-${i}`}
-            x={offset + i * cellSize + 2}
-            y={offset + innerSize + 2}
-            width={cellSize - 4}
-            height={borderThickness}
-            rx={2}
-            fill={getColor(c)}
-            stroke="#191919"
-            strokeWidth={1}
-          />
-        ))}
-
-        {/* Left Border Stickers */}
-        {leftBorders.map((c, i) => (
-          <rect
-            key={`left-${i}`}
-            x={offset - borderThickness - 2}
-            y={offset + i * cellSize + 2}
-            width={borderThickness}
-            height={cellSize - 4}
-            rx={2}
-            fill={getColor(c)}
-            stroke="#191919"
-            strokeWidth={1}
-          />
-        ))}
-
-        {/* Right Border Stickers */}
-        {rightBorders.map((c, i) => (
-          <rect
-            key={`right-${i}`}
-            x={offset + innerSize + 2}
-            y={offset + i * cellSize + 2}
-            width={borderThickness}
-            height={cellSize - 4}
-            rx={2}
-            fill={getColor(c)}
-            stroke="#191919"
-            strokeWidth={1}
-          />
-        ))}
-
-        {/* Top Face 3x3 Grid */}
-        {(topGrid ?? []).map((c, index) => {
-          const row = Math.floor(index / 3);
-          const col = index % 3;
-          return (
-            <rect
-              key={`grid-${index}`}
-              x={offset + col * cellSize + 2}
-              y={offset + row * cellSize + 2}
-              width={cellSize - 4}
-              height={cellSize - 4}
-              rx={3}
-              fill={getColor(c)}
-              stroke="#191919"
-              strokeWidth={1.5}
-            />
-          );
-        })}
-      </svg>
+        ) : (
+          <div className="text-[10px] text-[#888888] font-mono text-center p-2">
+            VisualCube API Diagram
+          </div>
+        )}
+      </div>
       {title && <span className="text-xs text-[#888888] mt-2 font-medium">{title}</span>}
     </div>
   );

@@ -185,6 +185,7 @@ export const TimerTab: React.FC = () => {
         </div>
         <button
           type="button"
+          aria-label="Generate new WCA scramble"
           onClick={handleNewScramble}
           className="px-4 py-2 rounded-lg bg-[#2d2d2d] hover:bg-[#383838] border border-[#383838] text-[#d4d4d4] text-xs font-semibold flex items-center gap-2 transition-colors"
         >
@@ -209,6 +210,18 @@ export const TimerTab: React.FC = () => {
           onMouseUp={handleTriggerRelease}
           onTouchStart={handleTriggerPress}
           onTouchEnd={handleTriggerRelease}
+          onKeyDown={e => {
+            if (e.key === ' ' || e.key === 'Enter') {
+              e.preventDefault();
+              handleTriggerPress();
+            }
+          }}
+          onKeyUp={e => {
+            if (e.key === ' ' || e.key === 'Enter') {
+              e.preventDefault();
+              handleTriggerRelease();
+            }
+          }}
           className="lg:col-span-7 flex flex-col items-center justify-center p-10 min-h-[340px] relative select-none cursor-pointer outline-none"
         >
           {/* Inspection Mode Toggle */}
@@ -275,13 +288,13 @@ export const TimerTab: React.FC = () => {
             <div className="bg-[#191919] p-3.5 rounded-lg border border-[#2d2d2d]">
               <span className="text-[11px] text-[#888888] font-semibold block">Ao5</span>
               <span className="text-xl font-bold font-mono text-[#818cf8]">
-                {ao5 ? (ao5 === -1 ? 'DNF' : formatTime(ao5)) : '-'}
+                {ao5 !== null ? (ao5 === -1 ? 'DNF' : formatTime(ao5)) : '-'}
               </span>
             </div>
             <div className="bg-[#191919] p-3.5 rounded-lg border border-[#2d2d2d]">
               <span className="text-[11px] text-[#888888] font-semibold block">Ao12</span>
               <span className="text-xl font-bold font-mono text-[#c084fc]">
-                {ao12 ? (ao12 === -1 ? 'DNF' : formatTime(ao12)) : '-'}
+                {ao12 !== null ? (ao12 === -1 ? 'DNF' : formatTime(ao12)) : '-'}
               </span>
             </div>
           </div>
@@ -296,6 +309,7 @@ export const TimerTab: React.FC = () => {
             {solves.length > 0 && (
               <button
                 type="button"
+                aria-label="Clear all solve records"
                 onClick={handleClearHistory}
                 className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 font-semibold"
               >
