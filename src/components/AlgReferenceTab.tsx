@@ -7,7 +7,7 @@ import { RubiksCube3D } from './RubiksCube3D';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
-import { parseTriggers } from '../utils/cubeLogic';
+import { parseTriggers, detectAlgBadges } from '../utils/cubeLogic';
 import {
   Search,
   Bookmark,
@@ -26,7 +26,7 @@ export const AlgReferenceTab: React.FC = () => {
   
   const validSteps = ['cross', 'f2l', 'oll', 'pll', 'bookmarked'] as const;
   const activeStep = useMemo(() => {
-    if (routeStep && validSteps.includes(routeStep as any)) {
+    if (routeStep && (validSteps as readonly string[]).includes(routeStep)) {
       return routeStep as typeof validSteps[number];
     }
     return 'oll';
@@ -140,7 +140,7 @@ export const AlgReferenceTab: React.FC = () => {
     return (
       <div className="flex flex-wrap items-center gap-1.5 my-1">
         {chunks.map((chunk, idx) => {
-          if (chunk.type === 'sexy') {
+          if (chunk.type === 'sexy' || chunk.type === 'wide-sexy' || chunk.type === 'inverse-sexy' || chunk.type === 'left-sexy') {
             return (
               <span
                 key={idx}
@@ -152,7 +152,7 @@ export const AlgReferenceTab: React.FC = () => {
               </span>
             );
           }
-          if (chunk.type === 'sledge') {
+          if (chunk.type === 'sledge' || chunk.type === 'wide-sledge') {
             return (
               <span
                 key={idx}
@@ -188,11 +188,11 @@ export const AlgReferenceTab: React.FC = () => {
               </span>
             );
           }
-          if (chunk.type === 'insert') {
+          if (chunk.type === 'palindrome') {
             return (
               <span
                 key={idx}
-                className="px-2 py-0.5 rounded bg-[#c084fc]/15 border border-[#c084fc]/40 text-[#c084fc] font-mono font-bold text-xs"
+                className="px-2 py-0.5 rounded bg-[#ec4899]/15 border border-[#ec4899]/40 text-[#ec4899] font-mono font-bold text-xs"
                 title={chunk.description}
               >
                 ({chunk.text})
@@ -417,8 +417,13 @@ export const AlgReferenceTab: React.FC = () => {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Badge variant="indigo">{c.subcategory}</Badge>
+                        {detectAlgBadges(c.primaryAlg).map(badge => (
+                          <Badge key={badge} variant={badge === 'Palindrome' ? 'amber' : 'emerald'}>
+                            {badge}
+                          </Badge>
+                        ))}
                         <h3 className={`text-sm font-bold transition-colors ${isSelected ? 'text-[#eab308]' : 'text-white group-hover:text-[#eab308]'}`}>
                           {c.name}
                         </h3>

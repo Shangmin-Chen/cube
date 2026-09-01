@@ -227,7 +227,9 @@ export const TimerTab: React.FC = () => {
           {/* Inspection Mode Toggle */}
           <div
             onClick={e => e.stopPropagation()}
-            className="absolute top-4 right-4 flex items-center gap-2 text-xs text-[#888888]"
+            onMouseDown={e => e.stopPropagation()}
+            onTouchStart={e => e.stopPropagation()}
+            className="absolute top-4 right-4 flex items-center gap-2 text-xs text-[#888888] z-10"
           >
             <input
               type="checkbox"

@@ -43,3 +43,10 @@ export interface TrainerSessionStats {
   times: number[];
   mastered: boolean;
 }
+
+export interface TriggerChunk {
+  text: string;
+  name?: string;
+  description?: string;
+  type: 'sexy' | 'wide-sexy' | 'inverse-sexy' | 'left-sexy' | 'sledge' | 'wide-sledge' | 'hedge' | 'sune' | 'palindrome' | 'normal';
+}
