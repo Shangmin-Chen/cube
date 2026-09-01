@@ -147,7 +147,7 @@ export const AlgReferenceTab: React.FC = () => {
                 className="px-2 py-0.5 rounded bg-[#818cf8]/15 border border-[#818cf8]/40 text-[#818cf8] font-mono font-bold text-xs"
                 title={chunk.description}
               >
-                ({chunk.text})
+                {chunk.text}
                 <span className="text-[9px] block font-sans font-normal opacity-80">{chunk.name}</span>
               </span>
             );
@@ -159,7 +159,7 @@ export const AlgReferenceTab: React.FC = () => {
                 className="px-2 py-0.5 rounded bg-[#ef4444]/15 border border-[#ef4444]/40 text-[#ef4444] font-mono font-bold text-xs"
                 title={chunk.description}
               >
-                ({chunk.text})
+                {chunk.text}
                 <span className="text-[9px] block font-sans font-normal opacity-80">{chunk.name}</span>
               </span>
             );
@@ -171,7 +171,7 @@ export const AlgReferenceTab: React.FC = () => {
                 className="px-2 py-0.5 rounded bg-[#22c55e]/15 border border-[#22c55e]/40 text-[#22c55e] font-mono font-bold text-xs"
                 title={chunk.description}
               >
-                ({chunk.text})
+                {chunk.text}
                 <span className="text-[9px] block font-sans font-normal opacity-80">{chunk.name}</span>
               </span>
             );
@@ -183,7 +183,7 @@ export const AlgReferenceTab: React.FC = () => {
                 className="px-2 py-0.5 rounded bg-[#eab308]/15 border border-[#eab308]/40 text-[#eab308] font-mono font-bold text-xs"
                 title={chunk.description}
               >
-                ({chunk.text})
+                {chunk.text}
                 <span className="text-[9px] block font-sans font-normal opacity-80">{chunk.name}</span>
               </span>
             );
@@ -195,7 +195,7 @@ export const AlgReferenceTab: React.FC = () => {
                 className="px-2 py-0.5 rounded bg-[#ec4899]/15 border border-[#ec4899]/40 text-[#ec4899] font-mono font-bold text-xs"
                 title={chunk.description}
               >
-                ({chunk.text})
+                {chunk.text}
                 <span className="text-[9px] block font-sans font-normal opacity-80">{chunk.name}</span>
               </span>
             );
