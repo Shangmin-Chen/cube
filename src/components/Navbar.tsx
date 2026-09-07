@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Layers, Timer, Box } from 'lucide-react';
+import { Layers, Timer, Box, Sparkles } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
@@ -8,6 +8,7 @@ export const Navbar: React.FC = () => {
 
   const navItems = [
     { id: 'timer', path: '/timer', label: 'Speedsolving Timer', icon: Timer, match: (p: string) => p.startsWith('/timer') || p === '/' },
+    { id: 'trainer', path: '/train', label: 'Flashcards', icon: Sparkles, match: (p: string) => p.startsWith('/train') },
     { id: 'reference', path: '/algs', label: 'Algorithms', icon: Layers, match: (p: string) => p.startsWith('/algs') },
   ];
 

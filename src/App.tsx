@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { AlgReferenceTab } from './components/AlgReferenceTab';
 import { TimerTab } from './components/TimerTab';
+import { TrainerTab } from './components/TrainerTab';
 
 export function App() {
   return (
@@ -13,6 +14,7 @@ export function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/timer" replace />} />
             <Route path="/timer" element={<TimerTab />} />
+            <Route path="/train" element={<TrainerTab />} />
             <Route path="/algs" element={<AlgReferenceTab />} />
             <Route path="/algs/:step" element={<AlgReferenceTab />} />
             <Route path="/algs/:step/:caseId" element={<AlgReferenceTab />} />

@@ -1,4 +1,5 @@
-import type { AlgCase } from '../types/cube';
+import { Alg } from 'cubing/alg';
+import type { AlgCase, MethodStep, AlgMethod } from '../types/cube';
 
 export const OLL_2LOOK_CASES: AlgCase[] = [
   // Edges (Orient Edges first if no yellow cross)
@@ -708,3 +709,134 @@ export const F2L_HIGHLIGHTS: AlgCase[] = [
     }
   }
 ];
+
+export const CROSS_CASES: AlgCase[] = [
+  {
+    id: 'cross-sample-1',
+    name: 'Bottom Cross Edge Insertion',
+    category: 'cross',
+    subcategory: 'Cross (C)',
+    group: 'Cross Step',
+    primaryAlg: 'D2 R F L B',
+    description: 'Align bottom cross edge with center and insert into bottom white face.',
+    tips: 'Always solve the cross on bottom during inspection.',
+    why: 'D2 aligns bottom centers while R F L B places all four edge stickers directly into white bottom face.',
+    topGrid: ['G', 'G', 'G', 'G', 'W', 'G', 'G', 'G', 'G'],
+    borderColors: {
+      top: ['G', 'G_GREEN', 'G'],
+      right: ['G', 'R', 'G'],
+      bottom: ['G', 'B', 'G'],
+      left: ['G', 'O', 'G'],
+    },
+  },
+];
+
+export const ALL_CFOP_CASES: AlgCase[] = [
+  ...CROSS_CASES,
+  ...F2L_HIGHLIGHTS,
+  ...OLL_2LOOK_CASES,
+  ...FULL_PLL_CASES,
+];
+
+export const CFOP_STEPS: MethodStep[] = [
+  { id: 'cross', label: 'Step 1: CROSS', description: 'Solve bottom 4 cross edges aligned with side centers' },
+  { id: 'f2l', label: 'Step 2: F2L', description: 'Solve first two layers simultaneously (corner + edge pairs)' },
+  { id: 'oll', label: 'Step 3: OLL', description: 'Orient last layer yellow pieces (2-Look & Full)' },
+  { id: 'pll', label: 'Step 4: PLL', description: 'Permute last layer yellow pieces into solved state' },
+];
+
+export const CFOP_METHOD: AlgMethod = {
+  id: 'cfop',
+  name: '2-Look CFOP Method',
+  description: 'Fridrich / CFOP system (Cross, F2L, 2-Look OLL, 2-Look PLL)',
+  steps: CFOP_STEPS,
+  cases: ALL_CFOP_CASES,
+  isAvailable: true,
+};
+
+// Third-party remote CFOP 2-look data fetching
+const THIRD_PARTY_ENDPOINTS = {
+  OLL_2LOOK: 'https://jperm.net/lib/2lookoll.js',
+  PLL_2LOOK: 'https://jperm.net/lib/2lookpll.js',
+};
+
+const cache: Record<string, AlgCase[]> = {};
+
+function safeParseJsObjectArray<T>(jsArrayStr: string): T[] {
+  try {
+    const jsonString = jsArrayStr
+      .replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":')
+      .replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (_, inner: string) => `"${inner.replace(/\\'/g, "'").replace(/"/g, '\\"')}"`)
+      .replace(/,\s*([\}\]])/g, '$1');
+    return JSON.parse(jsonString) as T[];
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchThirdPartyAlgData(type: 'oll' | 'pll'): Promise<AlgCase[]> {
+  if (cache[type]) {
+    return cache[type];
+  }
+
+  const endpoint = type === 'oll' ? THIRD_PARTY_ENDPOINTS.OLL_2LOOK : THIRD_PARTY_ENDPOINTS.PLL_2LOOK;
+
+  try {
+    const res = await fetch(endpoint);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const scriptText = await res.text();
+
+    const match = scriptText.match(/algsetAlgs\s*=\s*(\[\s*\{[\s\S]*?\}\s*\]);/);
+    if (!match || !match[1]) {
+      throw new Error('Failed to parse algsetAlgs from script');
+    }
+
+    const rawData = safeParseJsObjectArray<{
+      name?: string;
+      alg?: string[];
+      group?: string;
+      prob?: number;
+    }>(match[1]);
+
+    if (!Array.isArray(rawData) || rawData.length === 0) {
+      throw new Error('Parsed rawData is empty or not an array');
+    }
+
+    const parsedCases: AlgCase[] = rawData.map((item, index) => {
+      const algsList = Array.isArray(item.alg) ? item.alg : [];
+      const primaryAlgStr = algsList[0] || '';
+      let wcaAlgStr = primaryAlgStr;
+
+      try {
+        if (primaryAlgStr) {
+          wcaAlgStr = new Alg(primaryAlgStr).toString();
+        }
+      } catch {
+        wcaAlgStr = primaryAlgStr;
+      }
+
+      const caseName = item.name || `${type.toUpperCase()} Case ${index + 1}`;
+
+      return {
+        id: `${type}-2look-${index + 1}`,
+        name: caseName,
+        category: type,
+        subcategory: `2-Look ${type.toUpperCase()}`,
+        group: item.group || (type === 'oll' ? 'Corners (Look 2)' : 'Edges (Look 2)'),
+        is2Look: true,
+        primaryAlg: wcaAlgStr,
+        alternativeAlgs: algsList.slice(1),
+        description: `3x3 ${type.toUpperCase()} Case: ${caseName}`,
+        tips: `Third-Party Source Alg: ${wcaAlgStr}`,
+        why: `Calculated with WCA cubing/alg standard library`,
+        probability: item.prob ? `1/${item.prob}` : undefined,
+      };
+    });
+
+    cache[type] = parsedCases;
+    return parsedCases;
+  } catch (err) {
+    console.warn(`Dynamic fetch from ${endpoint} failed, using local fallback.`, err);
+    return [];
+  }
+}

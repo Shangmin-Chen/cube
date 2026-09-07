@@ -1,13 +1,20 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { OLL_2LOOK_CASES, PLL_2LOOK_CASES, F2L_HIGHLIGHTS } from '../data/cfopData';
-import type { AlgCase } from '../types/cube';
 import { AlgDiagram } from './AlgDiagram';
 import { RubiksCube3D } from './RubiksCube3D';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { parseTriggers, detectAlgBadges } from '../utils/cubeLogic';
+import {
+  getAllCases,
+  getSteps,
+  isValidStep,
+  getCasesForStep,
+  getDeckForStep,
+  getAvailableMethods,
+} from '../services/algService';
+import { useBookmarks } from '../hooks/useBookmarks';
 import {
   Search,
   Bookmark,
@@ -22,15 +29,23 @@ export const AlgReferenceTab: React.FC = () => {
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMethod, setSelectedMethod] = useState<'cfop' | 'roux' | 'zz' | '2x2'>('cfop');
+  const [selectedMethod, setSelectedMethod] = useState<string>('cfop');
   
-  const validSteps = ['cross', 'f2l', 'oll', 'pll', 'bookmarked'] as const;
-  const activeStep = useMemo(() => {
-    if (routeStep && (validSteps as readonly string[]).includes(routeStep)) {
-      return routeStep as typeof validSteps[number];
+  const { bookmarkedIds, toggleBookmark, isBookmarked } = useBookmarks();
+  const availableMethods = useMemo(() => getAvailableMethods(), []);
+
+  const allCases = useMemo(() => getAllCases(selectedMethod), [selectedMethod]);
+
+  const steps = useMemo(() => {
+    return getSteps(selectedMethod, bookmarkedIds);
+  }, [selectedMethod, bookmarkedIds]);
+
+  const activeStep: string = useMemo(() => {
+    if (isValidStep(routeStep, selectedMethod, bookmarkedIds)) {
+      return routeStep;
     }
-    return 'oll';
-  }, [routeStep]);
+    return steps[0]?.id || 'oll';
+  }, [routeStep, selectedMethod, bookmarkedIds, steps]);
 
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(routeCaseId || null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,70 +55,10 @@ export const AlgReferenceTab: React.FC = () => {
     setSelectedCaseId(routeCaseId || null);
   }, [routeCaseId]);
 
-  // Safe localStorage deserialization
-  const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('cfop_bookmarks');
-      const parsed = saved ? JSON.parse(saved) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // Cross Sample Case defined before allCases
-  const crossCases: AlgCase[] = useMemo(
-    () => [
-      {
-        id: 'cross-sample-1',
-        name: 'Bottom Cross Edge Insertion',
-        category: 'cross',
-        subcategory: 'Cross (C)',
-        group: 'Cross Step',
-        primaryAlg: 'D2 R F L B',
-        description: 'Align bottom cross edge with center and insert into bottom white face.',
-        tips: 'Always solve the cross on bottom during inspection.',
-        why: 'D2 aligns bottom centers while R F L B places all four edge stickers directly into white bottom face.',
-        topGrid: ['G', 'G', 'G', 'G', 'W', 'G', 'G', 'G', 'G'],
-        borderColors: {
-          top: ['G', 'G_GREEN', 'G'],
-          right: ['G', 'R', 'G'],
-          bottom: ['G', 'B', 'G'],
-          left: ['G', 'O', 'G'],
-        },
-      },
-    ],
-    []
-  );
-
-  const allCases: AlgCase[] = useMemo(() => {
-    return [...crossCases, ...OLL_2LOOK_CASES, ...PLL_2LOOK_CASES, ...F2L_HIGHLIGHTS];
-  }, [crossCases]);
-
-  const toggleBookmark = (id: string, e: React.MouseEvent | React.KeyboardEvent) => {
-    e.stopPropagation();
-    setBookmarkedIds(prev => {
-      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
-      try {
-        localStorage.setItem('cfop_bookmarks', JSON.stringify(next));
-      } catch {
-        // Fallback
-      }
-      return next;
-    });
-  };
-
   // Get active cases list based on selected step & filters
   const currentStepCases = useMemo(() => {
-    if (activeStep === 'bookmarked') {
-      return allCases.filter(c => bookmarkedIds.includes(c.id));
-    }
-    if (activeStep === 'cross') return crossCases;
-    if (activeStep === 'f2l') return F2L_HIGHLIGHTS;
-    if (activeStep === 'oll') return OLL_2LOOK_CASES;
-    if (activeStep === 'pll') return PLL_2LOOK_CASES;
-    return [];
-  }, [activeStep, crossCases, allCases, bookmarkedIds]);
+    return getCasesForStep(activeStep, selectedMethod, bookmarkedIds);
+  }, [activeStep, selectedMethod, bookmarkedIds]);
 
   const filteredCases = useMemo(() => {
     if (!searchQuery.trim()) return currentStepCases;
@@ -125,14 +80,6 @@ export const AlgReferenceTab: React.FC = () => {
     }
     return filteredCases.length > 0 ? filteredCases[0] : null;
   }, [selectedCaseId, filteredCases]);
-
-  const stepsList = [
-    { id: 'cross', label: 'Step 1: Cross', badge: `${crossCases.length}` },
-    { id: 'f2l', label: 'Step 2: F2L', badge: `${F2L_HIGHLIGHTS.length}` },
-    { id: 'oll', label: 'Step 3: OLL (2-Look)', badge: `${OLL_2LOOK_CASES.length}` },
-    { id: 'pll', label: 'Step 4: PLL (2-Look)', badge: `${PLL_2LOOK_CASES.length}` },
-    { id: 'bookmarked', label: 'Saved Bookmarks', badge: `${bookmarkedIds.length}` },
-  ] as const;
 
   // Render trigger chunks with color badges
   const renderTriggerChunks = (algStr: string) => {
@@ -227,13 +174,26 @@ export const AlgReferenceTab: React.FC = () => {
               <select
                 aria-label="Select Cubing Algorithm Collection"
                 value={selectedMethod}
-                onChange={e => setSelectedMethod(e.target.value as 'cfop' | 'roux' | 'zz' | '2x2')}
+                onChange={e => {
+                  const newMethod = e.target.value;
+                  setSelectedMethod(newMethod);
+                  const methodSteps = getSteps(newMethod, bookmarkedIds);
+                  if (methodSteps.length > 0) {
+                    navigate(`/algs/${methodSteps[0].id}`);
+                  }
+                }}
                 className="bg-transparent text-[#eab308] font-bold focus:outline-none cursor-pointer"
               >
-                <option value="cfop" className="bg-[#202020] text-white">2-Look CFOP Method</option>
-                <option value="roux" disabled className="bg-[#202020] text-[#888888]">Roux Method (Coming Soon)</option>
-                <option value="zz" disabled className="bg-[#202020] text-[#888888]">ZZ Method (Coming Soon)</option>
-                <option value="2x2" disabled className="bg-[#202020] text-[#888888]">2x2 Methods (Coming Soon)</option>
+                {availableMethods.map(method => (
+                  <option
+                    key={method.id}
+                    value={method.id}
+                    disabled={!method.isAvailable}
+                    className={`bg-[#202020] ${method.isAvailable ? 'text-white' : 'text-[#888888]'}`}
+                  >
+                    {method.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -338,7 +298,7 @@ export const AlgReferenceTab: React.FC = () => {
       {/* Persistent 1-Click CFOP Step Pipeline Bar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-[#202020] p-2 rounded-xl border border-[#2d2d2d]">
         <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
-          {stepsList.map(step => {
+          {steps.map(step => {
             const isActive = activeStep === step.id && !searchQuery.trim();
             return (
               <button
@@ -350,20 +310,37 @@ export const AlgReferenceTab: React.FC = () => {
                   setSelectedCaseId(null);
                   navigate(`/algs/${step.id}`);
                 }}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   isActive
                     ? 'bg-[#2d2d2d] text-[#eab308] border border-[#eab308]/40 shadow-none'
                     : 'text-[#888888] hover:text-white hover:bg-[#282828]'
                 }`}
               >
                 <span>{step.label}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${isActive ? 'bg-[#eab308] text-black font-black' : 'bg-[#191919] text-[#888888]'}`}>
-                  {step.badge}
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
+                    isActive ? 'bg-[#eab308] text-black font-black' : 'bg-[#191919] text-[#888888]'
+                  }`}
+                >
+                  {step.cases.length}
                 </span>
               </button>
             );
           })}
         </div>
+
+        {/* Quick Flashcard Drill CTA */}
+        <button
+          type="button"
+          onClick={() => {
+            const targetDeck = getDeckForStep(activeStep, selectedMethod, bookmarkedIds);
+            navigate(`/train?deck=${targetDeck}`);
+          }}
+          className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#eab308]/15 hover:bg-[#eab308]/25 border border-[#eab308]/40 text-[#eab308] text-xs font-bold transition-colors cursor-pointer"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Train in Flashcards</span>
+        </button>
       </div>
 
       {/* Main Master-Detail Workspace Grid */}
@@ -379,7 +356,7 @@ export const AlgReferenceTab: React.FC = () => {
           ) : (
             filteredCases.map(c => {
               const isSelected = activeCase?.id === c.id;
-              const isBookmarked = bookmarkedIds.includes(c.id);
+              const isCaseBookmarked = isBookmarked(c.id);
 
               return (
                 <Card
@@ -437,16 +414,16 @@ export const AlgReferenceTab: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      aria-label={isBookmarked ? 'Remove Bookmark' : 'Save Bookmark'}
+                      aria-label={isCaseBookmarked ? 'Remove Bookmark' : 'Save Bookmark'}
                       onClick={e => toggleBookmark(c.id, e)}
                       className={`p-2 rounded-lg transition-colors ${
-                        isBookmarked
+                        isCaseBookmarked
                           ? 'text-[#eab308] bg-[#eab308]/10'
                           : 'text-[#888888] hover:text-white hover:bg-[#2d2d2d]'
                       }`}
-                      title={isBookmarked ? 'Remove Bookmark' : 'Save Bookmark'}
+                      title={isCaseBookmarked ? 'Remove Bookmark' : 'Save Bookmark'}
                     >
-                      <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-[#eab308]' : ''}`} />
+                      <Bookmark className={`w-4 h-4 ${isCaseBookmarked ? 'fill-[#eab308]' : ''}`} />
                     </button>
 
                     <button
