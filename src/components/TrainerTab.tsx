@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Bookmark, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
-import { type DeckId, DECK_DEFINITIONS } from '../services/algService';
+import { getDecks } from '../services/algService';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useTrainerSession } from '../hooks/useTrainerSession';
 import { useTrainerKeyboard } from '../hooks/useTrainerKeyboard';
@@ -13,17 +13,20 @@ export const TrainerTab: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Read URL query deck param safely
-  const deckParam = (searchParams.get('deck') as DeckId) || 'bookmarks';
-  const selectedDeck: DeckId = DECK_DEFINITIONS.some(d => d.id === deckParam)
-    ? deckParam
-    : 'bookmarks';
-
   const { bookmarkedIds, toggleBookmark, isBookmarked } = useBookmarks();
 
-  const session = useTrainerSession(selectedDeck, bookmarkedIds);
+  // Read URL query deck param safely
+  const deckParam = searchParams.get('deck') || 'bookmarks';
 
-  const handleSelectDeck = (deckId: DeckId) => {
+  const session = useTrainerSession(deckParam, bookmarkedIds);
+
+  const availableDecks = useMemo(() => {
+    return getDecks(session.allCases, bookmarkedIds);
+  }, [session.allCases, bookmarkedIds]);
+
+  const activeDeckId = availableDecks.some(d => d.id === deckParam) ? deckParam : 'bookmarks';
+
+  const handleSelectDeck = (deckId: string) => {
     setSearchParams({ deck: deckId });
   };
 
@@ -48,8 +51,8 @@ export const TrainerTab: React.FC = () => {
     <div className="flex flex-col gap-6 max-w-3xl mx-auto py-2">
       {/* Top Monkeytype-Style Navigation & Config Bar */}
       <TrainerDeckSelector
-        selectedDeck={selectedDeck}
-        bookmarkedCount={bookmarkedIds.length}
+        decks={availableDecks}
+        selectedDeckId={activeDeckId}
         isShuffled={session.isShuffled}
         onSelectDeck={handleSelectDeck}
         onToggleShuffle={session.toggleShuffle}
@@ -57,7 +60,7 @@ export const TrainerTab: React.FC = () => {
       />
 
       {/* Empty Bookmarks Fallback State */}
-      {selectedDeck === 'bookmarks' && session.baseCases.length === 0 ? (
+      {activeDeckId === 'bookmarks' && session.baseCases.length === 0 ? (
         <div className="p-12 text-center flex flex-col items-center gap-4 bg-[#202020] border border-[#2d2d2d] rounded-3xl shadow-xl">
           <div className="w-14 h-14 rounded-2xl bg-[#141414] border border-[#2d2d2d] flex items-center justify-center text-[#eab308] shadow-inner">
             <Bookmark className="w-7 h-7 stroke-[2]" />
@@ -65,16 +68,16 @@ export const TrainerTab: React.FC = () => {
           <div className="flex flex-col gap-1.5 max-w-md">
             <h2 className="text-xl font-bold text-white tracking-tight">No Bookmarked Algorithms Yet</h2>
             <p className="text-xs text-[#888888] leading-relaxed">
-              Star algorithms from the <strong>Algorithms Reference</strong> library to create your custom training deck, or jump straight into 2-Look OLL/PLL!
+              Star algorithms from the <strong>Algorithms Reference</strong> library to create your custom training deck, or jump straight into any category!
             </p>
           </div>
           <div className="flex items-center gap-3 mt-2">
             <button
               type="button"
-              onClick={() => handleSelectDeck('oll-2look')}
+              onClick={() => handleSelectDeck(availableDecks[1]?.id || 'oll')}
               className="px-5 py-2.5 rounded-xl bg-[#eab308] hover:bg-[#facc15] text-black text-xs font-bold transition-all shadow-md cursor-pointer"
             >
-              Train 2-Look OLL (7 Cases)
+              Train {availableDecks[1]?.label || 'Algorithms'}
             </button>
             <button
               type="button"

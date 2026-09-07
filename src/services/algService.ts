@@ -1,205 +1,128 @@
 import { Alg } from 'cubing/alg';
-import type { AlgCase, AlgCategory } from '../types/cube';
-import { OLL_2LOOK_CASES, PLL_2LOOK_CASES, FULL_PLL_CASES, F2L_HIGHLIGHTS } from '../data/cfopData';
-
-export type DeckId = 'bookmarks' | 'oll-2look' | 'pll-2look' | 'pll-full' | 'f2l' | 'all';
-export type ReferenceStepId = 'cross' | 'f2l' | 'oll' | 'pll' | 'bookmarked';
-
-export interface DeckDefinition {
-  id: DeckId;
-  label: string;
-  description: string;
-  getCount: (bookmarkedCount: number) => number;
-}
-
-export interface StepDefinition {
-  id: ReferenceStepId;
-  label: string;
-  getBadgeCount: (allCases: AlgCase[], bookmarkedCount: number) => number;
-}
-
-// Single source of truth for cross sample
-export const CROSS_SAMPLE_CASES: AlgCase[] = [
-  {
-    id: 'cross-sample-1',
-    name: 'Bottom Cross Edge Insertion',
-    category: 'cross',
-    subcategory: 'Cross (C)',
-    group: 'Cross Step',
-    primaryAlg: 'D2 R F L B',
-    description: 'Align bottom cross edge with center and insert into bottom white face.',
-    tips: 'Always solve the cross on bottom during inspection.',
-    why: 'D2 aligns bottom centers while R F L B places all four edge stickers directly into white bottom face.',
-    topGrid: ['G', 'G', 'G', 'G', 'W', 'G', 'G', 'G', 'G'],
-    borderColors: {
-      top: ['G', 'G_GREEN', 'G'],
-      right: ['G', 'R', 'G'],
-      bottom: ['G', 'B', 'G'],
-      left: ['G', 'O', 'G'],
-    },
-  },
-];
-
-// Deduplicated master list of all unique algorithm cases
-const CASE_REGISTRY: AlgCase[] = (() => {
-  const map = new Map<string, AlgCase>();
-  [...CROSS_SAMPLE_CASES, ...OLL_2LOOK_CASES, ...FULL_PLL_CASES, ...F2L_HIGHLIGHTS].forEach(c => {
-    if (!map.has(c.id)) {
-      map.set(c.id, c);
-    }
-  });
-  return Array.from(map.values());
-})();
-
-const CASE_MAP = new Map<string, AlgCase>(CASE_REGISTRY.map(c => [c.id, c]));
+import type { AlgCase, AlgCategory, DeckOption, StepOption } from '../types/cube';
+import { ALL_CFOP_CASES } from '../data/cfopData';
 
 /**
  * Returns all registered algorithm cases
  */
 export function getAllCases(): AlgCase[] {
-  return CASE_REGISTRY;
+  return ALL_CFOP_CASES;
 }
 
 /**
  * Fast lookup for a single algorithm case by ID
  */
 export function getCaseById(id: string): AlgCase | undefined {
-  return CASE_MAP.get(id);
+  return ALL_CFOP_CASES.find(c => c.id === id);
 }
 
 /**
- * Available Flashcard Decks metadata
+ * Dynamically auto-populates flashcard training decks from registered algorithm data
  */
-export const DECK_DEFINITIONS: DeckDefinition[] = [
-  {
-    id: 'bookmarks',
-    label: 'Bookmarks',
-    description: 'Your starred algorithms for focused drill',
-    getCount: b => b,
-  },
-  {
-    id: 'oll-2look',
-    label: '2-Look OLL',
-    description: '7 Essential Orientation cases (Cross & Corners)',
-    getCount: () => OLL_2LOOK_CASES.length,
-  },
-  {
-    id: 'pll-2look',
-    label: '2-Look PLL',
-    description: '6 Essential Permutation cases (T, Y, Ua, Ub, H, Z)',
-    getCount: () => PLL_2LOOK_CASES.length,
-  },
-  {
-    id: 'pll-full',
-    label: 'Full PLL',
-    description: 'All 21 Permutations of the Last Layer',
-    getCount: () => FULL_PLL_CASES.length,
-  },
-  {
-    id: 'f2l',
-    label: 'Intuitive F2L',
-    description: 'Core First Two Layers insertion patterns',
-    getCount: () => F2L_HIGHLIGHTS.length,
-  },
-  {
-    id: 'all',
-    label: 'All Algorithms',
-    description: 'Complete library of CFOP algorithms',
-    getCount: () => CASE_REGISTRY.length,
-  },
-];
+export function getDecks(allCases: AlgCase[], bookmarkedIds: string[] = []): DeckOption[] {
+  const bookmarkedCases = allCases.filter(c => bookmarkedIds.includes(c.id));
 
-/**
- * Get cases belonging to a specific flashcard deck
- */
-export function getCasesForDeck(deckId: DeckId, bookmarkedIds: string[] = []): AlgCase[] {
-  switch (deckId) {
-    case 'bookmarks':
-      return CASE_REGISTRY.filter(c => bookmarkedIds.includes(c.id));
-    case 'oll-2look':
-      return OLL_2LOOK_CASES;
-    case 'pll-2look':
-      return PLL_2LOOK_CASES;
-    case 'pll-full':
-      return FULL_PLL_CASES;
-    case 'f2l':
-      return F2L_HIGHLIGHTS;
-    case 'all':
-      return CASE_REGISTRY;
-  }
+  // Dynamically group cases by subcategory / category
+  const groups = new Map<string, AlgCase[]>();
+  allCases.forEach(c => {
+    const key = c.subcategory || c.category.toUpperCase();
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key)!.push(c);
+  });
+
+  const dynamicSubcategoryDecks: DeckOption[] = Array.from(groups.entries()).map(([label, cases]) => ({
+    id: label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+    label,
+    cases,
+  }));
+
+  return [
+    {
+      id: 'bookmarks',
+      label: 'Bookmarks',
+      cases: bookmarkedCases,
+    },
+    ...dynamicSubcategoryDecks,
+    {
+      id: 'all',
+      label: 'All Algorithms',
+      cases: allCases,
+    },
+  ];
 }
 
 /**
- * Maps a reference step or category to its corresponding default flashcard training deck
+ * Get a specific deck by ID, with fallback to bookmarks
  */
-const STEP_TO_DECK_MAP: Record<ReferenceStepId, DeckId> = {
-  bookmarked: 'bookmarks',
-  oll: 'oll-2look',
-  pll: 'pll-2look',
-  f2l: 'f2l',
-  cross: 'all',
-};
-
-export function getDeckForStep(step: string): DeckId {
-  if (step in STEP_TO_DECK_MAP) {
-    return STEP_TO_DECK_MAP[step as ReferenceStepId];
-  }
-  return 'bookmarks';
+export function getDeckById(deckId: string, allCases: AlgCase[], bookmarkedIds: string[] = []): DeckOption {
+  const decks = getDecks(allCases, bookmarkedIds);
+  const found = decks.find(d => d.id === deckId);
+  return found || decks[0] || { id: 'bookmarks', label: 'Bookmarks', cases: [] };
 }
 
 /**
- * Step definitions for the Algorithm Reference pipeline
+ * Dynamically auto-populates reference step tabs from algorithm categories
  */
-export const STEP_DEFINITIONS: StepDefinition[] = [
-  {
-    id: 'cross',
-    label: 'Step 1: Cross',
-    getBadgeCount: () => CROSS_SAMPLE_CASES.length,
-  },
-  {
-    id: 'f2l',
-    label: 'Step 2: F2L',
-    getBadgeCount: () => F2L_HIGHLIGHTS.length,
-  },
-  {
-    id: 'oll',
-    label: 'Step 3: OLL (2-Look)',
-    getBadgeCount: () => OLL_2LOOK_CASES.length,
-  },
-  {
-    id: 'pll',
-    label: 'Step 4: PLL (2-Look)',
-    getBadgeCount: () => PLL_2LOOK_CASES.length,
-  },
-  {
-    id: 'bookmarked',
-    label: 'Saved Bookmarks',
-    getBadgeCount: (_, count) => count,
-  },
-];
+export function getSteps(allCases: AlgCase[], bookmarkedIds: string[] = []): StepOption[] {
+  const categories: AlgCategory[] = ['cross', 'f2l', 'oll', 'pll'];
 
-const VALID_STEP_SET = new Set<string>(STEP_DEFINITIONS.map(s => s.id));
+  const categorySteps: StepOption[] = categories.map((cat, idx) => {
+    const matchingCases = allCases.filter(c => c.category === cat);
+    const label = `Step ${idx + 1}: ${cat.toUpperCase()}`;
+    return {
+      id: cat,
+      label,
+      cases: matchingCases,
+    };
+  });
 
-export function isValidStep(step?: string): step is ReferenceStepId {
-  return typeof step === 'string' && VALID_STEP_SET.has(step);
+  return [
+    ...categorySteps,
+    {
+      id: 'bookmarked',
+      label: 'Saved Bookmarks',
+      cases: allCases.filter(c => bookmarkedIds.includes(c.id)),
+    },
+  ];
 }
 
 /**
- * Filter cases for Algorithm Reference tab by active step
+ * Checks if a step route is valid
  */
-export function getCasesForStep(step: ReferenceStepId, bookmarkedIds: string[]): AlgCase[] {
-  switch (step) {
-    case 'bookmarked':
-      return CASE_REGISTRY.filter(c => bookmarkedIds.includes(c.id));
-    case 'cross':
-      return CROSS_SAMPLE_CASES;
-    case 'f2l':
-      return F2L_HIGHLIGHTS;
-    case 'oll':
-      return OLL_2LOOK_CASES;
-    case 'pll':
-      return PLL_2LOOK_CASES;
-  }
+export function isValidStep(
+  step: string | undefined,
+  allCases = ALL_CFOP_CASES,
+  bookmarkedIds: string[] = []
+): step is string {
+  if (!step) return false;
+  const steps = getSteps(allCases, bookmarkedIds);
+  return steps.some(s => s.id === step);
+}
+
+/**
+ * Get cases for a reference step
+ */
+export function getCasesForStep(stepId: string, allCases: AlgCase[], bookmarkedIds: string[] = []): AlgCase[] {
+  const steps = getSteps(allCases, bookmarkedIds);
+  const step = steps.find(s => s.id === stepId);
+  return step ? step.cases : [];
+}
+
+/**
+ * Dynamically maps a reference step to its matching training deck
+ */
+export function getDeckForStep(stepId: string, allCases: AlgCase[], bookmarkedIds: string[] = []): string {
+  const decks = getDecks(allCases, bookmarkedIds);
+  if (stepId === 'bookmarked') return 'bookmarks';
+
+  // Find a deck that matches the step ID or category
+  const matchingDeck = decks.find(
+    d => d.id === stepId || d.id.startsWith(stepId) || d.cases.some(c => c.category === stepId)
+  );
+
+  return matchingDeck ? matchingDeck.id : 'all';
 }
 
 // Third-party remote data fetching

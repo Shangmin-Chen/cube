@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import type { AlgCase } from '../types/cube';
-import { getCasesForDeck, type DeckId } from '../services/algService';
+import { getAllCases, getDeckById } from '../services/algService';
 import { invertMoveString } from '../utils/cubeLogic';
 
 // Fisher-Yates shuffle
@@ -14,7 +14,7 @@ function shuffleArray<T>(array: T[]): T[] {
   return arr;
 }
 
-export function useTrainerSession(deckId: DeckId, bookmarkedIds: string[]) {
+export function useTrainerSession(deckId: string, bookmarkedIds: string[]) {
   const [isShuffled, setIsShuffled] = useState<boolean>(true);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -25,10 +25,12 @@ export function useTrainerSession(deckId: DeckId, bookmarkedIds: string[]) {
   const [learningIds, setLearningIds] = useState<Set<string>>(new Set());
   const [copiedType, setCopiedType] = useState<'setup' | 'solve' | null>(null);
 
-  // Raw cases for the current deck
+  const allCases = useMemo(() => getAllCases(), []);
+
+  // Raw cases for the dynamically resolved deck
   const baseCases = useMemo(() => {
-    return getCasesForDeck(deckId, bookmarkedIds);
-  }, [deckId, bookmarkedIds]);
+    return getDeckById(deckId, allCases, bookmarkedIds).cases;
+  }, [deckId, allCases, bookmarkedIds]);
 
   // Active queue of cards in current round
   const [activeQueue, setActiveQueue] = useState<AlgCase[]>(() => {
@@ -53,7 +55,7 @@ export function useTrainerSession(deckId: DeckId, bookmarkedIds: string[]) {
     []
   );
 
-  // Sync active queue when baseCases change
+  // Sync active queue when deck selection changes
   useEffect(() => {
     initRound(baseCases, isShuffled, 1);
   }, [deckId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -164,6 +166,7 @@ export function useTrainerSession(deckId: DeckId, bookmarkedIds: string[]) {
     : 0;
 
   return {
+    allCases,
     activeQueue,
     baseCases,
     currentCase,

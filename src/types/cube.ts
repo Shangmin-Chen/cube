@@ -2,6 +2,18 @@ export type FaceColor = 'white' | 'yellow' | 'green' | 'blue' | 'red' | 'orange'
 
 export type AlgCategory = 'cross' | 'f2l' | 'oll' | 'pll';
 
+export interface DeckOption {
+  id: string;
+  label: string;
+  cases: AlgCase[];
+}
+
+export interface StepOption {
+  id: string;
+  label: string;
+  cases: AlgCase[];
+}
+
 export interface AlgCase {
   id: string;
   name: string;

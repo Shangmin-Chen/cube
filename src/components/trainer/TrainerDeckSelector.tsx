@@ -1,19 +1,19 @@
 import React from 'react';
 import { Shuffle, RotateCcw } from 'lucide-react';
-import { DECK_DEFINITIONS, type DeckId } from '../../services/algService';
+import type { DeckOption } from '../../types/cube';
 
 interface TrainerDeckSelectorProps {
-  selectedDeck: DeckId;
-  bookmarkedCount: number;
+  decks: DeckOption[];
+  selectedDeckId: string;
   isShuffled: boolean;
-  onSelectDeck: (deckId: DeckId) => void;
+  onSelectDeck: (deckId: string) => void;
   onToggleShuffle: () => void;
   onRestart: () => void;
 }
 
 export const TrainerDeckSelector: React.FC<TrainerDeckSelectorProps> = ({
-  selectedDeck,
-  bookmarkedCount,
+  decks,
+  selectedDeckId,
   isShuffled,
   onSelectDeck,
   onToggleShuffle,
@@ -21,11 +21,10 @@ export const TrainerDeckSelector: React.FC<TrainerDeckSelectorProps> = ({
 }) => {
   return (
     <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#1e1e1e] p-2 rounded-2xl border border-[#2d2d2d] shadow-sm">
-      {/* Deck Category Pills */}
+      {/* Dynamic Deck Category Pills */}
       <div className="flex flex-wrap items-center gap-1">
-        {DECK_DEFINITIONS.map(deck => {
-          const count = deck.getCount(bookmarkedCount);
-          const isSelected = selectedDeck === deck.id;
+        {decks.map(deck => {
+          const isSelected = selectedDeckId === deck.id;
           return (
             <button
               key={deck.id}
@@ -36,7 +35,6 @@ export const TrainerDeckSelector: React.FC<TrainerDeckSelectorProps> = ({
                   ? 'bg-[#2a2a2a] text-[#eab308] border border-[#eab308]/40 shadow-sm'
                   : 'text-[#888888] hover:text-white hover:bg-[#252525] border border-transparent'
               }`}
-              title={deck.description}
             >
               <span>{deck.label}</span>
               <span
@@ -44,7 +42,7 @@ export const TrainerDeckSelector: React.FC<TrainerDeckSelectorProps> = ({
                   isSelected ? 'bg-[#eab308] text-black font-black' : 'bg-[#141414] text-[#737373]'
                 }`}
               >
-                {count}
+                {deck.cases.length}
               </span>
             </button>
           );

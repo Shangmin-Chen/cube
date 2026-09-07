@@ -708,3 +708,31 @@ export const F2L_HIGHLIGHTS: AlgCase[] = [
     }
   }
 ];
+
+export const CROSS_CASES: AlgCase[] = [
+  {
+    id: 'cross-sample-1',
+    name: 'Bottom Cross Edge Insertion',
+    category: 'cross',
+    subcategory: 'Cross (C)',
+    group: 'Cross Step',
+    primaryAlg: 'D2 R F L B',
+    description: 'Align bottom cross edge with center and insert into bottom white face.',
+    tips: 'Always solve the cross on bottom during inspection.',
+    why: 'D2 aligns bottom centers while R F L B places all four edge stickers directly into white bottom face.',
+    topGrid: ['G', 'G', 'G', 'G', 'W', 'G', 'G', 'G', 'G'],
+    borderColors: {
+      top: ['G', 'G_GREEN', 'G'],
+      right: ['G', 'R', 'G'],
+      bottom: ['G', 'B', 'G'],
+      left: ['G', 'O', 'G'],
+    },
+  },
+];
+
+export const ALL_CFOP_CASES: AlgCase[] = [
+  ...CROSS_CASES,
+  ...F2L_HIGHLIGHTS,
+  ...OLL_2LOOK_CASES,
+  ...FULL_PLL_CASES,
+];

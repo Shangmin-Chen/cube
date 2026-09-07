@@ -8,11 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { parseTriggers, detectAlgBadges } from '../utils/cubeLogic';
 import {
   getAllCases,
-  STEP_DEFINITIONS,
+  getSteps,
   isValidStep,
   getCasesForStep,
   getDeckForStep,
-  type ReferenceStepId,
 } from '../services/algService';
 import { useBookmarks } from '../hooks/useBookmarks';
 import {
@@ -31,12 +30,19 @@ export const AlgReferenceTab: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMethod, setSelectedMethod] = useState<'cfop' | 'roux' | 'zz' | '2x2'>('cfop');
   
-  const activeStep: ReferenceStepId = useMemo(() => {
-    if (isValidStep(routeStep)) {
+  const { bookmarkedIds, toggleBookmark, isBookmarked } = useBookmarks();
+  const allCases = useMemo(() => getAllCases(), []);
+
+  const steps = useMemo(() => {
+    return getSteps(allCases, bookmarkedIds);
+  }, [allCases, bookmarkedIds]);
+
+  const activeStep: string = useMemo(() => {
+    if (isValidStep(routeStep, allCases, bookmarkedIds)) {
       return routeStep;
     }
     return 'oll';
-  }, [routeStep]);
+  }, [routeStep, allCases, bookmarkedIds]);
 
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(routeCaseId || null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,14 +52,10 @@ export const AlgReferenceTab: React.FC = () => {
     setSelectedCaseId(routeCaseId || null);
   }, [routeCaseId]);
 
-  const { bookmarkedIds, toggleBookmark, isBookmarked } = useBookmarks();
-
-  const allCases = useMemo(() => getAllCases(), []);
-
   // Get active cases list based on selected step & filters
   const currentStepCases = useMemo(() => {
-    return getCasesForStep(activeStep, bookmarkedIds);
-  }, [activeStep, bookmarkedIds]);
+    return getCasesForStep(activeStep, allCases, bookmarkedIds);
+  }, [activeStep, allCases, bookmarkedIds]);
 
   const filteredCases = useMemo(() => {
     if (!searchQuery.trim()) return currentStepCases;
@@ -280,9 +282,8 @@ export const AlgReferenceTab: React.FC = () => {
       {/* Persistent 1-Click CFOP Step Pipeline Bar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-[#202020] p-2 rounded-xl border border-[#2d2d2d]">
         <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
-          {STEP_DEFINITIONS.map(step => {
+          {steps.map(step => {
             const isActive = activeStep === step.id && !searchQuery.trim();
-            const badgeCount = step.getBadgeCount(allCases, bookmarkedIds.length);
             return (
               <button
                 key={step.id}
@@ -293,7 +294,7 @@ export const AlgReferenceTab: React.FC = () => {
                   setSelectedCaseId(null);
                   navigate(`/algs/${step.id}`);
                 }}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   isActive
                     ? 'bg-[#2d2d2d] text-[#eab308] border border-[#eab308]/40 shadow-none'
                     : 'text-[#888888] hover:text-white hover:bg-[#282828]'
@@ -305,7 +306,7 @@ export const AlgReferenceTab: React.FC = () => {
                     isActive ? 'bg-[#eab308] text-black font-black' : 'bg-[#191919] text-[#888888]'
                   }`}
                 >
-                  {badgeCount}
+                  {step.cases.length}
                 </span>
               </button>
             );
@@ -316,7 +317,7 @@ export const AlgReferenceTab: React.FC = () => {
         <button
           type="button"
           onClick={() => {
-            const targetDeck = getDeckForStep(activeStep);
+            const targetDeck = getDeckForStep(activeStep, allCases, bookmarkedIds);
             navigate(`/train?deck=${targetDeck}`);
           }}
           className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#eab308]/15 hover:bg-[#eab308]/25 border border-[#eab308]/40 text-[#eab308] text-xs font-bold transition-colors cursor-pointer"
