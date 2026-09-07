@@ -58,7 +58,7 @@ export const TrainerTab: React.FC = () => {
 
       {/* Empty Bookmarks Fallback State */}
       {selectedDeck === 'bookmarks' && session.baseCases.length === 0 ? (
-        <div className="p-12 text-center flex flex-col items-center gap-4 bg-gradient-to-b from-[#202020] to-[#191919] border border-[#2d2d2d] rounded-3xl shadow-xl">
+        <div className="p-12 text-center flex flex-col items-center gap-4 bg-[#202020] border border-[#2d2d2d] rounded-3xl shadow-xl">
           <div className="w-14 h-14 rounded-2xl bg-[#141414] border border-[#2d2d2d] flex items-center justify-center text-[#eab308] shadow-inner">
             <Bookmark className="w-7 h-7 stroke-[2]" />
           </div>
@@ -127,7 +127,7 @@ export const TrainerTab: React.FC = () => {
           {/* Progress Bar */}
           <div className="w-full bg-[#1e1e1e] h-1.5 rounded-full overflow-hidden border border-[#2d2d2d]">
             <div
-              className="bg-gradient-to-r from-[#eab308] via-[#818cf8] to-[#22c55e] h-full transition-all duration-300 ease-out"
+              className="bg-[#eab308] h-full transition-all duration-300 ease-out"
               style={{ width: `${session.progressPercent}%` }}
             />
           </div>

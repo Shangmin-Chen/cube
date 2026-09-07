@@ -49,7 +49,7 @@ export const FlashCard: React.FC<FlashCardProps> = ({
         }`}
       >
         {/* FRONT FACE (Pattern Recognition & 2D Vector Diagram) */}
-        <div className="absolute inset-0 w-full h-full backface-hidden bg-gradient-to-b from-[#222222] to-[#1a1a1a] border border-[#333333] hover:border-[#444444] p-6 flex flex-col justify-between rounded-3xl shadow-2xl transition-colors">
+        <div className="absolute inset-0 w-full h-full backface-hidden bg-[#202020] border border-[#333333] hover:border-[#444444] p-6 flex flex-col justify-between rounded-3xl shadow-2xl transition-colors">
           {/* Front Header */}
           <div className="flex items-center justify-between border-b border-[#2d2d2d] pb-3">
             <div className="flex items-center gap-2">
@@ -124,7 +124,7 @@ export const FlashCard: React.FC<FlashCardProps> = ({
         </div>
 
         {/* BACK FACE (Setup Scramble + Solve Formula + Mechanics) */}
-        <div className="absolute inset-0 w-full h-full backface-hidden rotate-x-180 bg-gradient-to-b from-[#222222] to-[#1a1a1a] border border-[#333333] p-6 flex flex-col justify-between rounded-3xl shadow-2xl overflow-y-auto">
+        <div className="absolute inset-0 w-full h-full backface-hidden rotate-x-180 bg-[#202020] border border-[#333333] p-6 flex flex-col justify-between rounded-3xl shadow-2xl overflow-y-auto">
           {/* Back Header */}
           <div className="flex items-center justify-between border-b border-[#2d2d2d] pb-3" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-2.5">

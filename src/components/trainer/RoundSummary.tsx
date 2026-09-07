@@ -30,7 +30,7 @@ export const RoundSummary: React.FC<RoundSummaryProps> = ({
   const accuracyPercent = totalCards > 0 ? Math.round((masteredCount / totalCards) * 100) : 0;
 
   return (
-    <div className="p-8 flex flex-col items-center gap-6 bg-gradient-to-b from-[#202020] to-[#181818] border border-[#2d2d2d] rounded-3xl shadow-2xl text-center animate-in fade-in zoom-in-95 duration-200">
+    <div className="p-8 flex flex-col items-center gap-6 bg-[#202020] border border-[#2d2d2d] rounded-3xl shadow-2xl text-center animate-in fade-in zoom-in-95 duration-200">
       <div className="w-16 h-16 rounded-3xl bg-[#eab308]/15 border border-[#eab308]/40 flex items-center justify-center text-[#eab308] shadow-lg">
         <Award className="w-8 h-8 stroke-[2.5]" />
       </div>
