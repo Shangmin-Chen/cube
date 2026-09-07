@@ -17,6 +17,8 @@ import {
   Layers,
 } from 'lucide-react';
 
+const VALID_STEPS = ['cross', 'f2l', 'oll', 'pll', 'bookmarked'] as const;
+
 export const AlgReferenceTab: React.FC = () => {
   const { step: routeStep, caseId: routeCaseId } = useParams<{ step?: string; caseId?: string }>();
   const navigate = useNavigate();
@@ -24,10 +26,9 @@ export const AlgReferenceTab: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMethod, setSelectedMethod] = useState<'cfop' | 'roux' | 'zz' | '2x2'>('cfop');
   
-  const validSteps = ['cross', 'f2l', 'oll', 'pll', 'bookmarked'] as const;
   const activeStep = useMemo(() => {
-    if (routeStep && (validSteps as readonly string[]).includes(routeStep)) {
-      return routeStep as typeof validSteps[number];
+    if (routeStep && (VALID_STEPS as readonly string[]).includes(routeStep)) {
+      return routeStep as typeof VALID_STEPS[number];
     }
     return 'oll';
   }, [routeStep]);
@@ -364,6 +365,26 @@ export const AlgReferenceTab: React.FC = () => {
             );
           })}
         </div>
+
+        {/* Quick Flashcard Drill CTA */}
+        <button
+          type="button"
+          onClick={() => {
+            const deckMap: Record<string, string> = {
+              bookmarked: 'bookmarks',
+              oll: 'oll-2look',
+              pll: 'pll-2look',
+              f2l: 'f2l',
+              cross: 'all',
+            };
+            const targetDeck = deckMap[activeStep] || 'bookmarks';
+            navigate(`/train?deck=${targetDeck}`);
+          }}
+          className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#eab308]/15 hover:bg-[#eab308]/25 border border-[#eab308]/40 text-[#eab308] text-xs font-bold transition-colors cursor-pointer"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Train in Flashcards</span>
+        </button>
       </div>
 
       {/* Main Master-Detail Workspace Grid */}
