@@ -83,13 +83,23 @@ export function invertMoveString(movesStr: string): string[] {
   }
 }
 
+function isMovePalindrome(moves: string[]): boolean {
+  if (moves.length < 3) return false;
+  for (let k = 0; k < Math.floor(moves.length / 2); k++) {
+    if (moves[k] !== moves[moves.length - 1 - k]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // Identify intuitive building-block triggers in algorithm strings for human learners
 export function parseTriggers(movesStr: string): TriggerChunk[] {
   const clean = movesStr.replace(/[\(\)\{\}]/g, ' ').trim();
   if (!clean) return [];
 
   const chunks: TriggerChunk[] = [];
-  const moves = clean.split(/\s+/);
+  const moves = clean.split(/\s+/).filter(Boolean);
   let i = 0;
 
   const startsWithPattern = (rem: string, pattern: string) => {
@@ -97,7 +107,8 @@ export function parseTriggers(movesStr: string): TriggerChunk[] {
   };
 
   while (i < moves.length) {
-    const remaining = moves.slice(i).join(' ');
+    const remainingMoves = moves.slice(i);
+    const remaining = remainingMoves.join(' ');
 
     // 11-move trigger: Double Sune (R U R' U R U' R' U R U2 R')
     if (startsWithPattern(remaining, "R U R' U R U' R' U R U2 R'")) {
@@ -132,51 +143,6 @@ export function parseTriggers(movesStr: string): TriggerChunk[] {
         type: 'sune',
       });
       i += 7;
-      continue;
-    }
-
-    // Palindromic Substring Triggers (e.g. Headlights R' U2 R / R' U2 R' / Pi R2 U' R2 U' R2)
-    if (startsWithPattern(remaining, "R2 U' R2 U' R2")) {
-      chunks.push({
-        text: "R2 U' R2 U' R2",
-        name: 'Palindrome Substring',
-        description: 'Symmetrical triple R2 U\' rotation sequence.',
-        type: 'palindrome',
-      });
-      i += 5;
-      continue;
-    }
-
-    if (startsWithPattern(remaining, "R' U2 R'")) {
-      chunks.push({
-        text: "R' U2 R'",
-        name: 'Palindrome Substring',
-        description: 'Symmetrical corner rotation trigger.',
-        type: 'palindrome',
-      });
-      i += 3;
-      continue;
-    }
-
-    if (startsWithPattern(remaining, "R' U2 R")) {
-      chunks.push({
-        text: "R' U2 R",
-        name: 'Palindrome Substring',
-        description: 'Symmetrical corner rotation trigger.',
-        type: 'palindrome',
-      });
-      i += 3;
-      continue;
-    }
-
-    if (startsWithPattern(remaining, "R U2 R'")) {
-      chunks.push({
-        text: "R U2 R'",
-        name: 'Palindrome Substring',
-        description: 'Symmetrical corner rotation trigger.',
-        type: 'palindrome',
-      });
-      i += 3;
       continue;
     }
 
@@ -264,6 +230,29 @@ export function parseTriggers(movesStr: string): TriggerChunk[] {
       continue;
     }
 
+    // Dynamic Palindrome Precalculation:
+    // Find the longest consecutive move palindrome substring starting at index i
+    let longestPalLen = 0;
+    for (let len = remainingMoves.length; len >= 3; len--) {
+      const sub = remainingMoves.slice(0, len);
+      if (isMovePalindrome(sub)) {
+        longestPalLen = len;
+        break;
+      }
+    }
+
+    if (longestPalLen > 0) {
+      const palText = remainingMoves.slice(0, longestPalLen).join(' ');
+      chunks.push({
+        text: palText,
+        name: 'Palindrome Substring',
+        description: 'Symmetrical move sequence reading identical forwards and backwards.',
+        type: 'palindrome',
+      });
+      i += longestPalLen;
+      continue;
+    }
+
     // Single move fallback
     chunks.push({
       text: moves[i],
@@ -273,14 +262,6 @@ export function parseTriggers(movesStr: string): TriggerChunk[] {
   }
 
   return chunks;
-}
-
-function getInverseMove(move: string): string {
-  const clean = move.replace(/[\(\)]/g, '').trim();
-  if (!clean) return '';
-  if (clean.includes('2')) return clean;
-  if (clean.includes("'")) return clean.replace("'", "");
-  return clean + "'";
 }
 
 // Detect overall pattern badges (Palindrome, Sexy Move, Sledgehammer, Double Sune, etc.)
@@ -297,17 +278,8 @@ export function detectAlgBadges(movesStr: string): string[] {
   // 1. Exact string palindrome (e.g. H Perm: M2 U M2 U2 M2 U M2)
   const isExactStr = moves.join(' ') === [...moves].reverse().join(' ');
 
-  // 2. Explicit Symmetrical Palindrome cases (U Case / Headlights, Pi / Bruno)
-  const isExplicitPalindrome =
-    normalizedStr.includes("R2 D R' U2 R D' R' U2 R'") ||
-    normalizedStr.includes("R2 D' R U2 R' D R U2 R") ||
-    normalizedStr.includes("R U2 R2 U' R2 U' R2 U2 R");
-
-  // 3. Symmetrical Outer Bracket (e.g. F ... F' or f ... f' with inner trigger, matching inverse of outer 2 moves)
-  const isOuterInversePair =
-    moves.length >= 5 &&
-    getInverseMove(moves[0]) === moves[moves.length - 1] &&
-    getInverseMove(moves[1]) === moves[moves.length - 2];
+  // 2. Explicit Symmetrical Palindrome cases (e.g. Pi / Bruno)
+  const isExplicitPalindrome = normalizedStr.includes("R U2 R2 U' R2 U' R2 U2 R");
 
   // Exclude non-palindromic Sune / Anti-Sune / Double Sune / Ua / Ub / Z perms
   const isSuneFamily =
@@ -318,7 +290,7 @@ export function detectAlgBadges(movesStr: string): string[] {
     normalizedStr.includes("R2 U R U R' U' R' U' R' U R'") ||
     normalizedStr.includes("M' U M2 U M2 U M' U2 M2");
 
-  if ((isExactStr || isExplicitPalindrome || isOuterInversePair) && !isSuneFamily && !isUorZPerm) {
+  if ((isExactStr || isExplicitPalindrome) && !isSuneFamily && !isUorZPerm) {
     badges.push('Palindrome');
   }
 
