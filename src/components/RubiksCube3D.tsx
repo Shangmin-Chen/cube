@@ -23,7 +23,7 @@ interface CubieState {
 interface RubiksCube3DProps {
   initialAlgorithm?: string;
   autoPlay?: boolean;
-  highlightMode?: 'all' | 'cross' | 'f2l' | 'oll' | 'pll';
+  highlightMode?: 'all' | 'cross' | 'f2l' | 'oll' | 'pll' | string;
   showControls?: boolean;
   size?: string;
   mode?: 'algorithm' | 'scramble';

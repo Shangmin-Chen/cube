@@ -14,7 +14,7 @@ function shuffleArray<T>(array: T[]): T[] {
   return arr;
 }
 
-export function useTrainerSession(deckId: string, bookmarkedIds: string[]) {
+export function useTrainerSession(deckId: string, bookmarkedIds: string[], methodId = 'cfop') {
   const [isShuffled, setIsShuffled] = useState<boolean>(true);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -25,7 +25,7 @@ export function useTrainerSession(deckId: string, bookmarkedIds: string[]) {
   const [learningIds, setLearningIds] = useState<Set<string>>(new Set());
   const [copiedType, setCopiedType] = useState<'setup' | 'solve' | null>(null);
 
-  const allCases = useMemo(() => getAllCases(), []);
+  const allCases = useMemo(() => getAllCases(methodId), [methodId]);
 
   // Raw cases for the dynamically resolved deck
   const baseCases = useMemo(() => {

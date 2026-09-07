@@ -1,4 +1,4 @@
-import type { AlgCase } from '../types/cube';
+import type { AlgCase, MethodStep, AlgMethod } from '../types/cube';
 
 export const OLL_2LOOK_CASES: AlgCase[] = [
   // Edges (Orient Edges first if no yellow cross)
@@ -736,3 +736,19 @@ export const ALL_CFOP_CASES: AlgCase[] = [
   ...OLL_2LOOK_CASES,
   ...FULL_PLL_CASES,
 ];
+
+export const CFOP_STEPS: MethodStep[] = [
+  { id: 'cross', label: 'Step 1: CROSS', description: 'Solve bottom 4 cross edges aligned with side centers' },
+  { id: 'f2l', label: 'Step 2: F2L', description: 'Solve first two layers simultaneously (corner + edge pairs)' },
+  { id: 'oll', label: 'Step 3: OLL', description: 'Orient last layer yellow pieces (2-Look & Full)' },
+  { id: 'pll', label: 'Step 4: PLL', description: 'Permute last layer yellow pieces into solved state' },
+];
+
+export const CFOP_METHOD: AlgMethod = {
+  id: 'cfop',
+  name: '2-Look CFOP Method',
+  description: 'Fridrich / CFOP system (Cross, F2L, 2-Look OLL, 2-Look PLL)',
+  steps: CFOP_STEPS,
+  cases: ALL_CFOP_CASES,
+  isAvailable: true,
+};

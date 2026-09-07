@@ -12,6 +12,7 @@ import {
   isValidStep,
   getCasesForStep,
   getDeckForStep,
+  getAvailableMethods,
 } from '../services/algService';
 import { useBookmarks } from '../hooks/useBookmarks';
 import {
@@ -28,21 +29,23 @@ export const AlgReferenceTab: React.FC = () => {
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMethod, setSelectedMethod] = useState<'cfop' | 'roux' | 'zz' | '2x2'>('cfop');
+  const [selectedMethod, setSelectedMethod] = useState<string>('cfop');
   
   const { bookmarkedIds, toggleBookmark, isBookmarked } = useBookmarks();
-  const allCases = useMemo(() => getAllCases(), []);
+  const availableMethods = useMemo(() => getAvailableMethods(), []);
+
+  const allCases = useMemo(() => getAllCases(selectedMethod), [selectedMethod]);
 
   const steps = useMemo(() => {
-    return getSteps(allCases, bookmarkedIds);
-  }, [allCases, bookmarkedIds]);
+    return getSteps(selectedMethod, bookmarkedIds);
+  }, [selectedMethod, bookmarkedIds]);
 
   const activeStep: string = useMemo(() => {
-    if (isValidStep(routeStep, allCases, bookmarkedIds)) {
+    if (isValidStep(routeStep, selectedMethod, bookmarkedIds)) {
       return routeStep;
     }
-    return 'oll';
-  }, [routeStep, allCases, bookmarkedIds]);
+    return steps[0]?.id || 'oll';
+  }, [routeStep, selectedMethod, bookmarkedIds, steps]);
 
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(routeCaseId || null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -54,8 +57,8 @@ export const AlgReferenceTab: React.FC = () => {
 
   // Get active cases list based on selected step & filters
   const currentStepCases = useMemo(() => {
-    return getCasesForStep(activeStep, allCases, bookmarkedIds);
-  }, [activeStep, allCases, bookmarkedIds]);
+    return getCasesForStep(activeStep, selectedMethod, bookmarkedIds);
+  }, [activeStep, selectedMethod, bookmarkedIds]);
 
   const filteredCases = useMemo(() => {
     if (!searchQuery.trim()) return currentStepCases;
@@ -171,13 +174,26 @@ export const AlgReferenceTab: React.FC = () => {
               <select
                 aria-label="Select Cubing Algorithm Collection"
                 value={selectedMethod}
-                onChange={e => setSelectedMethod(e.target.value as 'cfop' | 'roux' | 'zz' | '2x2')}
+                onChange={e => {
+                  const newMethod = e.target.value;
+                  setSelectedMethod(newMethod);
+                  const methodSteps = getSteps(newMethod, bookmarkedIds);
+                  if (methodSteps.length > 0) {
+                    navigate(`/algs/${methodSteps[0].id}`);
+                  }
+                }}
                 className="bg-transparent text-[#eab308] font-bold focus:outline-none cursor-pointer"
               >
-                <option value="cfop" className="bg-[#202020] text-white">2-Look CFOP Method</option>
-                <option value="roux" disabled className="bg-[#202020] text-[#888888]">Roux Method (Coming Soon)</option>
-                <option value="zz" disabled className="bg-[#202020] text-[#888888]">ZZ Method (Coming Soon)</option>
-                <option value="2x2" disabled className="bg-[#202020] text-[#888888]">2x2 Methods (Coming Soon)</option>
+                {availableMethods.map(method => (
+                  <option
+                    key={method.id}
+                    value={method.id}
+                    disabled={!method.isAvailable}
+                    className={`bg-[#202020] ${method.isAvailable ? 'text-white' : 'text-[#888888]'}`}
+                  >
+                    {method.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -317,7 +333,7 @@ export const AlgReferenceTab: React.FC = () => {
         <button
           type="button"
           onClick={() => {
-            const targetDeck = getDeckForStep(activeStep, allCases, bookmarkedIds);
+            const targetDeck = getDeckForStep(activeStep, selectedMethod, bookmarkedIds);
             navigate(`/train?deck=${targetDeck}`);
           }}
           className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#eab308]/15 hover:bg-[#eab308]/25 border border-[#eab308]/40 text-[#eab308] text-xs font-bold transition-colors cursor-pointer"
