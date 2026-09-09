@@ -277,20 +277,7 @@ export function detectAlgBadges(movesStr: string): string[] {
 
   // 1. Exact string palindrome (e.g. H Perm: M2 U M2 U2 M2 U M2)
   const isExactStr = moves.join(' ') === [...moves].reverse().join(' ');
-
-  // 2. Explicit Symmetrical Palindrome cases (e.g. Pi / Bruno)
-  const isExplicitPalindrome = normalizedStr.includes("R U2 R2 U' R2 U' R2 U2 R");
-
-  // Exclude non-palindromic Sune / Anti-Sune / Double Sune / Ua / Ub / Z perms
-  const isSuneFamily =
-    normalizedStr.includes("R U R' U R U2 R'") ||
-    normalizedStr.includes("R U2 R' U' R U' R'");
-  const isUorZPerm =
-    normalizedStr.includes("R U' R U R U R U' R' U' R2") ||
-    normalizedStr.includes("R2 U R U R' U' R' U' R' U R'") ||
-    normalizedStr.includes("M' U M2 U M2 U M' U2 M2");
-
-  if ((isExactStr || isExplicitPalindrome) && !isSuneFamily && !isUorZPerm) {
+  if (isExactStr) {
     badges.push('Palindrome');
   }
 
