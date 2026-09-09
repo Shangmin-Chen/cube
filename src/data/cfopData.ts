@@ -379,8 +379,8 @@ export const FULL_PLL_CASES: AlgCase[] = [
     subcategory: 'Full PLL',
     group: 'Diagonal Corners',
     primaryAlg: "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
-    description: 'Swaps two pairs of adjacent corners simultaneously.',
-    why: "Uses D slice turns to swap front-left with front-right and back-left with back-right simultaneously.",
+    description: 'Diagonal corner swap (ENVY family) with zero headlights.',
+    why: "Uses D slice commutators to solve diagonal corner displacement by swapping pairs across opposing sides without disturbing edges.",
     probability: '1/36',
     topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
     borderColors: {
