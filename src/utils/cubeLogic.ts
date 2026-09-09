@@ -65,7 +65,7 @@ export function parseMoveString(movesStr: string): string[] {
 export function invertMoveString(movesStr: string): string[] {
   try {
     const alg = new Alg(movesStr);
-    const invertedStr = alg.expand().invert().toString();
+    const invertedStr = alg.expand().invert().toString().replace(/2'/g, '2');
     return invertedStr.split(/\s+/).filter(Boolean);
   } catch {
     const parsed = parseMoveString(movesStr);
