@@ -170,8 +170,9 @@ export const TimerTab: React.FC = () => {
   const timesArray = solves.map(s => (s.penalty === 'DNF' ? -1 : s.time + (s.penalty === '+2' ? 2000 : 0)));
   const validTimes = timesArray.filter(t => t > 0);
   const bestTime = validTimes.length > 0 ? Math.min(...validTimes) : null;
-  const ao5 = calculateAO(timesArray, 5);
-  const ao12 = calculateAO(timesArray, 12);
+  const oldestFirstTimes = [...timesArray].reverse();
+  const ao5 = calculateAO(oldestFirstTimes, 5);
+  const ao12 = calculateAO(oldestFirstTimes, 12);
 
   return (
     <div className="flex flex-col gap-6 max-w-6xl mx-auto py-4">
