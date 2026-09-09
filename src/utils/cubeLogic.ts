@@ -337,9 +337,13 @@ export function formatTime(ms: number): string {
   return `${remSec}.${msStr}`;
 }
 
+/**
+ * Calculates the Average of N (e.g. Ao5, Ao12) according to WCA rules.
+ * Expects times in newest-first queue order (index 0 is the most recent solve).
+ */
 export function calculateAO(times: number[], count: number): number | null {
   if (times.length < count) return null;
-  const recent = times.slice(-count);
+  const recent = times.slice(0, count);
   const dnfCount = recent.filter(t => t < 0).length;
   if (dnfCount >= 2) return -1;
 
