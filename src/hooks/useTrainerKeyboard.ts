@@ -32,6 +32,10 @@ export function useTrainerKeyboard({
         return;
       }
 
+      if (e.ctrlKey || e.metaKey || e.altKey) {
+        return;
+      }
+
       switch (e.code) {
         case 'Space':
         case 'Enter':
