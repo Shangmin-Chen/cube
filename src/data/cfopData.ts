@@ -377,7 +377,7 @@ export const FULL_PLL_CASES: AlgCase[] = [
     name: 'E Permutation',
     category: 'pll',
     subcategory: 'Full PLL',
-    group: 'Diagonal Corners',
+    group: 'Adjacent Corners',
     primaryAlg: "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
     description: 'Swaps two pairs of adjacent corners simultaneously.',
     why: "Uses D slice turns to swap front-left with front-right and back-left with back-right simultaneously.",
