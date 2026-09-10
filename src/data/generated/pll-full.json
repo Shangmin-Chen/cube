@@ -5,7 +5,7 @@
     "category": "pll",
     "subcategory": "Full PLL",
     "group": "Adjacent Corners",
-    "primaryAlg": "x L2 D2 L' U' L D2 L' U L'",
+    "primaryAlg": "x L2 D2 L' U' L D2 L' U L' x'",
     "alternativeAlgs": [
       "y' x' L' U L' D2 L U' L' D2 L2",
       "y x R' U R' D2 R U' R' D2 R2",
@@ -21,7 +21,7 @@
     "category": "pll",
     "subcategory": "Full PLL",
     "group": "Adjacent Corners",
-    "primaryAlg": "x' L2 D2 L U L' D2 L U' L",
+    "primaryAlg": "x' L2 D2 L U L' D2 L U' L x",
     "alternativeAlgs": [
       "y x L U' L D2 L' U L D2 L2",
       "y2 x R2 D2 R U R' D2 R U' R",
@@ -37,7 +37,7 @@
     "category": "pll",
     "subcategory": "Full PLL",
     "group": "Diagonal Corners",
-    "primaryAlg": "x' L' U L D' L' U' L D L' U' L D' L' U L D",
+    "primaryAlg": "x' L' U L D' L' U' L D L' U' L D' L' U L D x",
     "alternativeAlgs": [
       "x' R U' R' D R U R' D' R U R' D R U' R' D'"
     ],
@@ -134,7 +134,7 @@
     "category": "pll",
     "subcategory": "Full PLL",
     "group": "Adjacent Corners",
-    "primaryAlg": "x R2 F R F' R U2 r' U r U2",
+    "primaryAlg": "x R2 F R F' R U2 r' U r U2 x'",
     "alternativeAlgs": [
       "y2 L' U' L F L' U' L U L F' L2 U L",
       "y' R' U L' U2 R U' R' U2 R L"
@@ -149,7 +149,7 @@
     "category": "pll",
     "subcategory": "Full PLL",
     "group": "Adjacent Corners",
-    "primaryAlg": "R U R' F' R U R' U' R' F R2 U' R'",
+    "primaryAlg": "R U R' F' R U R' U' R' F R2 U' R' U'",
     "alternativeAlgs": [],
     "probability": "1/18",
     "description": "Jb Permutation case. Permutes last layer pieces without disturbing orientation.",
@@ -189,7 +189,7 @@
     "category": "pll",
     "subcategory": "Full PLL",
     "group": "Adjacent Corners",
-    "primaryAlg": "R U' R' U' R U R D R' U' R D' R' U2 R'",
+    "primaryAlg": "R U' R' U' R U R D R' U' R D' R' U2 R' U'",
     "alternativeAlgs": [
       "R U R' F' R U2 R' U2 R' F R U R U2 R'",
       "y' L U2 L' U2 L F' L' U' L U L F L2"
@@ -204,7 +204,7 @@
     "category": "pll",
     "subcategory": "Full PLL",
     "group": "Adjacent Corners",
-    "primaryAlg": "R2 F R U R U' R' F' R U2 R' U2 R",
+    "primaryAlg": "R2 F R U R U' R' F' R U2 R' U2 R U'",
     "alternativeAlgs": [
       "y' R' U2 R U2 R' F R U R' U' R' F' R2",
       "R' U2 R' D' R U' R' D R U R U' R' U' R"
@@ -262,7 +262,7 @@
     "category": "pll",
     "subcategory": "Full PLL",
     "group": "Diagonal Corners",
-    "primaryAlg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+    "primaryAlg": "R' U R' U' y R' F' R2 U' R' U R' F R F y'",
     "alternativeAlgs": [
       "R' U R' U' R D' R' D R' U D' R2 U' R2 D R2",
       "z D' R2 D R2 U R' D' R U' R U R' D R U' z'",
@@ -293,7 +293,7 @@
     "category": "pll",
     "subcategory": "Full PLL",
     "group": "Edges Only",
-    "primaryAlg": "M' U M2 U M2 U M' U2 M2",
+    "primaryAlg": "M' U M2 U M2 U M' U2 M2 U'",
     "alternativeAlgs": [
       "y M' U' M2 U' M2 U' M' U2 M2",
       "y M2 U M2 U M' U2 M2 U2 M'",

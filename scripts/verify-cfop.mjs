@@ -52,8 +52,54 @@ async function runVerification() {
     console.log(`✓ Validated all algorithms in ${set.name}`);
   }
 
+  // --- Semantic Invariant Tests (Finding 3) ---
+  console.log('--- Running Semantic Invariant Tests ---');
+  const allPllCases = [...pll2Look, ...pllFull];
+
+  // 1. Centers identity invariant for all PLL primary algorithms
+  for (const c of allPllCases) {
+    const transf = kpuzzle.algToTransformation(new Alg(c.primaryAlg));
+    const centers = transf.transformationData.CENTERS.permutation;
+    const isCentersIdentity = centers.every((val, idx) => val === idx);
+    if (!isCentersIdentity) {
+      throw new Error(`Semantic invariant failure: CENTERS not identity for ${c.id} (${c.primaryAlg}). Got: ${JSON.stringify(centers)}`);
+    }
+  }
+  console.log('✓ Invariant 1: All PLL algorithms preserve CENTERS permutation [0, 1, 2, 3, 4, 5]');
+
+  // 2. Edges-Only PLLs: corners must be strictly identity permutation and zero orientation
+  const edgesOnlyIds = [
+    'pll-z',
+    'pll-h',
+    'pll-ua',
+    'pll-ub',
+    'pll-2look-zperm',
+    'pll-2look-hperm',
+    'pll-2look-ua',
+    'pll-2look-ub',
+  ];
+
+  for (const id of edgesOnlyIds) {
+    const c = allPllCases.find(item => item.id === id);
+    if (!c) throw new Error(`Missing expected edges-only PLL case: ${id}`);
+    const transf = kpuzzle.algToTransformation(new Alg(c.primaryAlg));
+    const cornersPerm = transf.transformationData.CORNERS.permutation;
+    const cornersOri = transf.transformationData.CORNERS.orientationDelta;
+
+    const isCornersIdentity = cornersPerm.every((val, idx) => val === idx);
+    const isCornersOriZero = cornersOri.every(val => val === 0);
+
+    if (!isCornersIdentity) {
+      throw new Error(`Semantic invariant failure: CORNERS permutation not identity for ${id} (${c.primaryAlg}). Got: ${JSON.stringify(cornersPerm)}`);
+    }
+    if (!isCornersOriZero) {
+      throw new Error(`Semantic invariant failure: CORNERS orientation not all 0 for ${id} (${c.primaryAlg}). Got: ${JSON.stringify(cornersOri)}`);
+    }
+  }
+  console.log('✓ Invariant 2: Edges-Only PLLs leave all CORNERS in identity permutation and 0 orientation delta');
+
   console.log(`✓ Total algorithm variations successfully simulated: ${totalSimulated}`);
-  console.log('--- All verifications passed! ---');
+  console.log('--- All verifications and semantic invariant checks passed! ---');
 }
 
 runVerification().catch(err => {

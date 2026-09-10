@@ -18,6 +18,27 @@ const ENDPOINTS = {
 };
 
 /**
+ * Canonical overrides / patch map to correct third-party dropped AUFs and balancing rotations.
+ */
+const CANONICAL_OVERRIDES = {
+  // 1. Ensure trailing U' is appended so corners stay strictly identity [0..7]
+  'pll-2look-zperm': "M' U M2 U M2 U M' U2 M2 U'",
+  'pll-z': "M' U M2 U M2 U M' U2 M2 U'",
+  // 2. Ensure closing y' is appended so centers stay identity [0..5]
+  'pll-v': "R' U R' U' y R' F' R2 U' R' U R' F R F y'",
+  // 3. Ensure trailing U' is appended
+  'pll-jb': "R U R' F' R U R' U' R' F R2 U' R' U'",
+  // 4. Ensure trailing U' is appended
+  'pll-ra': "R U' R' U' R U R D R' U' R D' R' U2 R' U'",
+  'pll-rb': "R2 F R U R U' R' F' R U2 R' U2 R U'",
+  // 5. Ensure balanced rotations (closing x' or x) so centers stay identity [0..5]
+  'pll-aa': "x L2 D2 L' U' L D2 L' U L' x'",
+  'pll-ab': "x' L2 D2 L U L' D2 L U' L x",
+  'pll-e': "x' L' U L D' L' U' L D L' U' L D' L' U L D x",
+  'pll-ja': "x R2 F R F' R U2 r' U r U2 x'",
+};
+
+/**
  * Fetch and extract algsetAlgs array from a J Perm remote endpoint
  */
 async function fetchAlgset(url) {
@@ -277,7 +298,8 @@ function transform2LookPLL(rawAlgs, kpuzzle) {
       why: `Permute ${item.group?.includes('Corners') ? 'corners' : 'edges'} into solved position.`,
     };
 
-    const primaryAlg = normalizeAlg(item.alg[0]);
+    const rawPrimary = CANONICAL_OVERRIDES[meta.id] || item.alg[0];
+    const primaryAlg = normalizeAlg(rawPrimary);
     validateAlg(kpuzzle, primaryAlg, meta.id);
 
     const alternativeAlgs = (item.alg.slice(1) || []).map(algStr => {
@@ -432,7 +454,8 @@ function transformFullPLL(rawAlgs, kpuzzle) {
     // Probability: prob 4 -> 4/72 = 1/18, prob 2 -> 2/72 = 1/36, prob 1 -> 1/72
     const probStr = item.prob === 4 ? '1/18' : item.prob === 2 ? '1/36' : '1/72';
 
-    const primaryAlg = normalizeAlg(item.alg[0]);
+    const rawPrimary = CANONICAL_OVERRIDES[id] || item.alg[0];
+    const primaryAlg = normalizeAlg(rawPrimary);
     validateAlg(kpuzzle, primaryAlg, id);
 
     const alternativeAlgs = (item.alg.slice(1) || []).map(algStr => {

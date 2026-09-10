@@ -178,9 +178,10 @@ export const AlgReferenceTab: React.FC = () => {
                   const newMethod = e.target.value;
                   setSelectedMethod(newMethod);
                   const methodSteps = getSteps(newMethod, bookmarkedIds);
-                  if (methodSteps.length > 0) {
-                    navigate(`/algs/${methodSteps[0].id}`);
-                  }
+                  const targetStep = isValidStep(activeStep, newMethod, bookmarkedIds)
+                    ? activeStep
+                    : (methodSteps[0]?.id || 'oll');
+                  navigate(`/algs/${targetStep}`);
                 }}
                 className="bg-transparent text-[#eab308] font-bold focus:outline-none cursor-pointer"
               >

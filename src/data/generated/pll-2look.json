@@ -77,7 +77,7 @@
     "category": "pll",
     "subcategory": "2-Look PLL",
     "group": "Edges (Look 2)",
-    "primaryAlg": "M' U (M2 U M2 U) M' U2 M2",
+    "primaryAlg": "M' U M2 U M2 U M' U2 M2 U'",
     "alternativeAlgs": [
       "M' U' (M2 U' M2 U') M' U2 M2"
     ],
