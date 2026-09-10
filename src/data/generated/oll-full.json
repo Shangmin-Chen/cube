@@ -19,8 +19,8 @@
     "group": "Dot",
     "primaryAlg": "r U r' U2 r U2 R' U2 R U' r'",
     "alternativeAlgs": [
-      "y' F R U R' U' F' f R U R' U' f'",
-      "y' F R U R' U' S R U R' U' f'"
+      "y' F R U R' U' F' f R U R' U' f' y",
+      "y' F R U R' U' S R U R' U' f' y"
     ],
     "probability": "1/54",
     "description": "OLL Case 2 (Dot group).",
@@ -34,8 +34,8 @@
     "group": "Dot",
     "primaryAlg": "r' R2 U R' U r U2 r' U M'",
     "alternativeAlgs": [
-      "y F U R U' R' F' U F R U R' U' F'",
-      "y' f R U R' U' f' U' F R U R' U' F'"
+      "y F U R U' R' F' U F R U R' U' F' y'",
+      "y' f R U R' U' f' U' F R U R' U' F' y"
     ],
     "probability": "1/54",
     "description": "OLL Case 3 (Dot group).",
@@ -49,8 +49,8 @@
     "group": "Dot",
     "primaryAlg": "M U' r U2 r' U' R U' R' M'",
     "alternativeAlgs": [
-      "y F U R U' R' F' U' F R U R' U' F'",
-      "y' f R U R' U' f' U F R U R' U' F'"
+      "y F U R U' R' F' U' F R U R' U' F' y'",
+      "y' f R U R' U' f' U F R U R' U' F' y"
     ],
     "probability": "1/54",
     "description": "OLL Case 4 (Dot group).",
@@ -169,7 +169,7 @@
     "group": "Knight Move Shape",
     "primaryAlg": "F U R U' R2 F' R U R U' R'",
     "alternativeAlgs": [
-      "r U' r' U' r U r' y' R' U R"
+      "r U' r' U' r U r' y' R' U R y"
     ],
     "probability": "1/54",
     "description": "OLL Case 13 (Knight Move Shape group).",
@@ -235,7 +235,7 @@
     "group": "Dot",
     "primaryAlg": "r U R' U R U2 r' r' U' R U' R' U2 r",
     "alternativeAlgs": [
-      "y R U2 R' R' F R F' U2 M' (U R U' r')"
+      "y R U2 R' R' F R F' U2 M' (U R U' r') y'"
     ],
     "probability": "1/54",
     "description": "OLL Case 18 (Dot group).",
@@ -275,7 +275,7 @@
     "group": "Cross",
     "primaryAlg": "R U2 R' U' R U R' U' R U' R'",
     "alternativeAlgs": [
-      "y R U R' U R U' R' U R U2 R'"
+      "y R U R' U R U' R' U R U2 R' y'"
     ],
     "probability": "1/108",
     "description": "OLL Case 21 (Cross group).",
@@ -315,7 +315,7 @@
     "group": "Cross",
     "primaryAlg": "r U R' U' r' F R F'",
     "alternativeAlgs": [
-      "y R U R D R' U' R D' R2"
+      "y R U R D R' U' R D' R2 y'"
     ],
     "probability": "1/54",
     "description": "OLL Case 24 (Cross group).",
@@ -329,7 +329,7 @@
     "group": "Cross",
     "primaryAlg": "F' r U R' U' r' F R",
     "alternativeAlgs": [
-      "y' R' F R B' R' F' R B"
+      "y' R' F R B' R' F' R B y"
     ],
     "probability": "1/54",
     "description": "OLL Case 25 (Cross group).",
@@ -343,7 +343,7 @@
     "group": "Cross",
     "primaryAlg": "(R U2 R') U' R U' R'",
     "alternativeAlgs": [
-      "y' R' U' R U' R' U2 R"
+      "y' R' U' R U' R' U2 R y"
     ],
     "probability": "1/54",
     "description": "OLL Case 26 (Cross group).",
@@ -357,7 +357,7 @@
     "group": "Cross",
     "primaryAlg": "R U R' U R U2 R'",
     "alternativeAlgs": [
-      "y' R' U2 (R U R' U) R"
+      "y' R' U2 (R U R' U) R y"
     ],
     "probability": "1/54",
     "description": "OLL Case 27 (Cross group).",
@@ -616,7 +616,7 @@
     "primaryAlg": "R' U' R' F R F' R' F R F' U R",
     "alternativeAlgs": [
       "F' L' U' L U L' U' L U F",
-      "y' F U R U' R' F' R U R' U R U2 R'"
+      "y' F U R U' R' F' R U R' U R U2 R' y"
     ],
     "probability": "1/54",
     "description": "OLL Case 47 (Small L Shape group).",
@@ -681,7 +681,7 @@
     "primaryAlg": "R U R' U R U' B U' B' R'",
     "alternativeAlgs": [
       "y2 R' F' U' F U' (R U R' U) R",
-      "R U R' U R U' y R U' R' F'"
+      "R U R' U R U' y R U' R' F' y'"
     ],
     "probability": "1/54",
     "description": "OLL Case 52 (I Shape group).",
@@ -696,7 +696,7 @@
     "primaryAlg": "l' U2 L U L' U' L U L' U l",
     "alternativeAlgs": [
       "y2 r' U2 (R U R' U') R U R' U r",
-      "y r' U' R U' R' U R U' R' U2 r"
+      "y r' U' R U' R' U R U' R' U2 r y'"
     ],
     "probability": "1/54",
     "description": "OLL Case 53 (Small L Shape group).",
@@ -710,7 +710,7 @@
     "group": "Small L Shape",
     "primaryAlg": "(r U2 R' U') R U R' U' R U' r'",
     "alternativeAlgs": [
-      "y r U R' U R U' R' U R U2 r'"
+      "y r U R' U R U' R' U R U2 r' y'"
     ],
     "probability": "1/54",
     "description": "OLL Case 54 (Small L Shape group).",
@@ -724,7 +724,7 @@
     "group": "I Shape",
     "primaryAlg": "R' F R U R U' R2 F' R2 U' R' U R U R'",
     "alternativeAlgs": [
-      "y R U2 R2 U' R U' R' U2 F R F'"
+      "y R U2 R2 U' R U' R' U2 F R F' y'"
     ],
     "probability": "1/108",
     "description": "OLL Case 55 (I Shape group).",

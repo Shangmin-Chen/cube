@@ -39,7 +39,7 @@
     "group": "Diagonal Corners",
     "primaryAlg": "x' L' U L D' L' U' L D L' U' L D' L' U L D x",
     "alternativeAlgs": [
-      "x' R U' R' D R U R' D' R U R' D R U' R' D'"
+      "x' R U' R' D R U R' D' R U R' D R U' R' D' x"
     ],
     "probability": "1/36",
     "description": "E Permutation case. Permutes last layer pieces without disturbing orientation.",
@@ -65,7 +65,7 @@
     "group": "G Perms",
     "primaryAlg": "R2 U R' U R' U' R U' R2 (U' D) R' U R D'",
     "alternativeAlgs": [
-      "R2 u R' U R' U' R u' R2 y' R' U R"
+      "R2 u R' U R' U' R u' R2 y' R' U R y"
     ],
     "probability": "1/18",
     "description": "Ga Permutation case. Permutes last layer pieces without disturbing orientation.",
@@ -79,7 +79,7 @@
     "group": "G Perms",
     "primaryAlg": "R' U' R (U D') R2 U R' U R U' R U' R2 D",
     "alternativeAlgs": [
-      "y F' U' F R2 u R' U R U' R u' R2"
+      "y F' U' F R2 u R' U R U' R u' R2 y'"
     ],
     "probability": "1/18",
     "description": "Gb Permutation case. Permutes last layer pieces without disturbing orientation.",
@@ -94,7 +94,7 @@
     "primaryAlg": "R2 U' R U' R U R' U R2 (U D') R U' R' D",
     "alternativeAlgs": [
       "y2 R2 F2 R U2 R U2 R' F R U R' U' R' F R2",
-      "R2 u' R U' R U R' u R2 y R U' R'"
+      "R2 u' R U' R U R' u R2 y R U' R' y'"
     ],
     "probability": "1/18",
     "description": "Gc Permutation case. Permutes last layer pieces without disturbing orientation.",
@@ -108,7 +108,7 @@
     "group": "G Perms",
     "primaryAlg": "R U R' (U' D) R2 U' R U' R' U R' U R2 D'",
     "alternativeAlgs": [
-      "R U R' y' R2 u' R U' R' U R' u R2"
+      "R U R' y' R2 u' R U' R' U R' u R2 y"
     ],
     "probability": "1/18",
     "description": "Gd Permutation case. Permutes last layer pieces without disturbing orientation.",
@@ -136,8 +136,8 @@
     "group": "Adjacent Corners",
     "primaryAlg": "x R2 F R F' R U2 r' U r U2 x'",
     "alternativeAlgs": [
-      "y2 L' U' L F L' U' L U L F' L2 U L",
-      "y' R' U L' U2 R U' R' U2 R L"
+      "y2 L' U' L F L' U' L U L F' L2 U L U'",
+      "y' R' U L' U2 R U' R' U2 R L y U'"
     ],
     "probability": "1/18",
     "description": "Ja Permutation case. Permutes last layer pieces without disturbing orientation.",
@@ -163,7 +163,7 @@
     "group": "Diagonal Corners",
     "primaryAlg": "R U R' U R U R' F' R U R' U' R' F R2 U' R' U2 R U' R'",
     "alternativeAlgs": [
-      "z U R' D R2 U' R D' U R' D R2 U' R D'"
+      "z U R' D R2 U' R D' U R' D R2 U' R D' z'"
     ],
     "probability": "1/72",
     "description": "Na Permutation case. Permutes last layer pieces without disturbing orientation.",
@@ -177,7 +177,7 @@
     "group": "Diagonal Corners",
     "primaryAlg": "R' (U R U' R') F' U' F R U R' F R' F' R U' R",
     "alternativeAlgs": [
-      "z D' R U' R2 D R' U D' R U' R2 D R' U"
+      "z D' R U' R2 D R' U D' R U' R2 D R' U z'"
     ],
     "probability": "1/72",
     "description": "Nb Permutation case. Permutes last layer pieces without disturbing orientation.",
@@ -191,8 +191,8 @@
     "group": "Adjacent Corners",
     "primaryAlg": "R U' R' U' R U R D R' U' R D' R' U2 R' U'",
     "alternativeAlgs": [
-      "R U R' F' R U2 R' U2 R' F R U R U2 R'",
-      "y' L U2 L' U2 L F' L' U' L U L F L2"
+      "R U R' F' R U2 R' U2 R' F R U R U2 R' U'",
+      "y' L U2 L' U2 L F' L' U' L U L F L2 y U"
     ],
     "probability": "1/18",
     "description": "Ra Permutation case. Permutes last layer pieces without disturbing orientation.",
@@ -204,10 +204,10 @@
     "category": "pll",
     "subcategory": "Full PLL",
     "group": "Adjacent Corners",
-    "primaryAlg": "R2 F R U R U' R' F' R U2 R' U2 R U'",
+    "primaryAlg": "R2 F R U R U' R' F' R U2 R' U2 R U",
     "alternativeAlgs": [
-      "y' R' U2 R U2 R' F R U R' U' R' F' R2",
-      "R' U2 R' D' R U' R' D R U R U' R' U' R"
+      "y' R' U2 R U2 R' F R U R' U' R' F' R2 y U'",
+      "R' U2 R' D' R U' R' D R U R U' R' U' R U'"
     ],
     "probability": "1/18",
     "description": "Rb Permutation case. Permutes last layer pieces without disturbing orientation.",
@@ -267,7 +267,7 @@
       "R' U R' U' R D' R' D R' U D' R2 U' R2 D R2",
       "z D' R2 D R2 U R' D' R U' R U R' D R U' z'",
       "R U2 R' D R U' R U' R U R2 D R' U' R D2",
-      "x' R' F R F' U R U2 R' U' R U' R' U2 R U R' U'"
+      "x' R' F R F' U R U2 R' U' R U' R' U2 R U R' U' x"
     ],
     "probability": "1/18",
     "description": "V Permutation case. Permutes last layer pieces without disturbing orientation.",
@@ -295,9 +295,9 @@
     "group": "Edges Only",
     "primaryAlg": "M' U M2 U M2 U M' U2 M2 U'",
     "alternativeAlgs": [
-      "y M' U' M2 U' M2 U' M' U2 M2",
-      "y M2 U M2 U M' U2 M2 U2 M'",
-      "M2 U' M2 U' M' U2 M2 U2 M'"
+      "y M' U' M2 U' M2 U' M' U2 M2 y' U",
+      "y M2 U M2 U M' U2 M2 U2 M' y' U2",
+      "M2 U' M2 U' M' U2 M2 U2 M' U2"
     ],
     "probability": "1/36",
     "description": "Z Permutation case. Permutes last layer pieces without disturbing orientation.",
