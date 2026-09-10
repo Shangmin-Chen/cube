@@ -613,25 +613,6 @@ export const FULL_PLL_CASES: AlgCase[] = [
       bottom: ['G_GREEN', 'B', 'R'],
       left: ['O', 'G_GREEN', 'O'],
     }
-  },
-  {
-    id: 'pll-w',
-    name: 'W Permutation',
-    category: 'pll',
-    subcategory: 'Full PLL',
-    group: 'Diagonal Corners',
-    primaryAlg: "R' U R' U' R D' R' D R' U D' R2 U' R2 D R2",
-    alternativeAlgs: ["R U R' F' R U R' U' R' F R U' R' F R F'"],
-    description: 'Staircase pattern of matching colors.',
-    why: "Uses D' slice steps to shift staircase corner and edge patterns into solved spots.",
-    probability: '1/18',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'R', 'B'],
-      right: ['R', 'G_GREEN', 'O'],
-      bottom: ['G_GREEN', 'O', 'G_GREEN'],
-      left: ['O', 'B', 'R'],
-    }
   }
 ];
 
