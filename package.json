@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sync:algs": "node scripts/sync-algorithms.mjs",
+    "verify:algs": "node scripts/verify-cfop.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",

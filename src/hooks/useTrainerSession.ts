@@ -14,7 +14,7 @@ function shuffleArray<T>(array: T[]): T[] {
   return arr;
 }
 
-export function useTrainerSession(deckId: string, bookmarkedIds: string[], methodId = 'cfop') {
+export function useTrainerSession(deckId: string, bookmarkedIds: string[], methodId = 'cfop-4look') {
   const [isShuffled, setIsShuffled] = useState<boolean>(true);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -55,10 +55,10 @@ export function useTrainerSession(deckId: string, bookmarkedIds: string[], metho
     []
   );
 
-  // Sync active queue when deck selection changes
+  // Sync active queue when deck selection or baseCases changes
   useEffect(() => {
     initRound(baseCases, isShuffled, 1);
-  }, [deckId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [deckId, baseCases]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentCase = activeQueue[currentIndex] as AlgCase | undefined;
 

@@ -1,0 +1,144 @@
+[
+  {
+    "id": "oll-2look-dot",
+    "name": "Dot (No Edges)",
+    "category": "oll",
+    "subcategory": "2-Look OLL",
+    "group": "Edges (Look 1)",
+    "primaryAlg": "F R U R' U' F' f R U R' U' f'",
+    "alternativeAlgs": [],
+    "probability": "1/8",
+    "description": "Orient all 4 top edge pieces when no edges are oriented.",
+    "why": "Line trigger F (R U R' U') F' flips 2 edges into an L-shape, then wide f (R U R' U') f' flips the remaining 2 edges into a cross.",
+    "is2Look": true
+  },
+  {
+    "id": "oll-2look-line",
+    "name": "Line (Bar)",
+    "category": "oll",
+    "subcategory": "2-Look OLL",
+    "group": "Edges (Look 1)",
+    "primaryAlg": "F R U R' U' F'",
+    "alternativeAlgs": [
+      "R U R' U' M' U R U' r'"
+    ],
+    "probability": "2/8",
+    "description": "Hold yellow line horizontally (9 and 3 o-clock), then execute.",
+    "why": "F turns front slot lifting edge stickers up, R U R' U' swaps top layer, and F' closes slot leaving 2 edges flipped.",
+    "is2Look": true
+  },
+  {
+    "id": "oll-2look-lshape",
+    "name": "L-Shape (Small L)",
+    "category": "oll",
+    "subcategory": "2-Look OLL",
+    "group": "Edges (Look 1)",
+    "primaryAlg": "f R U R' U' f'",
+    "alternativeAlgs": [
+      "y2 F U R U' R' F'",
+      "y2 r U R' U' r' R (U R U' R')"
+    ],
+    "probability": "4/8",
+    "description": "Hold L at top-left corner (9 and 12 o-clock).",
+    "why": "Wide f turns two layers simultaneously, flipping adjacent edges instead of opposite edges before f' restores layers.",
+    "is2Look": true
+  },
+  {
+    "id": "oll-2look-sune",
+    "name": "Sune",
+    "category": "oll",
+    "subcategory": "2-Look OLL",
+    "group": "Corners (Look 2)",
+    "primaryAlg": "R U R' U R U2 R'",
+    "alternativeAlgs": [
+      "y' R' U2 (R U R' U) R"
+    ],
+    "probability": "4/27",
+    "description": "1 yellow corner facing UP at front-left (index 6).",
+    "why": "R U lifts the FR F2L pair and orbits it 360° around top layer before reinserting with R U2 R', twisting 3 corners by 120°.",
+    "is2Look": true
+  },
+  {
+    "id": "oll-2look-antisune",
+    "name": "Anti-Sune",
+    "category": "oll",
+    "subcategory": "2-Look OLL",
+    "group": "Corners (Look 2)",
+    "primaryAlg": "R U2 R' U' R U' R'",
+    "alternativeAlgs": [
+      "y' R' U' R U' R' U2 R",
+      "y L' U' L U' L' U2 L"
+    ],
+    "probability": "4/27",
+    "description": "1 yellow corner facing UP at back-left (index 0).",
+    "why": "Orbits the F2L pair in reverse direction (360° clockwise), twisting 3 corners opposite to Sune.",
+    "is2Look": true
+  },
+  {
+    "id": "oll-2look-h",
+    "name": "H Case (Double Sune)",
+    "category": "oll",
+    "subcategory": "2-Look OLL",
+    "group": "Corners (Look 2)",
+    "primaryAlg": "R U R' U R U' R' U R U2 R'",
+    "alternativeAlgs": [
+      "y F R U R' U' R U R' U' R U R' U' F'"
+    ],
+    "probability": "2/27",
+    "description": "0 corners facing up. Headlights on left AND right side.",
+    "why": "Chaining two Sunes cancels the middle moves and twists all four corners.",
+    "is2Look": true
+  },
+  {
+    "id": "oll-2look-pi",
+    "name": "Pi (Bruno)",
+    "category": "oll",
+    "subcategory": "2-Look OLL",
+    "group": "Corners (Look 2)",
+    "primaryAlg": "R U2 (R2 U' R2 U' R2) U2 R",
+    "alternativeAlgs": [],
+    "probability": "4/27",
+    "description": "0 corners facing up. Headlights on left side, back & front right stickers point away.",
+    "why": "R U2 R2 slot displacement cycles and twists all four unoriented corners in one fluid motion.",
+    "is2Look": true
+  },
+  {
+    "id": "oll-2look-headlights",
+    "name": "U Case (Headlights)",
+    "category": "oll",
+    "subcategory": "2-Look OLL",
+    "group": "Corners (Look 2)",
+    "primaryAlg": "R2 D R' U2 R D' R' U2 R'",
+    "alternativeAlgs": [],
+    "probability": "4/27",
+    "description": "2 corners facing UP on right. Headlights on left side.",
+    "why": "D slice moves isolate bottom layers while pivoting left headlights into top orientation.",
+    "is2Look": true
+  },
+  {
+    "id": "oll-2look-chameleon",
+    "name": "T Case (Chameleon)",
+    "category": "oll",
+    "subcategory": "2-Look OLL",
+    "group": "Corners (Look 2)",
+    "primaryAlg": "r U R' U' r' F R F'",
+    "alternativeAlgs": [],
+    "probability": "4/27",
+    "description": "2 corners facing UP on right. Front-left & back-left stickers point out.",
+    "why": "Wide r lift paired with F R F' slot insert rotates corner stickers into top face.",
+    "is2Look": true
+  },
+  {
+    "id": "oll-2look-bowtie",
+    "name": "L Case (Bowtie)",
+    "category": "oll",
+    "subcategory": "2-Look OLL",
+    "group": "Corners (Look 2)",
+    "primaryAlg": "F R' F' r U R U' r'",
+    "alternativeAlgs": [],
+    "probability": "4/27",
+    "description": "2 corners facing UP diagonally. Front-left sticker faces FRONT.",
+    "why": "F R' F' sets up corner stickers, then wide r slice turn rotates diagonal stickers into top face.",
+    "is2Look": true
+  }
+]

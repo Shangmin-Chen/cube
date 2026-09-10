@@ -1,0 +1,760 @@
+[
+  {
+    "id": "oll-1",
+    "name": "OLL 1",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Dot",
+    "primaryAlg": "R U2 R' R' F R F' U2 R' F R F'",
+    "alternativeAlgs": [],
+    "probability": "1/108",
+    "description": "OLL Case 1 (Dot group).",
+    "why": "Zero edges oriented. Uses wide turns or chained F-triggers to create an edge cross."
+  },
+  {
+    "id": "oll-2",
+    "name": "OLL 2",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Dot",
+    "primaryAlg": "r U r' U2 r U2 R' U2 R U' r'",
+    "alternativeAlgs": [
+      "y' F R U R' U' F' f R U R' U' f'",
+      "y' F R U R' U' S R U R' U' f'"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 2 (Dot group).",
+    "why": "Zero edges oriented. Uses wide turns or chained F-triggers to create an edge cross."
+  },
+  {
+    "id": "oll-3",
+    "name": "OLL 3",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Dot",
+    "primaryAlg": "r' R2 U R' U r U2 r' U M'",
+    "alternativeAlgs": [
+      "y F U R U' R' F' U F R U R' U' F'",
+      "y' f R U R' U' f' U' F R U R' U' F'"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 3 (Dot group).",
+    "why": "Zero edges oriented. Uses wide turns or chained F-triggers to create an edge cross."
+  },
+  {
+    "id": "oll-4",
+    "name": "OLL 4",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Dot",
+    "primaryAlg": "M U' r U2 r' U' R U' R' M'",
+    "alternativeAlgs": [
+      "y F U R U' R' F' U' F R U R' U' F'",
+      "y' f R U R' U' f' U F R U R' U' F'"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 4 (Dot group).",
+    "why": "Zero edges oriented. Uses wide turns or chained F-triggers to create an edge cross."
+  },
+  {
+    "id": "oll-5",
+    "name": "OLL 5",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Square Shape",
+    "primaryAlg": "l' U2 L U L' U l",
+    "alternativeAlgs": [
+      "y2 r' U2 R U R' U r"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 5 (Square Shape group).",
+    "why": "2x2 yellow block. Uses wide l/r turns to pair and orient adjacent edge stickers."
+  },
+  {
+    "id": "oll-6",
+    "name": "OLL 6",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Square Shape",
+    "primaryAlg": "r U2 R' U' R U' r'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 6 (Square Shape group).",
+    "why": "2x2 yellow block. Uses wide l/r turns to pair and orient adjacent edge stickers."
+  },
+  {
+    "id": "oll-7",
+    "name": "OLL 7",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Small Lightning Bolt",
+    "primaryAlg": "r U R' U R U2 r'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 7 (Small Lightning Bolt group).",
+    "why": "Lightning silhouette. Uses Sune-derived triggers to pivot misoriented corners."
+  },
+  {
+    "id": "oll-8",
+    "name": "OLL 8",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Small Lightning Bolt",
+    "primaryAlg": "l' U' L U' L' U2 l",
+    "alternativeAlgs": [
+      "R U2 R' U2 R' F R F'",
+      "y2 r' U' R U' R' U2 r"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 8 (Small Lightning Bolt group).",
+    "why": "Lightning silhouette. Uses Sune-derived triggers to pivot misoriented corners."
+  },
+  {
+    "id": "oll-9",
+    "name": "OLL 9",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Fish Shape",
+    "primaryAlg": "R U R' U' R' F R2 U R' U' F'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 9 (Fish Shape group).",
+    "why": "Fish-like pattern. Uses corner-edge pairing triggers to complete the yellow face."
+  },
+  {
+    "id": "oll-10",
+    "name": "OLL 10",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Fish Shape",
+    "primaryAlg": "R U R' U R' F R F' R U2 R'",
+    "alternativeAlgs": [
+      "y2 r U R' U R U' R' U' r' R (U R U' R')"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 10 (Fish Shape group).",
+    "why": "Fish-like pattern. Uses corner-edge pairing triggers to complete the yellow face."
+  },
+  {
+    "id": "oll-11",
+    "name": "OLL 11",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Small Lightning Bolt",
+    "primaryAlg": "r U R' U R' F R F' R U2 r'",
+    "alternativeAlgs": [
+      "y2 r' R2 U R' U R U2 R' U M'"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 11 (Small Lightning Bolt group).",
+    "why": "Lightning silhouette. Uses Sune-derived triggers to pivot misoriented corners."
+  },
+  {
+    "id": "oll-12",
+    "name": "OLL 12",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Small Lightning Bolt",
+    "primaryAlg": "M' R' U' R U' R' U2 R U' R r'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 12 (Small Lightning Bolt group).",
+    "why": "Lightning silhouette. Uses Sune-derived triggers to pivot misoriented corners."
+  },
+  {
+    "id": "oll-13",
+    "name": "OLL 13",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Knight Move Shape",
+    "primaryAlg": "F U R U' R2 F' R U R U' R'",
+    "alternativeAlgs": [
+      "r U' r' U' r U r' y' R' U R"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 13 (Knight Move Shape group).",
+    "why": "Knight move geometry. Uses paired front and right triggers to orient corners."
+  },
+  {
+    "id": "oll-14",
+    "name": "OLL 14",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Knight Move Shape",
+    "primaryAlg": "R' F R U R' F' R F U' F'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 14 (Knight Move Shape group).",
+    "why": "Knight move geometry. Uses paired front and right triggers to orient corners."
+  },
+  {
+    "id": "oll-15",
+    "name": "OLL 15",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Knight Move Shape",
+    "primaryAlg": "l' U' l L' U' L U l' U l",
+    "alternativeAlgs": [
+      "y2 r' U' r R' U' R U r' U r"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 15 (Knight Move Shape group).",
+    "why": "Knight move geometry. Uses paired front and right triggers to orient corners."
+  },
+  {
+    "id": "oll-16",
+    "name": "OLL 16",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Knight Move Shape",
+    "primaryAlg": "r U r' R U R' U' r U' r'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 16 (Knight Move Shape group).",
+    "why": "Knight move geometry. Uses paired front and right triggers to orient corners."
+  },
+  {
+    "id": "oll-17",
+    "name": "OLL 17",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Dot",
+    "primaryAlg": "F R' F' R2 r' U R U' R' U' M'",
+    "alternativeAlgs": [
+      "y2 R U R' U R' F R F' U2 R' F R F'"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 17 (Dot group).",
+    "why": "Zero edges oriented. Uses wide turns or chained F-triggers to create an edge cross."
+  },
+  {
+    "id": "oll-18",
+    "name": "OLL 18",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Dot",
+    "primaryAlg": "r U R' U R U2 r' r' U' R U' R' U2 r",
+    "alternativeAlgs": [
+      "y R U2 R' R' F R F' U2 M' (U R U' r')"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 18 (Dot group).",
+    "why": "Zero edges oriented. Uses wide turns or chained F-triggers to create an edge cross."
+  },
+  {
+    "id": "oll-19",
+    "name": "OLL 19",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Dot",
+    "primaryAlg": "r' R U R U R' U' M' R' F R F'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 19 (Dot group).",
+    "why": "Zero edges oriented. Uses wide turns or chained F-triggers to create an edge cross."
+  },
+  {
+    "id": "oll-20",
+    "name": "OLL 20",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Dot",
+    "primaryAlg": "r U R' U' M2 U R U' R' U' M'",
+    "alternativeAlgs": [
+      "r' R U (R U R' U') M2 U R U' r'"
+    ],
+    "probability": "1/216",
+    "description": "OLL Case 20 (Dot group).",
+    "why": "Zero edges oriented. Uses wide turns or chained F-triggers to create an edge cross."
+  },
+  {
+    "id": "oll-21",
+    "name": "OLL 21",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Cross",
+    "primaryAlg": "R U2 R' U' R U R' U' R U' R'",
+    "alternativeAlgs": [
+      "y R U R' U R U' R' U R U2 R'"
+    ],
+    "probability": "1/108",
+    "description": "OLL Case 21 (Cross group).",
+    "why": "Yellow cross already completed. Solves corner orientations in a single look."
+  },
+  {
+    "id": "oll-22",
+    "name": "OLL 22",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Cross",
+    "primaryAlg": "R U2 (R2 U' R2 U' R2) U2 R",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 22 (Cross group).",
+    "why": "Yellow cross already completed. Solves corner orientations in a single look."
+  },
+  {
+    "id": "oll-23",
+    "name": "OLL 23",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Cross",
+    "primaryAlg": "R2 D' R U2 R' D R U2 R",
+    "alternativeAlgs": [
+      "y2 R2 D R' U2 R D' R' U2 R'"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 23 (Cross group).",
+    "why": "Yellow cross already completed. Solves corner orientations in a single look."
+  },
+  {
+    "id": "oll-24",
+    "name": "OLL 24",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Cross",
+    "primaryAlg": "r U R' U' r' F R F'",
+    "alternativeAlgs": [
+      "y R U R D R' U' R D' R2"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 24 (Cross group).",
+    "why": "Yellow cross already completed. Solves corner orientations in a single look."
+  },
+  {
+    "id": "oll-25",
+    "name": "OLL 25",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Cross",
+    "primaryAlg": "F' r U R' U' r' F R",
+    "alternativeAlgs": [
+      "y' R' F R B' R' F' R B"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 25 (Cross group).",
+    "why": "Yellow cross already completed. Solves corner orientations in a single look."
+  },
+  {
+    "id": "oll-26",
+    "name": "OLL 26",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Cross",
+    "primaryAlg": "(R U2 R') U' R U' R'",
+    "alternativeAlgs": [
+      "y' R' U' R U' R' U2 R"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 26 (Cross group).",
+    "why": "Yellow cross already completed. Solves corner orientations in a single look."
+  },
+  {
+    "id": "oll-27",
+    "name": "OLL 27",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Cross",
+    "primaryAlg": "R U R' U R U2 R'",
+    "alternativeAlgs": [
+      "y' R' U2 (R U R' U) R"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 27 (Cross group).",
+    "why": "Yellow cross already completed. Solves corner orientations in a single look."
+  },
+  {
+    "id": "oll-28",
+    "name": "OLL 28",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Corners Oriented",
+    "primaryAlg": "r U R' U' r' R U R U' R'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 28 (Corners Oriented group).",
+    "why": "All four corners already yellow. Flips edges using M-slice and F-trigger commutators."
+  },
+  {
+    "id": "oll-29",
+    "name": "OLL 29",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Awkward Shape",
+    "primaryAlg": "R U R' U' R U' R' F' U' F R U R'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 29 (Awkward Shape group).",
+    "why": "Asymmetric yellow pattern. Uses multi-trigger sequences to cancel opposing twists."
+  },
+  {
+    "id": "oll-30",
+    "name": "OLL 30",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Awkward Shape",
+    "primaryAlg": "F R' F R2 U' R' U' R U R' F2",
+    "alternativeAlgs": [
+      "F U (R U2 R' U') R U2 R' U' F'"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 30 (Awkward Shape group).",
+    "why": "Asymmetric yellow pattern. Uses multi-trigger sequences to cancel opposing twists."
+  },
+  {
+    "id": "oll-31",
+    "name": "OLL 31",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "P Shape",
+    "primaryAlg": "R' U' F U R U' R' F' R",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 31 (P Shape group).",
+    "why": "P-block pattern. Uses F-trigger setups into sexy or inverse sexy moves."
+  },
+  {
+    "id": "oll-32",
+    "name": "OLL 32",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "P Shape",
+    "primaryAlg": "L U F' U' L' U L F L'",
+    "alternativeAlgs": [
+      "y2 S R U R' U' R' F R f'"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 32 (P Shape group).",
+    "why": "P-block pattern. Uses F-trigger setups into sexy or inverse sexy moves."
+  },
+  {
+    "id": "oll-33",
+    "name": "OLL 33",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "T Shape",
+    "primaryAlg": "R U R' U' R' F R F'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 33 (T Shape group).",
+    "why": "T-shaped yellow pattern. Uses standard sexy moves combined with sledgehammer inserts."
+  },
+  {
+    "id": "oll-34",
+    "name": "OLL 34",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "C Shape",
+    "primaryAlg": "R U R2 U' R' F R U R U' F'",
+    "alternativeAlgs": [
+      "R U R' U' B' R' F R F' B"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 34 (C Shape group).",
+    "why": "C-shaped perimeter. Uses paired slot inserts to complete top orientation."
+  },
+  {
+    "id": "oll-35",
+    "name": "OLL 35",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Fish Shape",
+    "primaryAlg": "R U2 R' R' F R F' R U2 R'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 35 (Fish Shape group).",
+    "why": "Fish-like pattern. Uses corner-edge pairing triggers to complete the yellow face."
+  },
+  {
+    "id": "oll-36",
+    "name": "OLL 36",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "W Shape",
+    "primaryAlg": "L' U' L U' L' U L U L F' L' F",
+    "alternativeAlgs": [
+      "y2 R' U' R U' R' U R U R B' R' B"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 36 (W Shape group).",
+    "why": "W-shaped yellow pattern. Uses mirrored trigger pairs to twist outer corners."
+  },
+  {
+    "id": "oll-37",
+    "name": "OLL 37",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Fish Shape",
+    "primaryAlg": "F R' F' R U R U' R'",
+    "alternativeAlgs": [
+      "F R U' R' U' R U R' F'"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 37 (Fish Shape group).",
+    "why": "Fish-like pattern. Uses corner-edge pairing triggers to complete the yellow face."
+  },
+  {
+    "id": "oll-38",
+    "name": "OLL 38",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "W Shape",
+    "primaryAlg": "R U R' U R U' R' U' R' F R F'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 38 (W Shape group).",
+    "why": "W-shaped yellow pattern. Uses mirrored trigger pairs to twist outer corners."
+  },
+  {
+    "id": "oll-39",
+    "name": "OLL 39",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Big Lightning Bolt",
+    "primaryAlg": "L F' L' U' L U F U' L'",
+    "alternativeAlgs": [
+      "y2 R B' R' U' R U B U' R'"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 39 (Big Lightning Bolt group).",
+    "why": "Extended lightning pattern. Uses wide insertions to rotate the last layer stickers."
+  },
+  {
+    "id": "oll-40",
+    "name": "OLL 40",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Big Lightning Bolt",
+    "primaryAlg": "R' F R U R' U' F' U R",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 40 (Big Lightning Bolt group).",
+    "why": "Extended lightning pattern. Uses wide insertions to rotate the last layer stickers."
+  },
+  {
+    "id": "oll-41",
+    "name": "OLL 41",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Awkward Shape",
+    "primaryAlg": "R U R' U R U2 R' F R U R' U' F'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 41 (Awkward Shape group).",
+    "why": "Asymmetric yellow pattern. Uses multi-trigger sequences to cancel opposing twists."
+  },
+  {
+    "id": "oll-42",
+    "name": "OLL 42",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Awkward Shape",
+    "primaryAlg": "R' U' R U' R' U2 R F R U R' U' F'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 42 (Awkward Shape group).",
+    "why": "Asymmetric yellow pattern. Uses multi-trigger sequences to cancel opposing twists."
+  },
+  {
+    "id": "oll-43",
+    "name": "OLL 43",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "P Shape",
+    "primaryAlg": "F' U' L' U L F",
+    "alternativeAlgs": [
+      "R' U' F R' F' R U R"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 43 (P Shape group).",
+    "why": "P-block pattern. Uses F-trigger setups into sexy or inverse sexy moves."
+  },
+  {
+    "id": "oll-44",
+    "name": "OLL 44",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "P Shape",
+    "primaryAlg": "F U R U' R' F'",
+    "alternativeAlgs": [
+      "y2 f R U R' U' f'"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 44 (P Shape group).",
+    "why": "P-block pattern. Uses F-trigger setups into sexy or inverse sexy moves."
+  },
+  {
+    "id": "oll-45",
+    "name": "OLL 45",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "T Shape",
+    "primaryAlg": "F R U R' U' F'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 45 (T Shape group).",
+    "why": "T-shaped yellow pattern. Uses standard sexy moves combined with sledgehammer inserts."
+  },
+  {
+    "id": "oll-46",
+    "name": "OLL 46",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "C Shape",
+    "primaryAlg": "R' U' R' F R F' U R",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 46 (C Shape group).",
+    "why": "C-shaped perimeter. Uses paired slot inserts to complete top orientation."
+  },
+  {
+    "id": "oll-47",
+    "name": "OLL 47",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Small L Shape",
+    "primaryAlg": "R' U' R' F R F' R' F R F' U R",
+    "alternativeAlgs": [
+      "F' L' U' L U L' U' L U F",
+      "y' F U R U' R' F' R U R' U R U2 R'"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 47 (Small L Shape group).",
+    "why": "Small L edge cluster. Uses commutator-based edge flips and corner twists."
+  },
+  {
+    "id": "oll-48",
+    "name": "OLL 48",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Small L Shape",
+    "primaryAlg": "F R U R' U' R U R' U' F'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 48 (Small L Shape group).",
+    "why": "Small L edge cluster. Uses commutator-based edge flips and corner twists."
+  },
+  {
+    "id": "oll-49",
+    "name": "OLL 49",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Small L Shape",
+    "primaryAlg": "r U' r2 U r2 U r2 U' r",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 49 (Small L Shape group).",
+    "why": "Small L edge cluster. Uses commutator-based edge flips and corner twists."
+  },
+  {
+    "id": "oll-50",
+    "name": "OLL 50",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Small L Shape",
+    "primaryAlg": "r' U r2 U' r2 U' r2 U r'",
+    "alternativeAlgs": [],
+    "probability": "1/54",
+    "description": "OLL Case 50 (Small L Shape group).",
+    "why": "Small L edge cluster. Uses commutator-based edge flips and corner twists."
+  },
+  {
+    "id": "oll-51",
+    "name": "OLL 51",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "I Shape",
+    "primaryAlg": "F U R U' R' U R U' R' F'",
+    "alternativeAlgs": [
+      "y2 f R U R' U' R U R' U' f'"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 51 (I Shape group).",
+    "why": "Line/bar pattern. Uses chained F-triggers to flip remaining edges into place."
+  },
+  {
+    "id": "oll-52",
+    "name": "OLL 52",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "I Shape",
+    "primaryAlg": "R U R' U R U' B U' B' R'",
+    "alternativeAlgs": [
+      "y2 R' F' U' F U' (R U R' U) R",
+      "R U R' U R U' y R U' R' F'"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 52 (I Shape group).",
+    "why": "Line/bar pattern. Uses chained F-triggers to flip remaining edges into place."
+  },
+  {
+    "id": "oll-53",
+    "name": "OLL 53",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Small L Shape",
+    "primaryAlg": "l' U2 L U L' U' L U L' U l",
+    "alternativeAlgs": [
+      "y2 r' U2 (R U R' U') R U R' U r",
+      "y r' U' R U' R' U R U' R' U2 r"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 53 (Small L Shape group).",
+    "why": "Small L edge cluster. Uses commutator-based edge flips and corner twists."
+  },
+  {
+    "id": "oll-54",
+    "name": "OLL 54",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Small L Shape",
+    "primaryAlg": "(r U2 R' U') R U R' U' R U' r'",
+    "alternativeAlgs": [
+      "y r U R' U R U' R' U R U2 r'"
+    ],
+    "probability": "1/54",
+    "description": "OLL Case 54 (Small L Shape group).",
+    "why": "Small L edge cluster. Uses commutator-based edge flips and corner twists."
+  },
+  {
+    "id": "oll-55",
+    "name": "OLL 55",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "I Shape",
+    "primaryAlg": "R' F R U R U' R2 F' R2 U' R' U R U R'",
+    "alternativeAlgs": [
+      "y R U2 R2 U' R U' R' U2 F R F'"
+    ],
+    "probability": "1/108",
+    "description": "OLL Case 55 (I Shape group).",
+    "why": "Line/bar pattern. Uses chained F-triggers to flip remaining edges into place."
+  },
+  {
+    "id": "oll-56",
+    "name": "OLL 56",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "I Shape",
+    "primaryAlg": "(r' U' r) U' R' U R U' R' U R r' U r",
+    "alternativeAlgs": [
+      "(r U r') U R U' R' U R U' R' (r U' r')",
+      "(r U r') U R U' R' U R U' M' U' r'"
+    ],
+    "probability": "1/108",
+    "description": "OLL Case 56 (I Shape group).",
+    "why": "Line/bar pattern. Uses chained F-triggers to flip remaining edges into place."
+  },
+  {
+    "id": "oll-57",
+    "name": "OLL 57",
+    "category": "oll",
+    "subcategory": "Full OLL",
+    "group": "Corners Oriented",
+    "primaryAlg": "R U R' U' M' U R U' r'",
+    "alternativeAlgs": [],
+    "probability": "1/108",
+    "description": "OLL Case 57 (Corners Oriented group).",
+    "why": "All four corners already yellow. Flips edges using M-slice and F-trigger commutators."
+  }
+]

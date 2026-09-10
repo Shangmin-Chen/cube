@@ -1,0 +1,306 @@
+[
+  {
+    "id": "pll-aa",
+    "name": "Aa Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Adjacent Corners",
+    "primaryAlg": "x L2 D2 L' U' L D2 L' U L'",
+    "alternativeAlgs": [
+      "y' x' L' U L' D2 L U' L' D2 L2",
+      "y x R' U R' D2 R U' R' D2 R2",
+      "y2 x' R2 D2 R' U' R D2 R' U R'"
+    ],
+    "probability": "1/18",
+    "description": "Aa Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "Uses D slice turns to cycle 3 corners counter-clockwise."
+  },
+  {
+    "id": "pll-ab",
+    "name": "Ab Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Adjacent Corners",
+    "primaryAlg": "x' L2 D2 L U L' D2 L U' L",
+    "alternativeAlgs": [
+      "y x L U' L D2 L' U L D2 L2",
+      "y2 x R2 D2 R U R' D2 R U' R",
+      "y' x' R U' R D2 R' U R D2 R2"
+    ],
+    "probability": "1/18",
+    "description": "Ab Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "Mirror of Aa perm using D slice turns to cycle 3 corners clockwise."
+  },
+  {
+    "id": "pll-e",
+    "name": "E Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Diagonal Corners",
+    "primaryAlg": "x' L' U L D' L' U' L D L' U' L D' L' U L D",
+    "alternativeAlgs": [
+      "x' R U' R' D R U R' D' R U R' D R U' R' D'"
+    ],
+    "probability": "1/36",
+    "description": "E Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "Uses D slice commutators to solve diagonal corner displacement without disturbing edges."
+  },
+  {
+    "id": "pll-f",
+    "name": "F Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Adjacent Corners",
+    "primaryAlg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+    "alternativeAlgs": [],
+    "probability": "1/18",
+    "description": "F Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "Executes a T-Perm corner swap wrapped inside a 1x3 bar setup move."
+  },
+  {
+    "id": "pll-ga",
+    "name": "Ga Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "G Perms",
+    "primaryAlg": "R2 U R' U R' U' R U' R2 (U' D) R' U R D'",
+    "alternativeAlgs": [
+      "R2 u R' U R' U' R u' R2 y' R' U R"
+    ],
+    "probability": "1/18",
+    "description": "Ga Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "Uses wide u slice moves to rotate 3 corners and 3 edges around an anchored 1x2 F2L block."
+  },
+  {
+    "id": "pll-gb",
+    "name": "Gb Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "G Perms",
+    "primaryAlg": "R' U' R (U D') R2 U R' U R U' R U' R2 D",
+    "alternativeAlgs": [
+      "y F' U' F R2 u R' U R U' R u' R2"
+    ],
+    "probability": "1/18",
+    "description": "Gb Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "F' U' F sets up block, wide u rotates 3 corners and 3 edges clockwise."
+  },
+  {
+    "id": "pll-gc",
+    "name": "Gc Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "G Perms",
+    "primaryAlg": "R2 U' R U' R U R' U R2 (U D') R U' R' D",
+    "alternativeAlgs": [
+      "y2 R2 F2 R U2 R U2 R' F R U R' U' R' F R2",
+      "R2 u' R U' R U R' u R2 y R U' R'"
+    ],
+    "probability": "1/18",
+    "description": "Gc Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "Wide u' counter-clockwise slice rotates 3 corners & edges around front-left block."
+  },
+  {
+    "id": "pll-gd",
+    "name": "Gd Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "G Perms",
+    "primaryAlg": "R U R' (U' D) R2 U' R U' R' U R' U R2 D'",
+    "alternativeAlgs": [
+      "R U R' y' R2 u' R U' R' U R' u R2"
+    ],
+    "probability": "1/18",
+    "description": "Gd Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "D slice step isolates back-left block while cycling remaining top pieces."
+  },
+  {
+    "id": "pll-h",
+    "name": "H Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Edges Only",
+    "primaryAlg": "M2 U M2 U2 M2 U M2",
+    "alternativeAlgs": [
+      "M2 U' M2 U2 M2 U' M2"
+    ],
+    "probability": "1/72",
+    "description": "H Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "M2 swaps opposite edge pairs across middle slice, U aligns top layer, and M2 restores F2L."
+  },
+  {
+    "id": "pll-ja",
+    "name": "Ja Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Adjacent Corners",
+    "primaryAlg": "x R2 F R F' R U2 r' U r U2",
+    "alternativeAlgs": [
+      "y2 L' U' L F L' U' L U L F' L2 U L",
+      "y' R' U L' U2 R U' R' U2 R L"
+    ],
+    "probability": "1/18",
+    "description": "Ja Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "x tilt with wide r' slice swaps front-left adjacent corners and edges."
+  },
+  {
+    "id": "pll-jb",
+    "name": "Jb Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Adjacent Corners",
+    "primaryAlg": "R U R' F' R U R' U' R' F R2 U' R'",
+    "alternativeAlgs": [],
+    "probability": "1/18",
+    "description": "Jb Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "Pops out right F2L pair and reinserts in offset slot, swapping front-right corners and edges."
+  },
+  {
+    "id": "pll-na",
+    "name": "Na Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Diagonal Corners",
+    "primaryAlg": "R U R' U R U R' F' R U R' U' R' F R2 U' R' U2 R U' R'",
+    "alternativeAlgs": [
+      "z U R' D R2 U' R D' U R' D R2 U' R D'"
+    ],
+    "probability": "1/72",
+    "description": "Na Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "Executes a double corner-and-edge diagonal swap along opposing faces."
+  },
+  {
+    "id": "pll-nb",
+    "name": "Nb Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Diagonal Corners",
+    "primaryAlg": "R' (U R U' R') F' U' F R U R' F R' F' R U' R",
+    "alternativeAlgs": [
+      "z D' R U' R2 D R' U D' R U' R2 D R' U"
+    ],
+    "probability": "1/72",
+    "description": "Nb Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "Mirror diagonal corner and edge swap using F' U' F triggers."
+  },
+  {
+    "id": "pll-ra",
+    "name": "Ra Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Adjacent Corners",
+    "primaryAlg": "R U' R' U' R U R D R' U' R D' R' U2 R'",
+    "alternativeAlgs": [
+      "R U R' F' R U2 R' U2 R' F R U R U2 R'",
+      "y' L U2 L' U2 L F' L' U' L U L F L2"
+    ],
+    "probability": "1/18",
+    "description": "Ra Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "Sets up front 1x2 bar with F', swaps left corners, and restores F2L."
+  },
+  {
+    "id": "pll-rb",
+    "name": "Rb Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Adjacent Corners",
+    "primaryAlg": "R2 F R U R U' R' F' R U2 R' U2 R",
+    "alternativeAlgs": [
+      "y' R' U2 R U2 R' F R U R' U' R' F' R2",
+      "R' U2 R' D' R U' R' D R U R U' R' U' R"
+    ],
+    "probability": "1/18",
+    "description": "Rb Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "Sets up back 1x2 bar with F, swaps left corners, and restores F2L."
+  },
+  {
+    "id": "pll-t",
+    "name": "T Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Adjacent Corners",
+    "primaryAlg": "R U R' U' R' F R2 U' R' U' (R U R') F'",
+    "alternativeAlgs": [],
+    "probability": "1/18",
+    "description": "T Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "Pops out two F2L pairs (R U R' U'), swaps right 2 corners and 2 edges, then restores both F2L pairs."
+  },
+  {
+    "id": "pll-ua",
+    "name": "Ua Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Edges Only",
+    "primaryAlg": "M2 U M U2 M' U M2",
+    "alternativeAlgs": [
+      "R U' R U R U R U' R' U' R2",
+      "y2 R2 U' R' U' R U R U R U' R"
+    ],
+    "probability": "1/18",
+    "description": "Ua Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "R U' lifts right F2L pair, cycles 3 top edges through right slot, and R' U' R2 re-locks F2L."
+  },
+  {
+    "id": "pll-ub",
+    "name": "Ub Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Edges Only",
+    "primaryAlg": "M2 U' M U2 M' U' M2",
+    "alternativeAlgs": [
+      "R2 U (R U R' U') R' U' R' U R'",
+      "y2 R' U R' U' R' U' (R' U R U) R2",
+      "y2 R' U R' U' R3 U' (R' U R U) R2"
+    ],
+    "probability": "1/18",
+    "description": "Ub Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "Clockwise mirror of Ua perm, cycling 3 edges through right slot in reverse."
+  },
+  {
+    "id": "pll-v",
+    "name": "V Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Diagonal Corners",
+    "primaryAlg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+    "alternativeAlgs": [
+      "R' U R' U' R D' R' D R' U D' R2 U' R2 D R2",
+      "z D' R2 D R2 U R' D' R U' R U R' D R U' z'",
+      "R U2 R' D R U' R U' R U R2 D R' U' R D2",
+      "x' R' F R F' U R U2 R' U' R U' R' U2 R U R' U'"
+    ],
+    "probability": "1/18",
+    "description": "V Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "Combines y rotation with F-trigger corner swap to solve diagonal displacement."
+  },
+  {
+    "id": "pll-y",
+    "name": "Y Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Diagonal Corners",
+    "primaryAlg": "F R U' R' U' R U R' F' R U R' U' R' F R F'",
+    "alternativeAlgs": [
+      "F R' F R2 U' R' U' R U R' F' R U R' U' F'"
+    ],
+    "probability": "1/18",
+    "description": "Y Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "Combines an edge setup trigger F (R U R' U') F' with a corner swap insert to resolve diagonal corner misalignment."
+  },
+  {
+    "id": "pll-z",
+    "name": "Z Permutation",
+    "category": "pll",
+    "subcategory": "Full PLL",
+    "group": "Edges Only",
+    "primaryAlg": "M' U M2 U M2 U M' U2 M2",
+    "alternativeAlgs": [
+      "y M' U' M2 U' M2 U' M' U2 M2",
+      "y M2 U M2 U M' U2 M2 U2 M'",
+      "M2 U' M2 U' M' U2 M2 U2 M'"
+    ],
+    "probability": "1/36",
+    "description": "Z Permutation case. Permutes last layer pieces without disturbing orientation.",
+    "why": "M' slice moves isolate adjacent edge pairs, cycling them in an X-pattern without disturbing corners."
+  }
+]

@@ -1,12 +1,15 @@
 import React from 'react';
-import { Shuffle, RotateCcw } from 'lucide-react';
-import type { DeckOption } from '../../types/cube';
+import { Shuffle, RotateCcw, FolderGit2 } from 'lucide-react';
+import type { DeckOption, AlgMethod } from '../../types/cube';
 
 interface TrainerDeckSelectorProps {
   decks: DeckOption[];
   selectedDeckId: string;
   isShuffled: boolean;
+  selectedMethodId?: string;
+  availableMethods?: AlgMethod[];
   onSelectDeck: (deckId: string) => void;
+  onSelectMethod?: (methodId: string) => void;
   onToggleShuffle: () => void;
   onRestart: () => void;
 }
@@ -15,14 +18,35 @@ export const TrainerDeckSelector: React.FC<TrainerDeckSelectorProps> = ({
   decks,
   selectedDeckId,
   isShuffled,
+  selectedMethodId,
+  availableMethods,
   onSelectDeck,
+  onSelectMethod,
   onToggleShuffle,
   onRestart,
 }) => {
   return (
     <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#1e1e1e] p-2 rounded-2xl border border-[#2d2d2d] shadow-sm">
-      {/* Dynamic Deck Category Pills */}
-      <div className="flex flex-wrap items-center gap-1">
+      {/* Left: Method Selector & Dynamic Deck Category Pills */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {availableMethods && onSelectMethod && (
+          <div className="flex items-center gap-1 bg-[#141414] px-2 py-1 rounded-xl border border-[#2d2d2d] text-xs font-mono mr-1">
+            <FolderGit2 className="w-3.5 h-3.5 text-[#eab308]" />
+            <span className="text-[#888888]">Method:</span>
+            <select
+              aria-label="Select CFOP Method"
+              value={selectedMethodId}
+              onChange={e => onSelectMethod(e.target.value)}
+              className="bg-transparent text-[#eab308] font-bold focus:outline-none cursor-pointer text-xs"
+            >
+              {availableMethods.map(m => (
+                <option key={m.id} value={m.id} className="bg-[#202020] text-white">
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         {decks.map(deck => {
           const isSelected = selectedDeckId === deck.id;
           return (

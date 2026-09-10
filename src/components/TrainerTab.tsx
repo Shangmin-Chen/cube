@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Bookmark, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
-import { getDecks } from '../services/algService';
+import { getDecks, getAvailableMethods } from '../services/algService';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useTrainerSession } from '../hooks/useTrainerSession';
 import { useTrainerKeyboard } from '../hooks/useTrainerKeyboard';
@@ -15,19 +15,29 @@ export const TrainerTab: React.FC = () => {
 
   const { bookmarkedIds, toggleBookmark, isBookmarked } = useBookmarks();
 
-  // Read URL query deck param safely
+  // Read URL query params safely
+  const methodParam = searchParams.get('method') || 'cfop-4look';
   const deckParam = searchParams.get('deck') || 'bookmarks';
 
-  const session = useTrainerSession(deckParam, bookmarkedIds);
+  const availableMethods = useMemo(() => getAvailableMethods(), []);
+  const session = useTrainerSession(deckParam, bookmarkedIds, methodParam);
 
   const availableDecks = useMemo(() => {
-    return getDecks(session.allCases, bookmarkedIds);
-  }, [session.allCases, bookmarkedIds]);
+    return getDecks(methodParam, bookmarkedIds);
+  }, [methodParam, bookmarkedIds]);
 
-  const activeDeckId = availableDecks.some(d => d.id === deckParam) ? deckParam : 'bookmarks';
+  const activeDeckId = availableDecks.some(d => d.id === deckParam)
+    ? deckParam
+    : (availableDecks.find(d => d.id !== 'bookmarks')?.id || 'bookmarks');
 
   const handleSelectDeck = (deckId: string) => {
-    setSearchParams({ deck: deckId });
+    setSearchParams({ deck: deckId, method: methodParam });
+  };
+
+  const handleSelectMethod = (newMethodId: string) => {
+    const newDecks = getDecks(newMethodId, bookmarkedIds);
+    const matchingDeck = newDecks.find(d => d.id === deckParam) || newDecks.find(d => d.id !== 'bookmarks') || newDecks[0];
+    setSearchParams({ deck: matchingDeck?.id || 'bookmarks', method: newMethodId });
   };
 
   // Keyboard controls
@@ -54,7 +64,10 @@ export const TrainerTab: React.FC = () => {
         decks={availableDecks}
         selectedDeckId={activeDeckId}
         isShuffled={session.isShuffled}
+        selectedMethodId={methodParam}
+        availableMethods={availableMethods}
         onSelectDeck={handleSelectDeck}
+        onSelectMethod={handleSelectMethod}
         onToggleShuffle={session.toggleShuffle}
         onRestart={session.restart}
       />
