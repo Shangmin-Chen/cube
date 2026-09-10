@@ -29,7 +29,7 @@ export const AlgReferenceTab: React.FC = () => {
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMethod, setSelectedMethod] = useState<string>('cfop');
+  const [selectedMethod, setSelectedMethod] = useState<string>('cfop-4look');
   
   const { bookmarkedIds, toggleBookmark, isBookmarked } = useBookmarks();
   const availableMethods = useMemo(() => getAvailableMethods(), []);
@@ -178,9 +178,10 @@ export const AlgReferenceTab: React.FC = () => {
                   const newMethod = e.target.value;
                   setSelectedMethod(newMethod);
                   const methodSteps = getSteps(newMethod, bookmarkedIds);
-                  if (methodSteps.length > 0) {
-                    navigate(`/algs/${methodSteps[0].id}`);
-                  }
+                  const targetStep = isValidStep(activeStep, newMethod, bookmarkedIds)
+                    ? activeStep
+                    : (methodSteps[0]?.id || 'oll');
+                  navigate(`/algs/${targetStep}`);
                 }}
                 className="bg-transparent text-[#eab308] font-bold focus:outline-none cursor-pointer"
               >
@@ -329,7 +330,7 @@ export const AlgReferenceTab: React.FC = () => {
           type="button"
           onClick={() => {
             const targetDeck = getDeckForStep(activeStep, selectedMethod, bookmarkedIds);
-            navigate(`/train?deck=${targetDeck}`);
+            navigate(`/train?deck=${targetDeck}&method=${selectedMethod}`);
           }}
           className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#eab308]/15 hover:bg-[#eab308]/25 border border-[#eab308]/40 text-[#eab308] text-xs font-bold transition-colors cursor-pointer"
         >

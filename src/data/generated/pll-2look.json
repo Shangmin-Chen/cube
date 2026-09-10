@@ -1,0 +1,89 @@
+[
+  {
+    "id": "pll-2look-tperm",
+    "name": "Headlights (T Permutation)",
+    "category": "pll",
+    "subcategory": "2-Look PLL",
+    "group": "Corners (Look 1)",
+    "primaryAlg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+    "alternativeAlgs": [],
+    "probability": "4/5",
+    "description": "Swaps 2 right corners & 2 edges. Headlights on left.",
+    "why": "Pops out two F2L pairs (R U R' U'), swaps right 2 corners and 2 edges, then restores both F2L pairs.",
+    "is2Look": true
+  },
+  {
+    "id": "pll-2look-yperm",
+    "name": "Diagonal (Y Permutation)",
+    "category": "pll",
+    "subcategory": "2-Look PLL",
+    "group": "Corners (Look 1)",
+    "primaryAlg": "F R U' R' U' R U R' F' R U R' U' R' F R F'",
+    "alternativeAlgs": [],
+    "probability": "1/5",
+    "description": "Swaps diagonal corners when no headlights exist.",
+    "why": "Combines an edge setup trigger F (R U R' U') F' with a corner swap insert to resolve diagonal corner misalignment.",
+    "is2Look": true
+  },
+  {
+    "id": "pll-2look-ua",
+    "name": "Ua Permutation",
+    "category": "pll",
+    "subcategory": "2-Look PLL",
+    "group": "Edges (Look 2)",
+    "primaryAlg": "R U' (R U R U) R U' R' U' R2",
+    "alternativeAlgs": [
+      "M2 U M U2 M' U M2"
+    ],
+    "probability": "1/3",
+    "description": "Cycles 3 edges counter-clockwise. Back side solved.",
+    "why": "R U' lifts right F2L pair, cycles 3 top edges through right slot, and R' U' R2 re-locks F2L.",
+    "is2Look": true
+  },
+  {
+    "id": "pll-2look-ub",
+    "name": "Ub Permutation",
+    "category": "pll",
+    "subcategory": "2-Look PLL",
+    "group": "Edges (Look 2)",
+    "primaryAlg": "R2 U (R U R' U') R' U' R' U R'",
+    "alternativeAlgs": [
+      "L' U L' U' L' U' L' U L U L2",
+      "M2 U' M U2 M' U' M2"
+    ],
+    "probability": "1/3",
+    "description": "Cycles 3 edges clockwise. Back side solved.",
+    "why": "Clockwise mirror of Ua perm, cycling 3 edges through right slot in reverse.",
+    "is2Look": true
+  },
+  {
+    "id": "pll-2look-hperm",
+    "name": "H Permutation",
+    "category": "pll",
+    "subcategory": "2-Look PLL",
+    "group": "Edges (Look 2)",
+    "primaryAlg": "M2 U M2 U2 M2 U M2",
+    "alternativeAlgs": [
+      "M2 U' M2 U2 M2 U' M2"
+    ],
+    "probability": "1/12",
+    "description": "Swaps opposite edge pairs (Front/Back & Left/Right).",
+    "why": "M2 swaps opposite edge pairs across middle slice, U aligns top layer, and M2 U M2 restores F2L.",
+    "is2Look": true
+  },
+  {
+    "id": "pll-2look-zperm",
+    "name": "Z Permutation",
+    "category": "pll",
+    "subcategory": "2-Look PLL",
+    "group": "Edges (Look 2)",
+    "primaryAlg": "M' U (M2 U M2 U) M' U2 M2 U'",
+    "alternativeAlgs": [
+      "M' U' (M2 U' M2 U') M' U2 M2 U"
+    ],
+    "probability": "1/6",
+    "description": "Swaps adjacent edge pairs (Front/Right & Back/Left).",
+    "why": "M' slice moves isolate adjacent edge pairs, cycling them in an X-pattern without disturbing corners.",
+    "is2Look": true
+  }
+]

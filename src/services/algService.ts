@@ -1,5 +1,9 @@
 import type { AlgCase, AlgMethod, DeckOption, StepOption } from '../types/cube';
-import { CFOP_METHOD } from '../data/cfopData';
+import {
+  CFOP_4LOOK_METHOD,
+  CFOP_3LOOK_METHOD,
+  CFOP_2LOOK_METHOD,
+} from '../data/cfopData';
 import { BUILTIN_METHODS } from '../data/methodsData';
 
 /**
@@ -7,8 +11,8 @@ import { BUILTIN_METHODS } from '../data/methodsData';
  */
 const METHOD_REGISTRY = new Map<string, AlgMethod>();
 
-// Register default built-in methods
-[CFOP_METHOD, ...BUILTIN_METHODS].forEach(method => {
+// Register default built-in methods (4-Look, 3-Look, and 2-Look CFOP)
+[CFOP_4LOOK_METHOD, CFOP_3LOOK_METHOD, CFOP_2LOOK_METHOD, ...BUILTIN_METHODS].forEach(method => {
   METHOD_REGISTRY.set(method.id, method);
 });
 
@@ -23,24 +27,41 @@ export function registerMethod(method: AlgMethod): void {
  * Returns all registered solving methods
  */
 export function getAvailableMethods(): AlgMethod[] {
-  return Array.from(METHOD_REGISTRY.values()).filter(m => m.isAvailable && m.cases.length > 0);
+  const seen = new Set<string>();
+  const methods: AlgMethod[] = [];
+  for (const m of METHOD_REGISTRY.values()) {
+    if (!seen.has(m.id) && m.isAvailable && m.cases.length > 0) {
+      seen.add(m.id);
+      methods.push(m);
+    }
+  }
+  return methods;
 }
 
 /**
- * Get a specific solving method by ID (defaults to 'cfop')
+ * Get a specific solving method by ID (defaults to 'cfop-4look', routes 'cfop' to 'cfop-4look')
  */
-export function getMethod(methodId = 'cfop'): AlgMethod {
-  return METHOD_REGISTRY.get(methodId) || CFOP_METHOD;
+export function getMethod(methodId = 'cfop-4look'): AlgMethod {
+  if (methodId === 'cfop' || !methodId) {
+    return METHOD_REGISTRY.get('cfop-4look') || CFOP_4LOOK_METHOD;
+  }
+  return METHOD_REGISTRY.get(methodId) || CFOP_4LOOK_METHOD;
 }
 
 /**
  * Returns all algorithm cases for a specific method or all registered methods
  */
-export function getAllCases(methodId = 'cfop'): AlgCase[] {
+export function getAllCases(methodId = 'cfop-4look'): AlgCase[] {
   if (methodId === 'all') {
     const combined: AlgCase[] = [];
+    const seen = new Set<string>();
     METHOD_REGISTRY.forEach(m => {
-      combined.push(...m.cases);
+      m.cases.forEach(c => {
+        if (!seen.has(c.id)) {
+          seen.add(c.id);
+          combined.push(c);
+        }
+      });
     });
     return combined;
   }
@@ -65,7 +86,7 @@ export function getCaseById(id: string, methodId?: string): AlgCase | undefined 
  * Dynamically auto-populates reference step tabs from the method's declared step pipeline
  */
 export function getSteps(
-  methodOrCases: string | AlgCase[] = 'cfop',
+  methodOrCases: string | AlgCase[] = 'cfop-4look',
   bookmarkedIds: string[] = []
 ): StepOption[] {
   let method: AlgMethod;
@@ -75,7 +96,7 @@ export function getSteps(
     method = getMethod(methodOrCases);
     cases = method.cases;
   } else {
-    method = CFOP_METHOD;
+    method = CFOP_4LOOK_METHOD;
     cases = methodOrCases;
   }
 
@@ -103,7 +124,7 @@ export function getSteps(
  */
 export function isValidStep(
   step: string | undefined,
-  methodOrCases: string | AlgCase[] = 'cfop',
+  methodOrCases: string | AlgCase[] = 'cfop-4look',
   bookmarkedIds: string[] = []
 ): step is string {
   if (!step) return false;
@@ -116,7 +137,7 @@ export function isValidStep(
  */
 export function getCasesForStep(
   stepId: string,
-  methodOrCases: string | AlgCase[] = 'cfop',
+  methodOrCases: string | AlgCase[] = 'cfop-4look',
   bookmarkedIds: string[] = []
 ): AlgCase[] {
   const steps = getSteps(methodOrCases, bookmarkedIds);
@@ -126,17 +147,24 @@ export function getCasesForStep(
 
 /**
  * Dynamically auto-populates flashcard training decks from registered algorithm data
+ * Generates:
+ * - 4-Look LL: 2-look-oll (10), 2-look-pll (6)
+ * - 3-Look LL: 2-look-oll (10), full-pll (21)
+ * - 2-Look LL: full-oll (57), full-pll (21)
  */
 export function getDecks(
-  methodOrCases: string | AlgCase[] = 'cfop',
+  methodOrCases: string | AlgCase[] = 'cfop-4look',
   bookmarkedIds: string[] = []
 ): DeckOption[] {
   const allCases = typeof methodOrCases === 'string' ? getAllCases(methodOrCases) : methodOrCases;
   const bookmarkedCases = allCases.filter(c => bookmarkedIds.includes(c.id));
 
-  // Dynamically group cases by subcategory / category
+  // Focus training decks on Last Layer algorithms (OLL and PLL)
+  const llCases = allCases.filter(c => c.category === 'oll' || c.category === 'pll');
+
+  // Dynamically group cases by subcategory
   const groups = new Map<string, AlgCase[]>();
-  allCases.forEach(c => {
+  llCases.forEach(c => {
     const key = c.subcategory || c.category.toUpperCase();
     if (!groups.has(key)) {
       groups.set(key, []);
@@ -150,6 +178,13 @@ export function getDecks(
     cases,
   }));
 
+  // Ensure deterministic deck ordering: OLL first, then PLL
+  dynamicSubcategoryDecks.sort((a, b) => {
+    if (a.id.includes('oll') && b.id.includes('pll')) return -1;
+    if (a.id.includes('pll') && b.id.includes('oll')) return 1;
+    return 0;
+  });
+
   return [
     {
       id: 'bookmarks',
@@ -160,37 +195,69 @@ export function getDecks(
     {
       id: 'all',
       label: 'All Algorithms',
-      cases: allCases,
+      cases: llCases,
     },
   ];
 }
 
 /**
- * Get a specific deck by ID, with fallback to bookmarks
+ * Get a specific deck by ID, with fallback to first non-bookmark deck
  */
 export function getDeckById(
   deckId: string,
-  methodOrCases: string | AlgCase[] = 'cfop',
+  methodOrCases: string | AlgCase[] = 'cfop-4look',
   bookmarkedIds: string[] = []
 ): DeckOption {
   const decks = getDecks(methodOrCases, bookmarkedIds);
   const found = decks.find(d => d.id === deckId);
-  return found || decks[0] || { id: 'bookmarks', label: 'Bookmarks', cases: [] };
+  return found || decks.find(d => d.id !== 'bookmarks') || decks[0] || { id: 'bookmarks', label: 'Bookmarks', cases: [] };
 }
 
 /**
  * Dynamically maps a reference step to its matching training deck
+ * - Step 'pll' on 4-Look LL -> '2-look-pll'
+ * - Step 'pll' on 3-Look or 2-Look LL -> 'full-pll'
+ * - Step 'oll' on 4-Look or 3-Look LL -> '2-look-oll'
+ * - Step 'oll' on 2-Look (Full) LL -> 'full-oll'
+ * - Does NOT allow bookmarked cases to hijack the step route to 'bookmarks'
  */
 export function getDeckForStep(
   stepId: string,
-  methodOrCases: string | AlgCase[] = 'cfop',
+  methodOrCases: string | AlgCase[] = 'cfop-4look',
   bookmarkedIds: string[] = []
 ): string {
-  const decks = getDecks(methodOrCases, bookmarkedIds);
   if (stepId === 'bookmarked') return 'bookmarks';
 
+  let methodId = 'cfop-4look';
+  let cases: AlgCase[];
+
+  if (typeof methodOrCases === 'string') {
+    const normalized = (methodOrCases === 'cfop' || !methodOrCases) ? 'cfop-4look' : methodOrCases;
+    methodId = normalized;
+    cases = getAllCases(normalized);
+  } else {
+    cases = methodOrCases;
+    if (cases.some(c => c.subcategory === 'Full OLL')) {
+      methodId = 'cfop-2look';
+    } else if (cases.some(c => c.subcategory === 'Full PLL')) {
+      methodId = 'cfop-3look';
+    } else {
+      methodId = 'cfop-4look';
+    }
+  }
+
+  if (stepId === 'pll') {
+    return methodId === 'cfop-4look' ? '2-look-pll' : 'full-pll';
+  }
+
+  if (stepId === 'oll') {
+    return methodId === 'cfop-2look' ? 'full-oll' : '2-look-oll';
+  }
+
+  // For other steps (e.g. cross, f2l), find non-bookmark matching deck or fallback to 'all'
+  const decks = getDecks(cases, bookmarkedIds);
   const matchingDeck = decks.find(
-    d => d.id === stepId || d.id.startsWith(stepId) || d.cases.some(c => c.category === stepId)
+    d => d.id !== 'bookmarks' && (d.id === stepId || d.id.includes(stepId) || d.cases.some(c => c.category === stepId))
   );
 
   return matchingDeck ? matchingDeck.id : 'all';

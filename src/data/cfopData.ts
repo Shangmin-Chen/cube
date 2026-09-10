@@ -1,694 +1,8 @@
 import type { AlgCase, MethodStep, AlgMethod } from '../types/cube';
-
-export const OLL_2LOOK_CASES: AlgCase[] = [
-  // Edges (Orient Edges first if no yellow cross)
-  {
-    id: 'oll-2look-dot',
-    name: 'Dot (No Edges)',
-    category: 'oll',
-    subcategory: '2-Look OLL',
-    group: 'Edges (Look 1)',
-    is2Look: true,
-    primaryAlg: "F (R U R' U') F' f (R U R' U') f'",
-    alternativeAlgs: ["F (R U R' U') F' U2 F (R U R' U') F'"],
-    description: 'Orient all 4 top edge pieces when no edges are oriented.',
-    tips: 'J Perm rule: Line trigger F (R U R\' U\') F\' then L-shape trigger f (R U R\' U\') f\'.',
-    why: "Line trigger F (R U R' U') F' flips 2 edges into an L-shape, then wide f (R U R' U') f' flips the remaining 2 edges into a cross.",
-    topGrid: ['G', 'G', 'G', 'G', 'Y', 'G', 'G', 'G', 'G'],
-    borderColors: {
-      top: ['G', 'Y', 'G'],
-      right: ['G', 'Y', 'G'],
-      bottom: ['G', 'Y', 'G'],
-      left: ['G', 'Y', 'G'],
-    }
-  },
-  {
-    id: 'oll-2look-line',
-    name: 'Line (Bar)',
-    category: 'oll',
-    subcategory: '2-Look OLL',
-    group: 'Edges (Look 1)',
-    is2Look: true,
-    primaryAlg: "F (R U R' U') F'",
-    description: 'Hold yellow line horizontally (9 and 3 o-clock), then execute.',
-    tips: 'J Perm rule: Hold bar horizontally. F (R U R\' U\') F\'.',
-    why: "F turns front slot lifting edge stickers up, R U R' U' swaps top layer, and F' closes slot leaving 2 edges flipped.",
-    topGrid: ['G', 'G', 'G', 'Y', 'Y', 'Y', 'G', 'G', 'G'],
-    borderColors: {
-      top: ['G', 'Y', 'G'],
-      right: ['G', 'G', 'G'],
-      bottom: ['G', 'Y', 'G'],
-      left: ['G', 'G', 'G'],
-    }
-  },
-  {
-    id: 'oll-2look-lshape',
-    name: 'L-Shape (Small L)',
-    category: 'oll',
-    subcategory: '2-Look OLL',
-    group: 'Edges (Look 1)',
-    is2Look: true,
-    primaryAlg: "f (R U R' U') f'",
-    alternativeAlgs: ["F (U R U' R') F'"],
-    description: 'Hold L at top-left corner (9 and 12 o-clock).',
-    tips: 'J Perm rule: Hold L at 9 and 12 o-clock. Wide f (R U R\' U\') f\' turns L into cross.',
-    why: "Wide f turns two layers simultaneously, flipping adjacent edges instead of opposite edges before f' restores layers.",
-    topGrid: ['G', 'Y', 'G', 'Y', 'Y', 'G', 'G', 'G', 'G'],
-    borderColors: {
-      top: ['G', 'G', 'G'],
-      right: ['G', 'Y', 'G'],
-      bottom: ['G', 'Y', 'G'],
-      left: ['G', 'G', 'G'],
-    }
-  },
-  // Corners (Orient Corners once cross is completed)
-  {
-    id: 'oll-2look-sune',
-    name: 'Sune',
-    category: 'oll',
-    subcategory: '2-Look OLL',
-    group: 'Corners (Look 2)',
-    is2Look: true,
-    primaryAlg: "R U R' U R U2 R'",
-    description: '1 yellow corner facing UP at front-left (index 6).',
-    tips: 'J Perm rule: Hold oriented corner at front-left. Yellow sticker on front-right corner faces FRONT.',
-    why: "R U lifts the FR F2L pair and orbits it 360° around top layer before reinserting with R U2 R', twisting 3 corners by 120°.",
-    topGrid: ['G', 'Y', 'G', 'Y', 'Y', 'Y', 'Y', 'Y', 'G'],
-    borderColors: {
-      top: ['Y', 'G', 'G'],
-      right: ['Y', 'G', 'G'],
-      bottom: ['G', 'G', 'Y'],
-      left: ['G', 'G', 'G'],
-    }
-  },
-  {
-    id: 'oll-2look-antisune',
-    name: 'Anti-Sune',
-    category: 'oll',
-    subcategory: '2-Look OLL',
-    group: 'Corners (Look 2)',
-    is2Look: true,
-    primaryAlg: "R U2 R' U' R U' R'",
-    alternativeAlgs: ["L' U' L U' L' U2 L"],
-    description: '1 yellow corner facing UP at back-left (index 0).',
-    tips: 'J Perm rule: Hold oriented corner at back-left. Yellow sticker on front-left corner faces FRONT.',
-    why: "Orbits the F2L pair in reverse direction (360° clockwise), twisting 3 corners opposite to Sune.",
-    topGrid: ['Y', 'Y', 'G', 'Y', 'Y', 'Y', 'G', 'Y', 'G'],
-    borderColors: {
-      top: ['G', 'G', 'Y'],
-      right: ['G', 'G', 'Y'],
-      bottom: ['Y', 'G', 'G'],
-      left: ['G', 'G', 'G'],
-    }
-  },
-  {
-    id: 'oll-2look-h',
-    name: 'H Case (Double Sune)',
-    category: 'oll',
-    subcategory: '2-Look OLL',
-    group: 'Corners (Look 2)',
-    is2Look: true,
-    primaryAlg: "R U R' U R U' R' U R U2 R'",
-    alternativeAlgs: ["y F (R U R' U')3 F'"],
-    description: '0 corners facing up. Headlights on left AND right side.',
-    tips: 'Double Sune: Two Sunes chained together where U2 R\' + R U cancels R\' R and combines U2 U into U\'.',
-    why: 'Double Sune combination: Chaining two Sunes (R U R\' U R U2 R\') cancels the middle R\' R and turns U2 U into U\', producing the seamless 11-move formula R U R\' U R U\' R\' U R U2 R\'.',
-    topGrid: ['G', 'Y', 'G', 'Y', 'Y', 'Y', 'G', 'Y', 'G'],
-    borderColors: {
-      top: ['G', 'G', 'G'],
-      right: ['Y', 'G', 'Y'],
-      bottom: ['G', 'G', 'G'],
-      left: ['Y', 'G', 'Y'],
-    }
-  },
-  {
-    id: 'oll-2look-pi',
-    name: 'Pi (Bruno)',
-    category: 'oll',
-    subcategory: '2-Look OLL',
-    group: 'Corners (Look 2)',
-    is2Look: true,
-    primaryAlg: "R U2 R2 U' R2 U' R2 U2 R",
-    description: '0 corners facing up. Headlights on left side, back & front right stickers point away.',
-    tips: 'J Perm rule: Hold headlights on LEFT. R U2 (R2 U\' R2 U\' R2) U2 R.',
-    why: "R U2 R2 slot displacement cycles and twists all four unoriented corners in one fluid motion.",
-    topGrid: ['G', 'Y', 'G', 'Y', 'Y', 'Y', 'G', 'Y', 'G'],
-    borderColors: {
-      top: ['G', 'G', 'Y'],
-      right: ['G', 'G', 'G'],
-      bottom: ['G', 'G', 'Y'],
-      left: ['Y', 'G', 'Y'],
-    }
-  },
-  {
-    id: 'oll-2look-headlights',
-    name: 'U Case (Headlights)',
-    category: 'oll',
-    subcategory: '2-Look OLL',
-    group: 'Corners (Look 2)',
-    is2Look: true,
-    primaryAlg: "R2 D R' U2 R D' R' U2 R'",
-    alternativeAlgs: ["R2 D' R U2 R' D R U2 R"],
-    description: '2 corners facing UP on right (UBR & UFR). Headlights on left side.',
-    tips: 'J Perm rule: Hold headlights on LEFT. R2 D R\' U2 R D\' R\' U2 R\'.',
-    why: "D slice moves isolate bottom layers while pivoting left headlights into top orientation.",
-    topGrid: ['G', 'Y', 'Y', 'Y', 'Y', 'Y', 'G', 'Y', 'Y'],
-    borderColors: {
-      top: ['G', 'G', 'G'],
-      right: ['G', 'G', 'G'],
-      bottom: ['G', 'G', 'G'],
-      left: ['Y', 'G', 'Y'],
-    }
-  },
-  {
-    id: 'oll-2look-chameleon',
-    name: 'T Case (Chameleon)',
-    category: 'oll',
-    subcategory: '2-Look OLL',
-    group: 'Corners (Look 2)',
-    is2Look: true,
-    primaryAlg: "r U R' U' r' F R F'",
-    alternativeAlgs: ["R U R' U' R' F R F'"],
-    description: '2 corners facing UP on right (UBR & UFR). Front-left & back-left stickers point out.',
-    tips: 'J Perm rule: Hold headlights/solved corners on RIGHT. r U R\' U\' r\' F R F\'.',
-    why: "Wide r lift paired with F R F' slot insert rotates corner stickers into top face.",
-    topGrid: ['G', 'Y', 'Y', 'Y', 'Y', 'Y', 'G', 'Y', 'Y'],
-    borderColors: {
-      top: ['Y', 'G', 'G'],
-      right: ['G', 'G', 'G'],
-      bottom: ['Y', 'G', 'G'],
-      left: ['G', 'G', 'G'],
-    }
-  },
-  {
-    id: 'oll-2look-bowtie',
-    name: 'L Case (Bowtie)',
-    category: 'oll',
-    subcategory: '2-Look OLL',
-    group: 'Corners (Look 2)',
-    is2Look: true,
-    primaryAlg: "F R' F' r U R U' r'",
-    alternativeAlgs: ["R U2 R2 F R F' U2 R' F R F'"],
-    description: '2 corners facing UP diagonally (UBL & UFR). Front-left sticker faces FRONT.',
-    tips: 'J Perm rule: Hold front-left yellow sticker facing FRONT. F R\' F\' r U R U\' r\'.',
-    why: "F R' F' sets up corner stickers, then wide r slice turn rotates diagonal stickers into top face.",
-    topGrid: ['Y', 'Y', 'G', 'Y', 'Y', 'Y', 'G', 'Y', 'Y'],
-    borderColors: {
-      top: ['G', 'G', 'G'],
-      right: ['G', 'G', 'Y'],
-      bottom: ['Y', 'G', 'G'],
-      left: ['G', 'G', 'G'],
-    }
-  }
-];
-
-export const PLL_2LOOK_CASES: AlgCase[] = [
-  // Corner Permutation (Look 1)
-  {
-    id: 'pll-2look-tperm',
-    name: 'Headlights (T Permutation)',
-    category: 'pll',
-    subcategory: '2-Look PLL',
-    group: 'Corners (Look 1)',
-    is2Look: true,
-    primaryAlg: "R U R' U' R' F R2 U' R' U' R U R' F'",
-    description: 'Swaps 2 right corners & 2 edges. Headlights on left.',
-    tips: 'J Perm rule: Hold headlights on LEFT. R U R\' U\' R\' F R2 U\' R\' U\' R U R\' F\'.',
-    why: "Pops out two F2L pairs (R U R' U'), swaps right 2 corners and 2 edges, then restores both F2L pairs.",
-    probability: '4/5',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'G_GREEN', 'B'],
-      right: ['R', 'B', 'R'],
-      bottom: ['G_GREEN', 'R', 'G_GREEN'],
-      left: ['O', 'O', 'O'],
-    }
-  },
-  {
-    id: 'pll-2look-yperm',
-    name: 'Diagonal (Y Permutation)',
-    category: 'pll',
-    subcategory: '2-Look PLL',
-    group: 'Corners (Look 1)',
-    is2Look: true,
-    primaryAlg: "F R U' R' U' R U R' F' R U R' U' R' F R F'",
-    description: 'Swaps diagonal corners when no headlights exist.',
-    tips: 'J Perm rule: Execute from any angle when NO headlights exist.',
-    why: "Combines an edge setup trigger F (R U R' U') F' with a corner swap insert to resolve diagonal corner misalignment.",
-    probability: '1/5',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['G_GREEN', 'B', 'B'],
-      right: ['R', 'G_GREEN', 'O'],
-      bottom: ['G_GREEN', 'R', 'B'],
-      left: ['R', 'O', 'O'],
-    }
-  },
-  // Edge Permutation (Look 2)
-  {
-    id: 'pll-2look-ua',
-    name: 'Ua Permutation',
-    category: 'pll',
-    subcategory: '2-Look PLL',
-    group: 'Edges (Look 2)',
-    is2Look: true,
-    primaryAlg: "R U' R U R U R U' R' U' R2",
-    alternativeAlgs: ["M2 U M U2 M' U M2"],
-    description: 'Cycles 3 edges counter-clockwise. Back side solved.',
-    tips: 'J Perm rule: Hold solved side on BACK.',
-    why: "R U' lifts right F2L pair, cycles 3 top edges through right slot, and R' U' R2 re-locks F2L.",
-    probability: '1/4',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'B', 'B'],
-      right: ['R', 'G_GREEN', 'R'],
-      bottom: ['G_GREEN', 'O', 'G_GREEN'],
-      left: ['O', 'R', 'O'],
-    }
-  },
-  {
-    id: 'pll-2look-ub',
-    name: 'Ub Permutation',
-    category: 'pll',
-    subcategory: '2-Look PLL',
-    group: 'Edges (Look 2)',
-    is2Look: true,
-    primaryAlg: "R2 U R U R' U' R' U' R' U R'",
-    alternativeAlgs: ["M2 U' M U2 M' U' M2"],
-    description: 'Cycles 3 edges clockwise. Back side solved.',
-    tips: 'J Perm rule: Hold solved side on BACK.',
-    why: "Clockwise mirror of Ua perm, cycling 3 edges through right slot in reverse.",
-    probability: '1/4',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'B', 'B'],
-      right: ['R', 'O', 'R'],
-      bottom: ['G_GREEN', 'R', 'G_GREEN'],
-      left: ['O', 'G_GREEN', 'O'],
-    }
-  },
-  {
-    id: 'pll-2look-hperm',
-    name: 'H Permutation',
-    category: 'pll',
-    subcategory: '2-Look PLL',
-    group: 'Edges (Look 2)',
-    is2Look: true,
-    primaryAlg: "M2 U M2 U2 M2 U M2",
-    alternativeAlgs: ["M2 U' M2 U2 M2 U' M2"],
-    description: 'Swaps opposite edge pairs (Front/Back & Left/Right).',
-    tips: 'J Perm rule: Execute from any angle. Fast slice M2 U M2...',
-    why: "M2 swaps opposite edge pairs across middle slice, U aligns top layer, and M2 U M2 restores F2L.",
-    probability: '1/8',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'G_GREEN', 'B'],
-      right: ['R', 'O', 'R'],
-      bottom: ['G_GREEN', 'B', 'G_GREEN'],
-      left: ['O', 'R', 'O'],
-    }
-  },
-  {
-    id: 'pll-2look-zperm',
-    name: 'Z Permutation',
-    category: 'pll',
-    subcategory: '2-Look PLL',
-    group: 'Edges (Look 2)',
-    is2Look: true,
-    primaryAlg: "M' U M2 U M2 U M' U2 M2 U'",
-    alternativeAlgs: ["M2 U M2 U M' U2 M2 U2 M' U2"],
-    description: 'Swaps adjacent edge pairs (Front/Right & Back/Left).',
-    tips: 'J Perm rule: Hold swap edges on FRONT & RIGHT.',
-    why: "M' slice moves isolate adjacent edge pairs, cycling them in an X-pattern without disturbing corners.",
-    probability: '1/8',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'O', 'B'],
-      right: ['R', 'G_GREEN', 'R'],
-      bottom: ['G_GREEN', 'R', 'G_GREEN'],
-      left: ['O', 'B', 'O'],
-    }
-  }
-];
-
-export const FULL_PLL_CASES: AlgCase[] = [
-  ...PLL_2LOOK_CASES,
-  {
-    id: 'pll-aa',
-    name: 'Aa Permutation',
-    category: 'pll',
-    subcategory: 'Full PLL',
-    group: 'Adjacent Corners',
-    primaryAlg: "x R' D R' U2 R D' R' U2 R2 x'",
-    alternativeAlgs: ["x R' U R' D2 R U' R' D2 R2 x'"],
-    description: 'Cycles 3 corners counter-clockwise.',
-    why: "Rotates right layer x' and uses D slice turns to cycle 3 corners counter-clockwise.",
-    probability: '1/18',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'O', 'B'],
-      right: ['R', 'R', 'O'],
-      bottom: ['G_GREEN', 'G_GREEN', 'G_GREEN'],
-      left: ['O', 'B', 'R'],
-    }
-  },
-  {
-    id: 'pll-ab',
-    name: 'Ab Permutation',
-    category: 'pll',
-    subcategory: 'Full PLL',
-    group: 'Adjacent Corners',
-    primaryAlg: "x R2 U2 R' D' R U2 R' D R' x'",
-    alternativeAlgs: ["x' R2 D2 R' U' R D2 R' U R' x"],
-    description: 'Cycles 3 corners clockwise.',
-    why: "Mirror of Aa perm using D slice turns to cycle 3 corners clockwise.",
-    probability: '1/18',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'R', 'B'],
-      right: ['R', 'B', 'O'],
-      bottom: ['G_GREEN', 'G_GREEN', 'G_GREEN'],
-      left: ['O', 'O', 'R'],
-    }
-  },
-  {
-    id: 'pll-e',
-    name: 'E Permutation',
-    category: 'pll',
-    subcategory: 'Full PLL',
-    group: 'Diagonal Corners',
-    primaryAlg: "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
-    description: 'Diagonal corner swap (ENVY family) with zero headlights.',
-    why: "Uses D slice commutators to solve diagonal corner displacement by swapping pairs across opposing sides without disturbing edges.",
-    probability: '1/36',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'G_GREEN', 'O'],
-      right: ['R', 'R', 'B'],
-      bottom: ['G_GREEN', 'G_GREEN', 'R'],
-      left: ['O', 'O', 'G_GREEN'],
-    }
-  },
-  {
-    id: 'pll-f',
-    name: 'F Permutation',
-    category: 'pll',
-    subcategory: 'Full PLL',
-    group: 'Adjacent Corners',
-    primaryAlg: "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
-    description: 'Swaps 2 corners and 2 edges on one side.',
-    why: "Executes a T-Perm corner swap wrapped inside a 1x3 bar setup move.",
-    probability: '1/18',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'B', 'B'],
-      right: ['R', 'O', 'R'],
-      bottom: ['G_GREEN', 'R', 'O'],
-      left: ['O', 'G_GREEN', 'G_GREEN'],
-    }
-  },
-  {
-    id: 'pll-ga',
-    name: 'Ga Permutation',
-    category: 'pll',
-    subcategory: 'Full PLL',
-    group: 'G Perms',
-    primaryAlg: "R2 u R' U R' U' R u' R2 F' U F",
-    alternativeAlgs: ["R2 U R' U R' U' R U' R2 D U' R' U R D'"],
-    description: 'Headlights on left, block on front-right.',
-    why: "Uses wide u slice moves to rotate 3 corners and 3 edges around an anchored 1x2 F2L block.",
-    probability: '1/18',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'G_GREEN', 'B'],
-      right: ['R', 'R', 'R'],
-      bottom: ['G_GREEN', 'O', 'O'],
-      left: ['O', 'B', 'G_GREEN'],
-    }
-  },
-  {
-    id: 'pll-gb',
-    name: 'Gb Permutation',
-    category: 'pll',
-    subcategory: 'Full PLL',
-    group: 'G Perms',
-    primaryAlg: "F' U' F R2 u R' U R U' R u' R2",
-    alternativeAlgs: ["R' U' R U D' R2 U R' U R U' R U' R2 D"],
-    description: 'Headlights on left, block on back-right.',
-    why: "F' U' F sets up block, wide u rotates 3 corners and 3 edges clockwise.",
-    probability: '1/18',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'B', 'O'],
-      right: ['R', 'G_GREEN', 'R'],
-      bottom: ['G_GREEN', 'R', 'G_GREEN'],
-      left: ['O', 'O', 'O'],
-    }
-  },
-  {
-    id: 'pll-gc',
-    name: 'Gc Permutation',
-    category: 'pll',
-    subcategory: 'Full PLL',
-    group: 'G Perms',
-    primaryAlg: "R2 u' R U' R U R' u R2 F U' F'",
-    alternativeAlgs: ["R2 U' R U' R U R' U R2 D' U R U' R' D"],
-    description: 'Headlights on left, block on front-left.',
-    why: "Wide u' counter-clockwise slice rotates 3 corners & edges around front-left block.",
-    probability: '1/18',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'O', 'B'],
-      right: ['R', 'B', 'R'],
-      bottom: ['G_GREEN', 'G_GREEN', 'G_GREEN'],
-      left: ['O', 'R', 'O'],
-    }
-  },
-  {
-    id: 'pll-gd',
-    name: 'Gd Permutation',
-    category: 'pll',
-    subcategory: 'Full PLL',
-    group: 'G Perms',
-    primaryAlg: "R U R' U' D R2 U' R U' R' U R' U R2 D'",
-    description: 'Headlights on left, block on back-left.',
-    why: "D slice step isolates back-left block while cycling remaining top pieces.",
-    probability: '1/18',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'R', 'B'],
-      right: ['R', 'O', 'R'],
-      bottom: ['G_GREEN', 'B', 'G_GREEN'],
-      left: ['O', 'O', 'O'],
-    }
-  },
-  {
-    id: 'pll-ja',
-    name: 'Ja Permutation',
-    category: 'pll',
-    subcategory: 'Full PLL',
-    group: 'Adjacent Corners',
-    primaryAlg: "x R2 F R F' R U2 r' U r U2 x'",
-    alternativeAlgs: ["R' U L' U2 R U' R' U2 R L"],
-    description: '1x2 block on front-left.',
-    why: "x tilt with wide r' slice swaps front-left adjacent corners and edges.",
-    probability: '1/18',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'B', 'B'],
-      right: ['R', 'R', 'O'],
-      bottom: ['G_GREEN', 'O', 'G_GREEN'],
-      left: ['O', 'G_GREEN', 'R'],
-    }
-  },
-  {
-    id: 'pll-jb',
-    name: 'Jb Permutation',
-    category: 'pll',
-    subcategory: 'Full PLL',
-    group: 'Adjacent Corners',
-    primaryAlg: "R U R' F' R U R' U' R' F R2 U' R' U'",
-    description: '1x2 block on front-right.',
-    why: "Pops out right F2L pair and reinserts in offset slot, swapping front-right corners and edges.",
-    probability: '1/18',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'B', 'B'],
-      right: ['R', 'G_GREEN', 'O'],
-      bottom: ['G_GREEN', 'R', 'G_GREEN'],
-      left: ['O', 'O', 'R'],
-    }
-  },
-  {
-    id: 'pll-na',
-    name: 'Na Permutation',
-    category: 'pll',
-    subcategory: 'Full PLL',
-    group: 'Diagonal Corners',
-    primaryAlg: "R U R' U R U R' F' R U R' U' R' F R2 U' R' U2 R U' R'",
-    alternativeAlgs: ["z U R' D R2 U' R D' U R' D R2 U' R D' z'"],
-    description: 'Swaps opposite corners & edges.',
-    why: "Executes a double corner-and-edge diagonal swap along opposing faces.",
-    probability: '1/72',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'G_GREEN', 'B'],
-      right: ['R', 'O', 'R'],
-      bottom: ['G_GREEN', 'B', 'G_GREEN'],
-      left: ['O', 'R', 'O'],
-    }
-  },
-  {
-    id: 'pll-nb',
-    name: 'Nb Permutation',
-    category: 'pll',
-    subcategory: 'Full PLL',
-    group: 'Diagonal Corners',
-    primaryAlg: "R' U R U' R' F' U' F R U R' F R' F' R U' R",
-    alternativeAlgs: ["R' U L' U2 R U' L R' U L' U2 R U' L"],
-    description: 'Mirror of Na perm.',
-    why: "Mirror diagonal corner and edge swap using F' U' F triggers.",
-    probability: '1/72',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'O', 'B'],
-      right: ['R', 'B', 'R'],
-      bottom: ['G_GREEN', 'R', 'G_GREEN'],
-      left: ['O', 'G_GREEN', 'O'],
-    }
-  },
-  {
-    id: 'pll-ra',
-    name: 'Ra Permutation',
-    category: 'pll',
-    subcategory: 'Full PLL',
-    group: 'Adjacent Corners',
-    primaryAlg: "R U R' F' R U2 R' U2 R' F R U R U2 R' U'",
-    alternativeAlgs: ["R U2 R' U2 R B' R' U' R U R B R2"],
-    description: 'Headlights on left, bar on front.',
-    why: "Sets up front 1x2 bar with F', swaps left corners, and restores F2L.",
-    probability: '1/18',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'B', 'B'],
-      right: ['R', 'O', 'O'],
-      bottom: ['G_GREEN', 'R', 'G_GREEN'],
-      left: ['O', 'G_GREEN', 'R'],
-    }
-  },
-  {
-    id: 'pll-rb',
-    name: 'Rb Permutation',
-    category: 'pll',
-    subcategory: 'Full PLL',
-    group: 'Adjacent Corners',
-    primaryAlg: "R' U2 R U2 R' F R U R' U' R' F' R2 U'",
-    description: 'Headlights on left, bar on back.',
-    why: "Sets up back 1x2 bar with F, swaps left corners, and restores F2L.",
-    probability: '1/18',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'B', 'B'],
-      right: ['R', 'G_GREEN', 'R'],
-      bottom: ['G_GREEN', 'O', 'G_GREEN'],
-      left: ['O', 'R', 'O'],
-    }
-  },
-  {
-    id: 'pll-v',
-    name: 'V Permutation',
-    category: 'pll',
-    subcategory: 'Full PLL',
-    group: 'Diagonal Corners',
-    primaryAlg: "R' U R' U' y R' F' R2 U' R' U R' F R F y'",
-    alternativeAlgs: ["R' U R' U' B' R' B2 U' R' U R' B R B"],
-    description: 'Diagonal swap with 2x2 block on back-left.',
-    why: "Combines y rotation with F-trigger corner swap to solve diagonal displacement.",
-    probability: '1/18',
-    topGrid: ['Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'],
-    borderColors: {
-      top: ['B', 'O', 'B'],
-      right: ['R', 'R', 'G_GREEN'],
-      bottom: ['G_GREEN', 'B', 'R'],
-      left: ['O', 'G_GREEN', 'O'],
-    }
-  }
-];
-
-export const F2L_HIGHLIGHTS: AlgCase[] = [
-  {
-    id: 'f2l-basic-1',
-    name: 'Basic Pair in Top Layer',
-    category: 'f2l',
-    subcategory: 'Basic F2L',
-    group: 'Connected Pair',
-    primaryAlg: "U R U' R'",
-    description: 'Corner and edge are connected in top layer.',
-    tips: 'Align pair above slot, then insert.',
-    why: "Direct slot insertion (U R U' R') taking advantage of pre-aligned corner and edge.",
-    topGrid: ['G', 'G', 'G', 'G', 'Y', 'R', 'G', 'G', 'R'],
-    borderColors: {
-      top: ['G', 'G', 'G'],
-      right: ['G', 'G_GREEN', 'W'],
-      bottom: ['G', 'G', 'G_GREEN'],
-      left: ['G', 'G', 'G'],
-    }
-  },
-  {
-    id: 'f2l-basic-2',
-    name: 'Corner Up, Edge in Top Layer',
-    category: 'f2l',
-    subcategory: 'Basic F2L',
-    group: 'White Up',
-    primaryAlg: "R U2 R' U' R U R'",
-    description: 'White sticker points UP on top layer.',
-    tips: 'Align edge with side center, push corner away, pair & insert.',
-    why: "R U2 R' separates corner and edge, matches side colors, then inserts pair.",
-    topGrid: ['G', 'G', 'G', 'G', 'Y', 'G_GREEN', 'G', 'G', 'W'],
-    borderColors: {
-      top: ['G', 'G', 'G'],
-      right: ['G', 'R', 'G_GREEN'],
-      bottom: ['G', 'G', 'R'],
-      left: ['G', 'G', 'G'],
-    }
-  },
-  {
-    id: 'f2l-basic-3',
-    name: 'Separated Pair (Different Colors)',
-    category: 'f2l',
-    subcategory: 'Basic F2L',
-    group: 'Different Colors',
-    primaryAlg: "R U R'",
-    description: 'White sticker faces side, different top colors.',
-    tips: 'Hide corner, match edge, bring back.',
-    why: "R U R' hides corner in back slot to match edge orientation before inserting.",
-    topGrid: ['G', 'G', 'G', 'R', 'Y', 'G', 'G', 'G', 'G_GREEN'],
-    borderColors: {
-      top: ['G', 'G', 'G'],
-      right: ['G', 'G', 'R'],
-      bottom: ['G', 'G', 'W'],
-      left: ['G', 'G_GREEN', 'G'],
-    }
-  },
-  {
-    id: 'f2l-basic-4',
-    name: 'Separated Pair (Same Top Color)',
-    category: 'f2l',
-    subcategory: 'Basic F2L',
-    group: 'Same Colors',
-    primaryAlg: "U' R U2 R' U2 R U' R'",
-    description: 'Both top stickers have SAME color.',
-    tips: 'Form connected pair then insert.',
-    why: "U' R U2 R' sets up connected pair in top layer, then inserts cleanly.",
-    topGrid: ['G', 'R', 'G', 'G', 'Y', 'G', 'G', 'G', 'R'],
-    borderColors: {
-      top: ['G', 'G_GREEN', 'G'],
-      right: ['G', 'G', 'W'],
-      bottom: ['G', 'G', 'G_GREEN'],
-      left: ['G', 'G', 'G'],
-    }
-  }
-];
+import oll2LookJson from './generated/oll-2look.json';
+import pll2LookJson from './generated/pll-2look.json';
+import ollFullJson from './generated/oll-full.json';
+import pllFullJson from './generated/pll-full.json';
 
 export const CROSS_CASES: AlgCase[] = [
   {
@@ -711,25 +25,144 @@ export const CROSS_CASES: AlgCase[] = [
   },
 ];
 
-export const ALL_CFOP_CASES: AlgCase[] = [
-  ...CROSS_CASES,
-  ...F2L_HIGHLIGHTS,
-  ...OLL_2LOOK_CASES,
-  ...FULL_PLL_CASES,
+export const F2L_HIGHLIGHTS: AlgCase[] = [
+  {
+    id: 'f2l-basic-1',
+    name: 'Basic Pair in Top Layer',
+    category: 'f2l',
+    subcategory: 'Basic F2L',
+    group: 'Connected Pair',
+    primaryAlg: "U R U' R'",
+    description: 'Corner and edge are connected in top layer.',
+    tips: 'Align pair above slot, then insert.',
+    why: "Direct slot insertion (U R U' R') taking advantage of pre-aligned corner and edge.",
+    topGrid: ['G', 'G', 'G', 'G', 'Y', 'R', 'G', 'G', 'R'],
+    borderColors: {
+      top: ['G', 'G', 'G'],
+      right: ['G', 'G_GREEN', 'W'],
+      bottom: ['G', 'G', 'G_GREEN'],
+      left: ['G', 'G', 'G'],
+    },
+  },
+  {
+    id: 'f2l-basic-2',
+    name: 'Corner Up, Edge in Top Layer',
+    category: 'f2l',
+    subcategory: 'Basic F2L',
+    group: 'White Up',
+    primaryAlg: "R U2 R' U' R U R'",
+    description: 'White sticker points UP on top layer.',
+    tips: 'Align edge with side center, push corner away, pair & insert.',
+    why: "R U2 R' separates corner and edge, matches side colors, then inserts pair.",
+    topGrid: ['G', 'G', 'G', 'G', 'Y', 'G_GREEN', 'G', 'G', 'W'],
+    borderColors: {
+      top: ['G', 'G', 'G'],
+      right: ['G', 'R', 'G_GREEN'],
+      bottom: ['G', 'G', 'R'],
+      left: ['G', 'G', 'G'],
+    },
+  },
+  {
+    id: 'f2l-basic-3',
+    name: 'Separated Pair (Different Colors)',
+    category: 'f2l',
+    subcategory: 'Basic F2L',
+    group: 'Different Colors',
+    primaryAlg: "R U R'",
+    description: 'White sticker faces side, different top colors.',
+    tips: 'Hide corner, match edge, bring back.',
+    why: "R U R' hides corner in back slot to match edge orientation before inserting.",
+    topGrid: ['G', 'G', 'G', 'R', 'Y', 'G', 'G', 'G', 'G_GREEN'],
+    borderColors: {
+      top: ['G', 'G', 'G'],
+      right: ['G', 'G', 'R'],
+      bottom: ['G', 'G', 'W'],
+      left: ['G', 'G_GREEN', 'G'],
+    },
+  },
+  {
+    id: 'f2l-basic-4',
+    name: 'Separated Pair (Same Top Color)',
+    category: 'f2l',
+    subcategory: 'Basic F2L',
+    group: 'Same Colors',
+    primaryAlg: "U' R U2 R' U2 R U' R'",
+    description: 'Both top stickers have SAME color.',
+    tips: 'Form connected pair then insert.',
+    why: "U' R U2 R' sets up connected pair in top layer, then inserts cleanly.",
+    topGrid: ['G', 'R', 'G', 'G', 'Y', 'G', 'G', 'G', 'R'],
+    borderColors: {
+      top: ['G', 'G_GREEN', 'G'],
+      right: ['G', 'G', 'W'],
+      bottom: ['G', 'G', 'G_GREEN'],
+      left: ['G', 'G', 'G'],
+    },
+  },
 ];
+
+export const OLL_2LOOK_CASES: AlgCase[] = oll2LookJson as AlgCase[];
+export const PLL_2LOOK_CASES: AlgCase[] = pll2LookJson as AlgCase[];
+export const OLL_FULL_CASES: AlgCase[] = ollFullJson as AlgCase[];
+export const FULL_PLL_CASES: AlgCase[] = pllFullJson as AlgCase[];
 
 export const CFOP_STEPS: MethodStep[] = [
   { id: 'cross', label: 'Step 1: CROSS', description: 'Solve bottom 4 cross edges aligned with side centers' },
   { id: 'f2l', label: 'Step 2: F2L', description: 'Solve first two layers simultaneously (corner + edge pairs)' },
-  { id: 'oll', label: 'Step 3: OLL', description: 'Orient last layer yellow pieces (2-Look & Full)' },
+  { id: 'oll', label: 'Step 3: OLL', description: 'Orient last layer yellow pieces' },
   { id: 'pll', label: 'Step 4: PLL', description: 'Permute last layer yellow pieces into solved state' },
 ];
 
-export const CFOP_METHOD: AlgMethod = {
-  id: 'cfop',
-  name: '2-Look CFOP Method',
-  description: 'Fridrich / CFOP system (Cross, F2L, 2-Look OLL, 2-Look PLL)',
+/**
+ * 4-Look LL (Beginner CFOP): Cross (1), F2L (4), 2-Look OLL (10), 2-Look PLL (6) = 21 cases
+ */
+export const CFOP_4LOOK_METHOD: AlgMethod = {
+  id: 'cfop-4look',
+  name: '4-Look LL (Beginner CFOP)',
+  description: 'Beginner CFOP: Cross, F2L, 2-Look OLL (10 algs), 2-Look PLL (6 algs)',
   steps: CFOP_STEPS,
-  cases: ALL_CFOP_CASES,
+  cases: [
+    ...CROSS_CASES,
+    ...F2L_HIGHLIGHTS,
+    ...OLL_2LOOK_CASES,
+    ...PLL_2LOOK_CASES,
+  ],
   isAvailable: true,
 };
+
+/**
+ * 3-Look LL (Intermediate CFOP): Cross (1), F2L (4), 2-Look OLL (10), Full PLL (21) = 36 cases
+ */
+export const CFOP_3LOOK_METHOD: AlgMethod = {
+  id: 'cfop-3look',
+  name: '3-Look LL (Intermediate CFOP)',
+  description: 'Intermediate CFOP: Cross, F2L, 2-Look OLL (10 algs), Full PLL (21 algs)',
+  steps: CFOP_STEPS,
+  cases: [
+    ...CROSS_CASES,
+    ...F2L_HIGHLIGHTS,
+    ...OLL_2LOOK_CASES,
+    ...FULL_PLL_CASES,
+  ],
+  isAvailable: true,
+};
+
+/**
+ * 2-Look LL (Full CFOP): Cross (1), F2L (4), Full OLL (57), Full PLL (21) = 83 cases
+ */
+export const CFOP_2LOOK_METHOD: AlgMethod = {
+  id: 'cfop-2look',
+  name: '2-Look LL (Full CFOP)',
+  description: 'Advanced CFOP: Cross, F2L, Full OLL (57 algs), Full PLL (21 algs)',
+  steps: CFOP_STEPS,
+  cases: [
+    ...CROSS_CASES,
+    ...F2L_HIGHLIGHTS,
+    ...OLL_FULL_CASES,
+    ...FULL_PLL_CASES,
+  ],
+  isAvailable: true,
+};
+
+// Aliases for backwards compatibility and default routing
+export const CFOP_METHOD: AlgMethod = CFOP_4LOOK_METHOD;
+export const ALL_CFOP_CASES: AlgCase[] = CFOP_4LOOK_METHOD.cases;
