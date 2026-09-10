@@ -23,7 +23,7 @@ export function registerMethod(method: AlgMethod): void {
  * Returns all registered solving methods
  */
 export function getAvailableMethods(): AlgMethod[] {
-  return Array.from(METHOD_REGISTRY.values());
+  return Array.from(METHOD_REGISTRY.values()).filter(m => m.isAvailable && m.cases.length > 0);
 }
 
 /**

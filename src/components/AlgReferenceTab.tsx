@@ -185,12 +185,7 @@ export const AlgReferenceTab: React.FC = () => {
                 className="bg-transparent text-[#eab308] font-bold focus:outline-none cursor-pointer"
               >
                 {availableMethods.map(method => (
-                  <option
-                    key={method.id}
-                    value={method.id}
-                    disabled={!method.isAvailable}
-                    className={`bg-[#202020] ${method.isAvailable ? 'text-white' : 'text-[#888888]'}`}
-                  >
+                  <option key={method.id} value={method.id} className="bg-[#202020] text-white">
                     {method.name}
                   </option>
                 ))}
