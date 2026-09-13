@@ -44,16 +44,6 @@ export interface AlgCase {
   tips?: string;
   why?: string;
   is2Look?: boolean;
-  // Visual representation for 2D diagram (top layer 3x3 + borders)
-  // topGrid: 9 colors ('Y' or 'G')
-  // borders: top (3), right (3), bottom (3), left (3) colors ('Y', 'B', 'R', 'G', 'O', 'G')
-  topGrid?: string[]; // array of 9 strings (e.g. ['Y', 'Y', 'G', ...])
-  borderColors?: {
-    top: string[];    // 3 colors
-    right: string[];  // 3 colors
-    bottom: string[]; // 3 colors
-    left: string[];   // 3 colors
-  };
 }
 
 export interface SolveRecord {
