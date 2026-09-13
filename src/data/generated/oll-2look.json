@@ -35,8 +35,8 @@
     "group": "Edges (Look 1)",
     "primaryAlg": "f R U R' U' f'",
     "alternativeAlgs": [
-      "y2 F U R U' R' F' y2",
-      "y2 r U R' U' r' R (U R U' R') y2"
+      "y2 F U R U' R' F'",
+      "y2 r U R' U' r' R (U R U' R')"
     ],
     "probability": "4/8",
     "description": "Hold L at top-left corner (9 and 12 o-clock).",
@@ -70,7 +70,7 @@
       "y L' U' L U' L' U2 L y'"
     ],
     "probability": "4/27",
-    "description": "1 yellow corner facing UP at back-right (index 2).",
+    "description": "1 yellow corner facing UP at back-right (index 1).",
     "why": "Orbits the F2L pair in reverse direction (360° clockwise), twisting 3 corners opposite to Sune.",
     "is2Look": true
   },

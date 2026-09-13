@@ -41,7 +41,7 @@ const OLL_2LOOK_META = {
     name: 'Anti-Sune',
     group: 'Corners (Look 2)',
     probability: '4/27',
-    description: '1 yellow corner facing UP at back-right (index 2).',
+    description: '1 yellow corner facing UP at back-right (index 1).',
     why: 'Orbits the F2L pair in reverse direction (360° clockwise), twisting 3 corners opposite to Sune.',
   },
   'H': {
