@@ -111,7 +111,7 @@
     "primaryAlg": "R2 D R' U2 R D' R' U2 R'",
     "alternativeAlgs": [],
     "probability": "4/27",
-    "description": "2 corners facing UP on back. Headlights on left side.",
+    "description": "2 corners facing UP at back-left and back-right. Headlights on left side.",
     "why": "D slice moves isolate bottom layers while pivoting left headlights into top orientation.",
     "is2Look": true
   },

@@ -65,7 +65,7 @@ const OLL_2LOOK_META = {
     name: 'U Case (Headlights)',
     group: 'Corners (Look 2)',
     probability: '4/27',
-    description: '2 corners facing UP on back. Headlights on left side.',
+    description: '2 corners facing UP at back-left and back-right. Headlights on left side.',
     why: 'D slice moves isolate bottom layers while pivoting left headlights into top orientation.',
   },
   'T': {
