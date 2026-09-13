@@ -2,6 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { puzzles } from 'cubing/puzzles';
 import { fetchAlgset } from './ingest/fetcher.mjs';
+import { loadLock, writeLock } from './ingest/upstream-lock.mjs';
 import {
   transform2LookOLL,
   transform2LookPLL,
@@ -22,19 +23,31 @@ const ENDPOINTS = {
   pllFull: 'https://jperm.net/lib/pll.js',
 };
 
+const updatePin = process.argv.includes('--update-pin');
+
 async function main() {
+  if (updatePin) {
+    console.log('--- Updating upstream content pins (--update-pin) ---');
+  }
+
   console.log('--- Starting CFOP Algorithm Ingestion Pipeline ---');
 
   console.log('Initializing cubing/puzzles 3x3x3 simulation...');
   const kpuzzle = await puzzles['3x3x3'].kpuzzle();
 
-  console.log('Fetching raw datasets...');
+  console.log('Fetching raw datasets (pinned upstream)...');
+  const lock = loadLock();
+  const fetchOptions = { lock, updatePin };
   const [oll2LookRaw, pll2LookRaw, ollFullRaw, pllFullRaw] = await Promise.all([
-    fetchAlgset(ENDPOINTS.oll2Look),
-    fetchAlgset(ENDPOINTS.pll2Look),
-    fetchAlgset(ENDPOINTS.ollFull),
-    fetchAlgset(ENDPOINTS.pllFull),
+    fetchAlgset('oll2Look', ENDPOINTS.oll2Look, fetchOptions),
+    fetchAlgset('pll2Look', ENDPOINTS.pll2Look, fetchOptions),
+    fetchAlgset('ollFull', ENDPOINTS.ollFull, fetchOptions),
+    fetchAlgset('pllFull', ENDPOINTS.pllFull, fetchOptions),
   ]);
+
+  if (updatePin) {
+    writeLock(lock);
+  }
 
   console.log('Transforming and validating algorithms with rule-based pipeline...');
   const oll2LookCases = transform2LookOLL(oll2LookRaw, kpuzzle);
@@ -53,6 +66,10 @@ async function main() {
     { file: 'oll-full.json', count: ollFullCases.length, data: ollFullCases },
     { file: 'pll-full.json', count: pllFullCases.length, data: pllFullCases },
   ], OUTPUT_DIR);
+
+  if (updatePin) {
+    console.log('✓ Upstream lockfile updated at scripts/ingest/upstream.lock.json');
+  }
 
   console.log('--- Algorithm sync complete! All cases validated successfully. ---');
 }
