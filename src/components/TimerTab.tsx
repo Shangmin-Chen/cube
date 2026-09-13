@@ -14,16 +14,15 @@ function createSolveId(): string {
 }
 
 function formatInspectionTime(elapsedMs: number): string {
-  const remainingMs = INSPECTION_LIMIT_MS - elapsedMs;
-  if (remainingMs >= 0) {
-    return formatTime(remainingMs);
+  if (elapsedMs < INSPECTION_LIMIT_MS) {
+    return formatTime(INSPECTION_LIMIT_MS - elapsedMs);
   }
   return `+${formatTime(elapsedMs - INSPECTION_LIMIT_MS)}`;
 }
 
 function inspectionPenaltyForElapsed(elapsedMs: number): 'none' | '+2' | 'DNF' {
   if (elapsedMs >= INSPECTION_DNF_MS) return 'DNF';
-  if (elapsedMs > INSPECTION_LIMIT_MS) return '+2';
+  if (elapsedMs >= INSPECTION_LIMIT_MS) return '+2';
   return 'none';
 }
 
@@ -261,6 +260,7 @@ export const TimerTab: React.FC = () => {
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (e.button !== 0) return;
+      if (spaceHoldActiveRef.current) return;
       if (activePointerIdRef.current !== null) return;
       activePointerIdRef.current = e.pointerId;
       e.preventDefault();
@@ -272,6 +272,7 @@ export const TimerTab: React.FC = () => {
 
   const handlePointerUp = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
+      if (spaceHoldActiveRef.current) return;
       if (activePointerIdRef.current !== e.pointerId) return;
       activePointerIdRef.current = null;
       e.preventDefault();
@@ -287,6 +288,7 @@ export const TimerTab: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || e.repeat) return;
+      if (activePointerIdRef.current !== null) return;
       if (shouldLetNativeSpaceThrough(e.target) || shouldLetNativeSpaceThrough(document.activeElement)) {
         return;
       }
