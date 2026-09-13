@@ -295,15 +295,8 @@ export const TimerTab: React.FC = () => {
 
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || e.repeat) return;
-      if (spaceHoldActiveRef.current) {
-        spaceHoldActiveRef.current = false;
-        e.preventDefault();
-        handleTriggerRelease();
-        return;
-      }
-      if (shouldLetNativeSpaceThrough(e.target) || shouldLetNativeSpaceThrough(document.activeElement)) {
-        return;
-      }
+      if (!spaceHoldActiveRef.current) return;
+      spaceHoldActiveRef.current = false;
       e.preventDefault();
       handleTriggerRelease();
     };
