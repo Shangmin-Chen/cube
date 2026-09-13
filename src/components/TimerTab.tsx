@@ -114,6 +114,7 @@ export const TimerTab: React.FC = () => {
   const recordInspectionDnf = useCallback(() => {
     if (!inspectionActiveRef.current) return;
     inspectionActiveRef.current = false;
+    timerStateRef.current = 'idle';
 
     clearInspectionTimer();
     inspectionPenaltyRef.current = 'none';
@@ -136,12 +137,13 @@ export const TimerTab: React.FC = () => {
     inspectionStartRef.current = performance.now();
     setInspectionElapsed(0);
     setElapsedTime(0);
+    timerStateRef.current = 'inspection';
     setTimerState('inspection');
 
     inspectionIntervalRef.current = setInterval(() => {
       const elapsed = performance.now() - inspectionStartRef.current;
       setInspectionElapsed(elapsed);
-      if (elapsed >= INSPECTION_DNF_MS) {
+      if (inspectionPenaltyForElapsed(elapsed) === 'DNF') {
         recordInspectionDnf();
       }
     }, 10);
@@ -151,6 +153,7 @@ export const TimerTab: React.FC = () => {
   const startTimer = useCallback(
     (inspectionPenalty: 'none' | '+2' | 'DNF' = 'none') => {
       inspectionActiveRef.current = false;
+      timerStateRef.current = 'running';
       clearInspectionTimer();
       inspectionPenaltyRef.current = inspectionPenalty;
       setInspectionElapsed(0);
@@ -195,6 +198,8 @@ export const TimerTab: React.FC = () => {
         setTimerState('ready');
       }, 300);
     } else if (state === 'inspection') {
+      if (!inspectionActiveRef.current) return;
+
       const elapsed = performance.now() - inspectionStartRef.current;
       const penalty = inspectionPenaltyForElapsed(elapsed);
       if (penalty === 'DNF') {
