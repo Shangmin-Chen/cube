@@ -1,5 +1,9 @@
 import React from 'react';
 import { parseTriggers } from '../../utils/cubeLogic';
+import {
+  NO_RECOGNIZED_TRIGGERS_HINT,
+  NO_RECOGNIZED_TRIGGERS_HINT_CLASS,
+} from '../../utils/triggerHints';
 
 interface TriggerChipsProps {
   algorithm: string;
@@ -12,8 +16,8 @@ export const TriggerChips: React.FC<TriggerChipsProps> = ({ algorithm }) => {
   return (
     <div className="flex flex-wrap items-center gap-1.5 my-1">
       {!recognized && chunks.length > 0 && (
-        <span className="text-[10px] italic text-[#737373] px-1">
-          No recognized triggers
+        <span className={NO_RECOGNIZED_TRIGGERS_HINT_CLASS}>
+          {NO_RECOGNIZED_TRIGGERS_HINT}
         </span>
       )}
       {chunks.map((chunk, idx) => {

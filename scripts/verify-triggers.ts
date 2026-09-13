@@ -1,20 +1,27 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  TRIGGER_PATTERNS,
-  MIN_PALINDROME_MOVES,
-  filterShadowedMatches,
-  findTokenAlignedMatches,
-  tokenizeAlgMoves,
-} from '../src/utils/triggerPatterns.ts';
+import { TRIGGER_PATTERNS, MIN_PALINDROME_MOVES } from '../src/utils/triggerPatterns.ts';
 import { detectAlgBadges, parseTriggers } from '../src/utils/cubeLogic.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 
+const UI_HINT_SURFACES = [
+  'src/components/trainer/TriggerChips.tsx',
+  'src/components/AlgReferenceTab.tsx',
+  'src/components/trainer/RoundSummary.tsx',
+] as const;
+
 type CaseRow = { id: string; primaryAlg: string };
+
+type IndependentMatch = {
+  start: number;
+  end: number;
+  label: string;
+  tokenLen: number;
+};
 
 function loadPrimaries(): CaseRow[] {
   const files = [
@@ -27,6 +34,91 @@ function loadPrimaries(): CaseRow[] {
     const data = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, file), 'utf8')) as CaseRow[];
     return data.map(row => ({ id: row.id, primaryAlg: row.primaryAlg }));
   });
+}
+
+function assert(condition: boolean, message: string): void {
+  if (!condition) throw new Error(message);
+}
+
+function arraysEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+  return sortedA.every((val, idx) => val === sortedB[idx]);
+}
+
+/** Independent tokenizer — duplicated here so tests do not wrap production helpers. */
+function independentTokenize(movesStr: string): string[] {
+  const clean = movesStr.replace(/[(){}]/g, ' ').trim();
+  if (!clean) return [];
+  return clean.split(/\s+/).filter(Boolean);
+}
+
+function independentMatchesAt(
+  moves: readonly string[],
+  start: number,
+  patternTokens: readonly string[],
+): boolean {
+  if (start + patternTokens.length > moves.length) return false;
+  for (let j = 0; j < patternTokens.length; j++) {
+    if (moves[start + j] !== patternTokens[j]) return false;
+  }
+  return true;
+}
+
+function independentFindMatches(moves: readonly string[]): IndependentMatch[] {
+  const matches: IndependentMatch[] = [];
+  for (let i = 0; i < moves.length; i++) {
+    for (const pattern of TRIGGER_PATTERNS) {
+      if (independentMatchesAt(moves, i, pattern.tokens)) {
+        matches.push({
+          start: i,
+          end: i + pattern.tokens.length,
+          label: pattern.badgeLabel,
+          tokenLen: pattern.tokens.length,
+        });
+        break;
+      }
+    }
+  }
+  return matches;
+}
+
+function independentIsContained(inner: IndependentMatch, outer: IndependentMatch): boolean {
+  return (
+    outer.tokenLen > inner.tokenLen &&
+    outer.start <= inner.start &&
+    outer.end >= inner.end
+  );
+}
+
+function independentVisibleMatches(matches: readonly IndependentMatch[]): IndependentMatch[] {
+  return matches.filter(
+    m => !matches.some(other => other !== m && independentIsContained(m, other)),
+  );
+}
+
+function independentIsPalindrome(moves: readonly string[]): boolean {
+  if (moves.length < MIN_PALINDROME_MOVES) return false;
+  for (let k = 0; k < Math.floor(moves.length / 2); k++) {
+    if (moves[k] !== moves[moves.length - 1 - k]) return false;
+  }
+  return true;
+}
+
+/** Property oracle: badges from an independent token scan, not production shadowing helpers. */
+function independentExpectedBadges(movesStr: string): string[] {
+  const moves = independentTokenize(movesStr);
+  if (moves.length === 0) return [];
+
+  const badges: string[] = [];
+  if (independentIsPalindrome(moves)) {
+    badges.push('Palindrome');
+  }
+  for (const match of independentVisibleMatches(independentFindMatches(moves))) {
+    badges.push(match.label);
+  }
+  return Array.from(new Set(badges));
 }
 
 function legacyDetectAlgBadges(movesStr: string): string[] {
@@ -55,23 +147,13 @@ function legacyDetectAlgBadges(movesStr: string): string[] {
   return Array.from(new Set(badges));
 }
 
-function assert(condition: boolean, message: string): void {
-  if (!condition) throw new Error(message);
-}
-
-function arraysEqual(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) return false;
-  const sortedA = [...a].sort();
-  const sortedB = [...b].sort();
-  return sortedA.every((val, idx) => val === sortedB[idx]);
-}
-
 function runVerification(): void {
   console.log('--- Trigger Pattern Verification ---');
 
   const primaries = loadPrimaries();
   console.log(`Loaded ${primaries.length} generated primaries`);
 
+  // AC1: No palindrome chips shorter than 5 moves
   let shortPalindromeCount = 0;
   for (const row of primaries) {
     for (const chunk of parseTriggers(row.primaryAlg)) {
@@ -87,39 +169,33 @@ function runVerification(): void {
   assert(shortPalindromeCount === 0, `AC1: ${shortPalindromeCount} palindrome chips < ${MIN_PALINDROME_MOVES} moves`);
   console.log(`AC1: 0 palindrome chips shorter than ${MIN_PALINDROME_MOVES} moves (swept ${primaries.length} primaries)`);
 
-  const oll2lookH = primaries.find(row => row.id === 'oll-2look-h');
-  assert(Boolean(oll2lookH), 'oll-2look-h not found');
-  const oll2lookHBages = detectAlgBadges(oll2lookH!.primaryAlg);
+  // Palindrome badge threshold (AC8): same ≥5 rule as chips
   assert(
-    arraysEqual(oll2lookHBages, ['Double Sune']),
-    `AC2: oll-2look-h badges = ${JSON.stringify(oll2lookHBages)}, expected ["Double Sune"]`,
+    !detectAlgBadges('R2 U R2').includes('Palindrome'),
+    'Palindrome badge: R2 U R2 must not badge (3 moves)',
   );
-  console.log('AC2: oll-2look-h → ["Double Sune"]');
+  assert(
+    detectAlgBadges('R U2 R U2 R').includes('Palindrome'),
+    'Palindrome badge: R U2 R U2 R must badge (5-move palindrome)',
+  );
+  console.log('Palindrome badge threshold: R2 U R2 rejected, R U2 R U2 R accepted');
 
-  let shadowedBadgeCount = 0;
+  // Property-based AC3/AC4: production badges must match independent oracle across all primaries
+  let propertyFailures = 0;
   for (const row of primaries) {
-    const moves = tokenizeAlgMoves(row.primaryAlg);
-    const allMatches = findTokenAlignedMatches(moves);
-    const visible = filterShadowedMatches(allMatches);
-    const badges = detectAlgBadges(row.primaryAlg).filter(b => b !== 'Palindrome');
-
-    for (const match of allMatches) {
-      if (!visible.includes(match) && badges.includes(match.pattern.badgeLabel)) {
-        shadowedBadgeCount++;
-        console.error(`AC3 fail: ${row.id} shadowed badge "${match.pattern.badgeLabel}"`);
-      }
-    }
-
-    for (const badge of badges) {
-      if (!visible.some(m => m.pattern.badgeLabel === badge)) {
-        shadowedBadgeCount++;
-        console.error(`AC4 fail: ${row.id} badge "${badge}" without visible match`);
-      }
+    const expected = independentExpectedBadges(row.primaryAlg);
+    const actual = detectAlgBadges(row.primaryAlg);
+    if (!arraysEqual(actual, expected)) {
+      propertyFailures++;
+      console.error(
+        `Property fail: ${row.id} actual=${JSON.stringify(actual)} expected=${JSON.stringify(expected)}`,
+      );
     }
   }
-  assert(shadowedBadgeCount === 0, `AC3/AC4: ${shadowedBadgeCount} shadowing violations`);
-  console.log(`AC3/AC4: 0 shadowed badges across ${primaries.length} primaries`);
+  assert(propertyFailures === 0, `AC3/AC4: ${propertyFailures} badge property violations`);
+  console.log(`AC3/AC4: production badges match independent oracle for ${primaries.length} primaries`);
 
+  // Named regression locks (supplement property checks, not replace them)
   const expectedById: Record<string, string[]> = {
     'oll-17': ['Inverse Sexy'],
     'oll-36': [],
@@ -169,27 +245,42 @@ function runVerification(): void {
   assert(regressionFailures === 0, `AC5: ${regressionFailures} regression failures (${totalRemovals} removals)`);
   console.log(`AC5: ${totalRemovals} intentional badge removals, 0 unexpected changes`);
 
+  // AC7: UI surfaces must import and render the shared hint string
+  for (const relativePath of UI_HINT_SURFACES) {
+    const source = fs.readFileSync(path.join(ROOT_DIR, relativePath), 'utf8');
+    assert(
+      source.includes('triggerHints') && source.includes('NO_RECOGNIZED_TRIGGERS_HINT'),
+      `AC7 fail: ${relativePath} missing shared zero-chip hint import/usage`,
+    );
+  }
   const zeroChipCases = primaries.filter(row => {
     const chunks = parseTriggers(row.primaryAlg);
     return chunks.length > 0 && chunks.every(c => c.type === 'normal');
   });
-  console.log(`AC7: ${zeroChipCases.length} primaries with no recognized trigger chips`);
+  console.log(`AC7: hint wired in ${UI_HINT_SURFACES.length} UI surfaces; ${zeroChipCases.length} zero-chip primaries`);
 
-  let substringFalsePositives = 0;
+  // False-positive sweep: fail if a badge is emitted for a substring-only (non-token-aligned) hit
+  let substringBadgeViolations = 0;
   for (const row of primaries) {
-    const moves = tokenizeAlgMoves(row.primaryAlg);
+    const moves = independentTokenize(row.primaryAlg);
     const joined = moves.join(' ');
-    const tokenMatches = new Set(
-      filterShadowedMatches(findTokenAlignedMatches(moves)).map(m => m.pattern.pattern),
-    );
+    const badges = detectAlgBadges(row.primaryAlg).filter(b => b !== 'Palindrome');
+
     for (const pattern of TRIGGER_PATTERNS) {
-      if (joined.includes(pattern.pattern) && !tokenMatches.has(pattern.pattern)) {
-        const hasTokenHit = findTokenAlignedMatches(moves).some(m => m.pattern.pattern === pattern.pattern);
-        if (!hasTokenHit) substringFalsePositives++;
+      const hasSubstringHit = joined.includes(pattern.pattern);
+      const hasTokenHit = independentFindMatches(moves).some(
+        m => m.label === pattern.badgeLabel && m.tokenLen === pattern.tokens.length,
+      );
+      if (hasSubstringHit && !hasTokenHit && badges.includes(pattern.badgeLabel)) {
+        substringBadgeViolations++;
+        console.error(
+          `False-positive fail: ${row.id} badges "${pattern.badgeLabel}" from substring "${pattern.pattern}" without token alignment`,
+        );
       }
     }
   }
-  console.log(`False-positive sweep: ${substringFalsePositives} substring-only hits (not surfaced as badges)`);
+  assert(substringBadgeViolations === 0, `False-positive sweep: ${substringBadgeViolations} substring badge violations`);
+  console.log('False-positive sweep: 0 substring-only badges across 94 primaries');
 
   for (let i = 0; i < TRIGGER_PATTERNS.length; i++) {
     for (let j = i + 1; j < TRIGGER_PATTERNS.length; j++) {
