@@ -12,7 +12,8 @@
     "verify:algs": "node scripts/verify-cfop.mjs",
     "verify:trainer": "node --experimental-strip-types scripts/verify-trainer-session.ts",
     "verify:triggers": "node --experimental-strip-types scripts/verify-triggers.ts",
-    "verify:upstream-pin": "node scripts/verify-upstream-pin.mjs"
+    "verify:upstream-pin": "node scripts/verify-upstream-pin.mjs",
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",
