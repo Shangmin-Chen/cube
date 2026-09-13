@@ -41,7 +41,7 @@ const OLL_2LOOK_META = {
     name: 'Anti-Sune',
     group: 'Corners (Look 2)',
     probability: '4/27',
-    description: '1 yellow corner facing UP at back-left (index 0).',
+    description: '1 yellow corner facing UP at back-right (index 2).',
     why: 'Orbits the F2L pair in reverse direction (360° clockwise), twisting 3 corners opposite to Sune.',
   },
   'H': {
@@ -65,7 +65,7 @@ const OLL_2LOOK_META = {
     name: 'U Case (Headlights)',
     group: 'Corners (Look 2)',
     probability: '4/27',
-    description: '2 corners facing UP on right. Headlights on left side.',
+    description: '2 corners facing UP on back. Headlights on left side.',
     why: 'D slice moves isolate bottom layers while pivoting left headlights into top orientation.',
   },
   'T': {

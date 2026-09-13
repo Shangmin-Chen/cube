@@ -35,8 +35,8 @@
     "group": "Edges (Look 1)",
     "primaryAlg": "f R U R' U' f'",
     "alternativeAlgs": [
-      "y2 F U R U' R' F'",
-      "y2 r U R' U' r' R (U R U' R')"
+      "y2 F U R U' R' F' y2",
+      "y2 r U R' U' r' R (U R U' R') y2"
     ],
     "probability": "4/8",
     "description": "Hold L at top-left corner (9 and 12 o-clock).",
@@ -70,7 +70,7 @@
       "y L' U' L U' L' U2 L y'"
     ],
     "probability": "4/27",
-    "description": "1 yellow corner facing UP at back-left (index 0).",
+    "description": "1 yellow corner facing UP at back-right (index 2).",
     "why": "Orbits the F2L pair in reverse direction (360° clockwise), twisting 3 corners opposite to Sune.",
     "is2Look": true
   },
@@ -111,7 +111,7 @@
     "primaryAlg": "R2 D R' U2 R D' R' U2 R'",
     "alternativeAlgs": [],
     "probability": "4/27",
-    "description": "2 corners facing UP on right. Headlights on left side.",
+    "description": "2 corners facing UP on back. Headlights on left side.",
     "why": "D slice moves isolate bottom layers while pivoting left headlights into top orientation.",
     "is2Look": true
   },
