@@ -219,8 +219,7 @@ export function detectTokenAlignedBadges(movesStr: string): string[] {
   if (moves.length === 0) return [];
 
   const badges: string[] = [];
-  const isExactPalindrome = moves.join(' ') === [...moves].reverse().join(' ');
-  if (isExactPalindrome) {
+  if (isMovePalindrome(moves)) {
     badges.push('Palindrome');
   }
 
