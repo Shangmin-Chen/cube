@@ -61,10 +61,17 @@ export const TimerTab: React.FC = () => {
   const inspectionActiveRef = useRef(false);
   const timerStateRef = useRef(timerState);
   const activePointerIdRef = useRef<number | null>(null);
+  const spaceHoldActiveRef = useRef(false);
+  const scrambleRef = useRef(scramble);
+  const attemptScrambleRef = useRef('');
 
   useEffect(() => {
     timerStateRef.current = timerState;
   }, [timerState]);
+
+  useEffect(() => {
+    scrambleRef.current = scramble;
+  }, [scramble]);
 
   const scramblePreviewAlgorithm = useMemo(
     () => (scramble ? invertMoveString(scramble).join(' ') : ''),
@@ -125,18 +132,21 @@ export const TimerTab: React.FC = () => {
     setInspectionElapsed(0);
     setElapsedTime(0);
     setTimerState('idle');
+    const recordedScramble = attemptScrambleRef.current || scrambleRef.current;
+    attemptScrambleRef.current = '';
     appendSolve({
       time: 0,
-      scramble,
+      scramble: recordedScramble,
       date: Date.now(),
       penalty: 'DNF',
     });
     handleNewScramble();
-  }, [appendSolve, clearInspectionTimer, handleNewScramble, scramble]);
+  }, [appendSolve, clearInspectionTimer, handleNewScramble]);
 
   const beginInspection = useCallback(() => {
     clearInspectionTimer();
     inspectionActiveRef.current = true;
+    attemptScrambleRef.current = scrambleRef.current;
     inspectionPenaltyRef.current = 'none';
     inspectionStartRef.current = performance.now();
     setInspectionElapsed(0);
@@ -158,6 +168,9 @@ export const TimerTab: React.FC = () => {
     (inspectionPenalty: 'none' | '+2' | 'DNF' = 'none') => {
       inspectionActiveRef.current = false;
       timerStateRef.current = 'running';
+      if (!attemptScrambleRef.current) {
+        attemptScrambleRef.current = scrambleRef.current;
+      }
       clearInspectionTimer();
       inspectionPenaltyRef.current = inspectionPenalty;
       setInspectionElapsed(0);
@@ -184,15 +197,18 @@ export const TimerTab: React.FC = () => {
     const inspectionPenalty = inspectionPenaltyRef.current;
     inspectionPenaltyRef.current = 'none';
 
+    const recordedScramble = attemptScrambleRef.current || scrambleRef.current;
+    attemptScrambleRef.current = '';
+
     appendSolve({
       time: Math.round(finalTime),
-      scramble,
+      scramble: recordedScramble,
       date: Date.now(),
       penalty: inspectionPenalty,
     });
 
     handleNewScramble();
-  }, [appendSolve, handleNewScramble, scramble]);
+  }, [appendSolve, handleNewScramble]);
 
   const handleTriggerPress = useCallback(() => {
     const state = timerStateRef.current;
@@ -271,11 +287,18 @@ export const TimerTab: React.FC = () => {
         return;
       }
       e.preventDefault();
+      spaceHoldActiveRef.current = true;
       handleTriggerPress();
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || e.repeat) return;
+      if (spaceHoldActiveRef.current) {
+        spaceHoldActiveRef.current = false;
+        e.preventDefault();
+        handleTriggerRelease();
+        return;
+      }
       if (shouldLetNativeSpaceThrough(e.target) || shouldLetNativeSpaceThrough(document.activeElement)) {
         return;
       }
