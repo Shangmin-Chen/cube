@@ -1,3 +1,4 @@
+import { applyAlgorithmOverrides } from './algorithm-overrides.mjs';
 import { applyAlgRules, validateAlg } from './rules.mjs';
 
 /**
@@ -107,10 +108,11 @@ export function transform2LookOLL(rawAlgs, kpuzzle) {
       why: `Orient ${item.group?.includes('Edges') ? 'edges' : 'corners'} into solved orientation.`,
     };
 
-    const primaryAlg = applyAlgRules(item.alg[0], kpuzzle);
+    const resolvedAlgs = applyAlgorithmOverrides(meta.id, item.alg);
+    const primaryAlg = applyAlgRules(resolvedAlgs[0], kpuzzle);
     validateAlg(kpuzzle, primaryAlg, meta.id);
 
-    const alternativeAlgs = (item.alg.slice(1) || []).map(algStr => {
+    const alternativeAlgs = (resolvedAlgs.slice(1) || []).map(algStr => {
       const norm = applyAlgRules(algStr, kpuzzle);
       validateAlg(kpuzzle, norm, meta.id);
       return norm;
@@ -228,10 +230,11 @@ export function transform2LookPLL(rawAlgs, kpuzzle) {
     const isEdgesOnly = meta.group.includes('Edges');
     const isAdjacentCornerSwap = rawName === 'Headlights' || meta.id.includes('tperm');
 
-    const primaryAlg = applyAlgRules(item.alg[0], kpuzzle, { isEdgesOnly, isAdjacentCornerSwap });
+    const resolvedAlgs = applyAlgorithmOverrides(meta.id, item.alg);
+    const primaryAlg = applyAlgRules(resolvedAlgs[0], kpuzzle, { isEdgesOnly, isAdjacentCornerSwap });
     validateAlg(kpuzzle, primaryAlg, meta.id);
 
-    const alternativeAlgs = (item.alg.slice(1) || []).map(algStr => {
+    const alternativeAlgs = (resolvedAlgs.slice(1) || []).map(algStr => {
       const norm = applyAlgRules(algStr, kpuzzle, { isEdgesOnly, isAdjacentCornerSwap });
       validateAlg(kpuzzle, norm, meta.id);
       return norm;
@@ -306,10 +309,11 @@ export function transformFullOLL(rawAlgs, kpuzzle) {
     // Probability: prob 4 -> 4/216 = 1/54, prob 2 -> 2/216 = 1/108, prob 1 -> 1/216
     const probStr = item.prob === 4 ? '1/54' : item.prob === 2 ? '1/108' : '1/216';
 
-    const primaryAlg = applyAlgRules(item.alg[0], kpuzzle);
+    const resolvedAlgs = applyAlgorithmOverrides(id, item.alg);
+    const primaryAlg = applyAlgRules(resolvedAlgs[0], kpuzzle);
     validateAlg(kpuzzle, primaryAlg, id);
 
-    const alternativeAlgs = (item.alg.slice(1) || []).map(algStr => {
+    const alternativeAlgs = (resolvedAlgs.slice(1) || []).map(algStr => {
       const norm = applyAlgRules(algStr, kpuzzle);
       validateAlg(kpuzzle, norm, id);
       return norm;
@@ -394,10 +398,11 @@ export function transformFullPLL(rawAlgs, kpuzzle) {
     const isEdgesOnly = meta.group === 'Edges Only';
     const isAdjacentCornerSwap = ['ja', 'jb', 'ra', 'rb', 't', 'f'].includes(rawKey);
 
-    const primaryAlg = applyAlgRules(item.alg[0], kpuzzle, { isEdgesOnly, isAdjacentCornerSwap });
+    const resolvedAlgs = applyAlgorithmOverrides(id, item.alg);
+    const primaryAlg = applyAlgRules(resolvedAlgs[0], kpuzzle, { isEdgesOnly, isAdjacentCornerSwap });
     validateAlg(kpuzzle, primaryAlg, id);
 
-    const alternativeAlgs = (item.alg.slice(1) || []).map(algStr => {
+    const alternativeAlgs = (resolvedAlgs.slice(1) || []).map(algStr => {
       const norm = applyAlgRules(algStr, kpuzzle, { isEdgesOnly, isAdjacentCornerSwap });
       validateAlg(kpuzzle, norm, id);
       return norm;
