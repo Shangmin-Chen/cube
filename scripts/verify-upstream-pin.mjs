@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   assertOrUpdatePin,
+  createEmptyLock,
   digestContent,
   loadLock,
 } from './ingest/upstream-lock.mjs';
@@ -46,9 +47,20 @@ try {
   fs.rmSync(tamperedLockPath, { force: true });
 }
 
+const updateLock = structuredClone(tamperedLock);
 try {
-  assertOrUpdatePin('oll2Look', ollEntry.url, matchingContent, structuredClone(tamperedLock), true);
-  pass('--update-pin path records new digest without throwing');
+  assertOrUpdatePin('oll2Look', ollEntry.url, matchingContent, updateLock, true);
+  const recorded = updateLock.sources.oll2Look;
+  if (!recorded) {
+    fail('update-pin path did not record a lock entry');
+  }
+  if (recorded.sha256 !== digestContent(matchingContent)) {
+    fail(`update-pin recorded wrong digest: ${recorded.sha256}`);
+  }
+  if (recorded.url !== ollEntry.url) {
+    fail(`update-pin recorded wrong url: ${recorded.url}`);
+  }
+  pass('--update-pin path records digestContent(content)');
 } catch (err) {
   fail(`update-pin path should not throw: ${err.message}`);
 }
@@ -61,6 +73,38 @@ try {
   pass('matching digest passes verification');
 } catch (err) {
   fail(`matching digest should pass: ${err.message}`);
+}
+
+const missingLockPath = path.join(__dirname, '.upstream.lock.missing.json');
+try {
+  fs.rmSync(missingLockPath, { force: true });
+  try {
+    loadLock(missingLockPath);
+    fail('expected missing lockfile to throw without bootstrap');
+  } catch (err) {
+    if (!String(err.message).includes('Upstream lockfile missing')) {
+      fail(`unexpected missing-lock error: ${err.message}`);
+    }
+    pass('missing lockfile fails without bootstrap');
+  }
+
+  const bootstrapped = loadLock(missingLockPath, { bootstrap: true });
+  if (!bootstrapped.sources || Object.keys(bootstrapped.sources).length !== 0) {
+    fail('bootstrap should return an empty lock');
+  }
+  if (bootstrapped.version !== 1) {
+    fail(`bootstrap lock should have version 1, got ${bootstrapped.version}`);
+  }
+  pass('missing lockfile bootstraps empty lock with bootstrap=true');
+
+  const emptyLock = createEmptyLock();
+  assertOrUpdatePin('oll2Look', ollEntry.url, matchingContent, emptyLock, true);
+  if (emptyLock.sources.oll2Look?.sha256 !== digestContent(matchingContent)) {
+    fail('bootstrap lock did not record digest after update-pin');
+  }
+  pass('bootstrap lock accepts update-pin entries offline');
+} finally {
+  fs.rmSync(missingLockPath, { force: true });
 }
 
 console.log('verify-upstream-pin: all checks passed');

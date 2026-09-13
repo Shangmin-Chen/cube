@@ -36,7 +36,7 @@ async function main() {
   const kpuzzle = await puzzles['3x3x3'].kpuzzle();
 
   console.log('Fetching raw datasets (pinned upstream)...');
-  const lock = loadLock();
+  const lock = loadLock(undefined, { bootstrap: updatePin });
   const fetchOptions = { lock, updatePin };
   const [oll2LookRaw, pll2LookRaw, ollFullRaw, pllFullRaw] = await Promise.all([
     fetchAlgset('oll2Look', ENDPOINTS.oll2Look, fetchOptions),
@@ -44,10 +44,6 @@ async function main() {
     fetchAlgset('ollFull', ENDPOINTS.ollFull, fetchOptions),
     fetchAlgset('pllFull', ENDPOINTS.pllFull, fetchOptions),
   ]);
-
-  if (updatePin) {
-    writeLock(lock);
-  }
 
   console.log('Transforming and validating algorithms with rule-based pipeline...');
   const oll2LookCases = transform2LookOLL(oll2LookRaw, kpuzzle);
@@ -68,6 +64,7 @@ async function main() {
   ], OUTPUT_DIR);
 
   if (updatePin) {
+    writeLock(lock);
     console.log('✓ Upstream lockfile updated at scripts/ingest/upstream.lock.json');
   }
 

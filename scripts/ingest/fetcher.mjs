@@ -7,7 +7,7 @@ import { assertOrUpdatePin } from './upstream-lock.mjs';
  * @param {string} url
  * @returns {Promise<string>}
  */
-export async function fetchRaw(url) {
+async function fetchRaw(url) {
   console.log(`Fetching from ${url}...`);
   const res = await fetch(url);
   if (!res.ok) {

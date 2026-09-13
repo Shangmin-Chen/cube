@@ -17,11 +17,23 @@ export function digestContent(content) {
 }
 
 /**
- * @param {string} lockPath
  * @returns {{ version: number, sources: Record<string, { url: string, sha256: string }> }}
  */
-export function loadLock(lockPath = DEFAULT_LOCK_PATH) {
+export function createEmptyLock() {
+  return { version: 1, sources: {} };
+}
+
+/**
+ * @param {string} lockPath
+ * @param {{ bootstrap?: boolean }} [options]
+ * @returns {{ version: number, sources: Record<string, { url: string, sha256: string }> }}
+ */
+export function loadLock(lockPath = DEFAULT_LOCK_PATH, { bootstrap = false } = {}) {
   if (!fs.existsSync(lockPath)) {
+    if (bootstrap) {
+      return createEmptyLock();
+    }
+
     throw new Error(
       `Upstream lockfile missing at ${lockPath}. Run \`npm run sync:algs -- --update-pin\` to create it.`,
     );
