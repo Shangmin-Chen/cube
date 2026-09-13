@@ -1,5 +1,8 @@
 import { applyAlgRules } from './rules.mjs';
 
+/** Recognized keys for each ALGORITHM_OVERRIDES entry. */
+export const RECOGNIZED_OVERRIDE_KEYS = ['primaryAlg', 'removeAlternatives'];
+
 /**
  * Per-case algorithm overrides applied during transform, before rule processing.
  *
@@ -16,6 +19,51 @@ import { applyAlgRules } from './rules.mjs';
  * }>}
  */
 export const ALGORITHM_OVERRIDES = {};
+
+/**
+ * @param {string} caseId
+ * @param {Record<string, unknown>} override
+ */
+export function validateOverrideEntry(caseId, override) {
+  const keys = Object.keys(override);
+
+  if (keys.length === 0) {
+    throw new Error(
+      `Override for ${caseId} is empty; must specify primaryAlg and/or removeAlternatives`,
+    );
+  }
+
+  const unknownKeys = keys.filter(key => !RECOGNIZED_OVERRIDE_KEYS.includes(key));
+  if (unknownKeys.length > 0) {
+    throw new Error(
+      `Override for ${caseId} contains unrecognized keys: ${unknownKeys.join(', ')}`,
+    );
+  }
+
+  const hasPrimary = override.primaryAlg !== undefined;
+  const hasRemove = override.removeAlternatives !== undefined;
+
+  if (!hasPrimary && !hasRemove) {
+    throw new Error(
+      `Override for ${caseId} must specify primaryAlg and/or removeAlternatives`,
+    );
+  }
+
+  if (hasPrimary) {
+    if (typeof override.primaryAlg !== 'string' || override.primaryAlg.trim() === '') {
+      throw new Error(`Override for ${caseId} has empty or invalid primaryAlg`);
+    }
+  }
+
+  if (hasRemove) {
+    if (!Array.isArray(override.removeAlternatives)) {
+      throw new Error(`Override for ${caseId} removeAlternatives must be an array`);
+    }
+    if (override.removeAlternatives.length === 0) {
+      throw new Error(`Override for ${caseId} has empty removeAlternatives`);
+    }
+  }
+}
 
 /**
  * @param {typeof ALGORITHM_OVERRIDES} [overrides=ALGORITHM_OVERRIDES]
@@ -133,6 +181,7 @@ export function applyAlgorithmOverrides(
     throw new Error(`kpuzzle is required to apply algorithm overrides for case ${caseId}`);
   }
 
+  validateOverrideEntry(caseId, override);
   appliedOverrideKeys?.add(caseId);
 
   let algs = [...upstreamAlgs];

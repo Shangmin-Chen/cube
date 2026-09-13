@@ -3,13 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { puzzles } from 'cubing/puzzles';
 import { fetchAlgset } from './ingest/fetcher.mjs';
 import { loadLock, writeLock } from './ingest/upstream-lock.mjs';
-import { createOverrideContext } from './pipeline/algorithm-overrides.mjs';
-import {
-  transform2LookOLL,
-  transform2LookPLL,
-  transformFullOLL,
-  transformFullPLL,
-} from './pipeline/transformers.mjs';
+import { transformAllCfopDatasets } from './pipeline/transform-pipeline.mjs';
 import { exportDatasets } from './pipeline/exporter.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -47,17 +41,15 @@ async function main() {
   ]);
 
   console.log('Transforming and validating algorithms with rule-based pipeline...');
-  const overrideContext = createOverrideContext();
-  const transformOptions = {
-    overrides: overrideContext.overrides,
-    appliedOverrideKeys: overrideContext.appliedOverrideKeys,
-  };
-
-  const oll2LookCases = transform2LookOLL(oll2LookRaw, kpuzzle, transformOptions);
-  const pll2LookCases = transform2LookPLL(pll2LookRaw, kpuzzle, transformOptions);
-  const ollFullCases = transformFullOLL(ollFullRaw, kpuzzle, transformOptions);
-  const pllFullCases = transformFullPLL(pllFullRaw, kpuzzle, transformOptions);
-  overrideContext.assertAllUsed();
+  const { oll2LookCases, pll2LookCases, ollFullCases, pllFullCases } = transformAllCfopDatasets(
+    {
+      oll2Look: oll2LookRaw,
+      pll2Look: pll2LookRaw,
+      ollFull: ollFullRaw,
+      pllFull: pllFullRaw,
+    },
+    kpuzzle,
+  );
 
   if (oll2LookCases.length !== 10) throw new Error(`Expected 10 cases for 2-Look OLL, got ${oll2LookCases.length}`);
   if (pll2LookCases.length !== 6) throw new Error(`Expected 6 cases for 2-Look PLL, got ${pll2LookCases.length}`);
