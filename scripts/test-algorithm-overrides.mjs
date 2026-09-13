@@ -32,7 +32,7 @@ const OLL_FULL_FIXTURE = {
   name: 1,
   group: 'Dot',
   prob: 1,
-  alg: ["R U R' U'", "F R F'", "L U L' U'"],
+  alg: ["F R U R' U' F'", "F R F'", "L U L' U'"],
 };
 
 const PLL_FULL_FIXTURE = {
@@ -186,6 +186,36 @@ function testUnknownOverrideValueKey() {
   );
 }
 
+function testUnknownOverrideValueKeyTransformPath(kpuzzle) {
+  assertThrows(
+    () => transform2LookOLL([OLL_2LOOK_FIXTURE], kpuzzle, {
+      overrides: { 'oll-2look-line': { primaryalg: "R U R' U'" } },
+    }),
+    'unrecognized keys',
+  );
+}
+
+function testIdentityPrimaryNoOp(kpuzzle) {
+  assertThrows(
+    () => applyAlgorithmOverrides(
+      'oll-2look-line',
+      OLL_2LOOK_FIXTURE.alg,
+      { 'oll-2look-line': { primaryAlg: OLL_2LOOK_FIXTURE.alg[0] } },
+      { kpuzzle, appliedOverrideKeys: new Set() },
+    ),
+    'made no change',
+  );
+}
+
+function testIdentityPrimaryNoOpTransformPath(kpuzzle) {
+  assertThrows(
+    () => transform2LookOLL([OLL_2LOOK_FIXTURE], kpuzzle, {
+      overrides: { 'oll-2look-line': { primaryAlg: OLL_2LOOK_FIXTURE.alg[0] } },
+    }),
+    'made no change',
+  );
+}
+
 function testEmptyOverrideEntry() {
   assertThrows(
     () => validateOverrideEntry('oll-2look-line', {}),
@@ -251,10 +281,17 @@ function testSyncAssertAllUsed(kpuzzle) {
   );
 }
 
+const SYNC_OVERRIDE_FIXTURES = [
+  { caseId: 'oll-2look-line', resultKey: 'oll2LookCases', primaryAlg: "R U R' U'" },
+  { caseId: 'pll-2look-tperm', resultKey: 'pll2LookCases', primaryAlg: "R U R' U'" },
+  { caseId: 'oll-1', resultKey: 'ollFullCases', primaryAlg: "R U R' U'" },
+  { caseId: 'pll-t', resultKey: 'pllFullCases', primaryAlg: "R U R' U'" },
+];
+
 function testSyncPipelineAppliesOverrides(kpuzzle) {
-  const overrides = {
-    'oll-2look-line': { primaryAlg: "R U R' U'" },
-  };
+  const overrides = Object.fromEntries(
+    SYNC_OVERRIDE_FIXTURES.map(({ caseId, primaryAlg }) => [caseId, { primaryAlg }]),
+  );
 
   const results = transformAllCfopDatasets(
     {
@@ -267,8 +304,13 @@ function testSyncPipelineAppliesOverrides(kpuzzle) {
     overrides,
   );
 
-  const lineCase = results.oll2LookCases.find(entry => entry.id === 'oll-2look-line');
-  assert(lineCase?.primaryAlg === "R U R' U'", 'sync pipeline applied override before assertAllUsed');
+  for (const { caseId, resultKey, primaryAlg } of SYNC_OVERRIDE_FIXTURES) {
+    const outputCase = results[resultKey].find(entry => entry.id === caseId);
+    assert(
+      outputCase?.primaryAlg === primaryAlg,
+      `sync pipeline applied override for ${caseId} via transformAllCfopDatasets`,
+    );
+  }
 }
 
 async function main() {
@@ -281,6 +323,9 @@ async function main() {
     ['unknown-case-id', () => testUnknownCaseId(kpuzzle)],
     ['unmatched-remove', () => testUnmatchedRemove(kpuzzle)],
     ['unknown-override-value-key', () => testUnknownOverrideValueKey()],
+    ['unknown-override-value-key-transform', () => testUnknownOverrideValueKeyTransformPath(kpuzzle)],
+    ['identity-primary-no-op', () => testIdentityPrimaryNoOp(kpuzzle)],
+    ['identity-primary-no-op-transform', () => testIdentityPrimaryNoOpTransformPath(kpuzzle)],
     ['empty-override-entry', () => testEmptyOverrideEntry()],
     ['empty-remove-alternatives', () => testEmptyRemoveAlternatives()],
     ['empty-primary-alg', () => testEmptyPrimaryAlg()],

@@ -182,8 +182,8 @@ export function applyAlgorithmOverrides(
   }
 
   validateOverrideEntry(caseId, override);
-  appliedOverrideKeys?.add(caseId);
 
+  const originalAlgs = [...upstreamAlgs];
   let algs = [...upstreamAlgs];
 
   if (override.removeAlternatives?.length) {
@@ -221,5 +221,10 @@ export function applyAlgorithmOverrides(
     algs = dedupeAlternativesAgainstPrimary(algs, kpuzzle, ruleOptions);
   }
 
+  if (algs.length === originalAlgs.length && algs.every((alg, index) => alg === originalAlgs[index])) {
+    throw new Error(`Override for ${caseId} made no change to upstream algorithms`);
+  }
+
+  appliedOverrideKeys?.add(caseId);
   return algs;
 }
