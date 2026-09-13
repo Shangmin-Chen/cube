@@ -2,16 +2,72 @@ import { puzzles } from 'cubing/puzzles';
 import {
   applyAlgorithmOverrides,
   assertNoUnusedOverrides,
+  validateOverrideEntry,
 } from './pipeline/algorithm-overrides.mjs';
 import { applyAlgRules } from './pipeline/rules.mjs';
-import { transform2LookOLL } from './pipeline/transformers.mjs';
+import {
+  CFOP_DATASET_TRANSFORMERS,
+  transformAllCfopDatasets,
+} from './pipeline/transform-pipeline.mjs';
+import {
+  transform2LookOLL,
+  transform2LookPLL,
+  transformFullOLL,
+  transformFullPLL,
+} from './pipeline/transformers.mjs';
 
-const FIXTURE_CASE_ID = 'oll-2look-line';
-const FIXTURE_RAW_ITEM = {
+const OLL_2LOOK_FIXTURE = {
   name: 'I-Shape',
   group: 'Edges',
   alg: ["F R U R' U' F'", "R U R' U' M' U R U' r'", "L U L' U'"],
 };
+
+const PLL_2LOOK_FIXTURE = {
+  name: 'Headlights',
+  group: 'Corners',
+  alg: ["R U R' U' R' F R2 U' R' U' R U R' F'", "F R F'", "L U L' U'"],
+};
+
+const OLL_FULL_FIXTURE = {
+  name: 1,
+  group: 'Dot',
+  prob: 1,
+  alg: ["R U R' U'", "F R F'", "L U L' U'"],
+};
+
+const PLL_FULL_FIXTURE = {
+  name: 't',
+  group: 'Adjacent Corners',
+  prob: 4,
+  alg: ["R U R' U' R' F R2 U' R' U' R U R' F'", "F R F'", "L U L' U'"],
+};
+
+const TRANSFORM_FIXTURES = [
+  {
+    label: '2-Look OLL',
+    fn: transform2LookOLL,
+    raw: [OLL_2LOOK_FIXTURE],
+    caseId: 'oll-2look-line',
+  },
+  {
+    label: '2-Look PLL',
+    fn: transform2LookPLL,
+    raw: [PLL_2LOOK_FIXTURE],
+    caseId: 'pll-2look-tperm',
+  },
+  {
+    label: 'Full OLL',
+    fn: transformFullOLL,
+    raw: [OLL_FULL_FIXTURE],
+    caseId: 'oll-1',
+  },
+  {
+    label: 'Full PLL',
+    fn: transformFullPLL,
+    raw: [PLL_FULL_FIXTURE],
+    caseId: 'pll-t',
+  },
+];
 
 function assert(condition, message) {
   if (!condition) {
@@ -37,10 +93,10 @@ function assertThrows(fn, expectedMessagePart) {
 function testReplacePrimary(kpuzzle) {
   const upstreamAlgs = ["R U R' U'", "F R F'", "L U L' U'"];
   const overrides = {
-    [FIXTURE_CASE_ID]: { primaryAlg: "U R U' R'" },
+    'oll-2look-line': { primaryAlg: "U R U' R'" },
   };
 
-  const resolved = applyAlgorithmOverrides(FIXTURE_CASE_ID, upstreamAlgs, overrides, {
+  const resolved = applyAlgorithmOverrides('oll-2look-line', upstreamAlgs, overrides, {
     kpuzzle,
     appliedOverrideKeys: new Set(),
   });
@@ -52,10 +108,10 @@ function testReplacePrimary(kpuzzle) {
 function testRemoveAlternative(kpuzzle) {
   const upstreamAlgs = ["R U R' U'", "F R F'", "L U L' U'"];
   const overrides = {
-    [FIXTURE_CASE_ID]: { removeAlternatives: ["F R F'"] },
+    'oll-2look-line': { removeAlternatives: ["F R F'"] },
   };
 
-  const resolved = applyAlgorithmOverrides(FIXTURE_CASE_ID, upstreamAlgs, overrides, {
+  const resolved = applyAlgorithmOverrides('oll-2look-line', upstreamAlgs, overrides, {
     kpuzzle,
     appliedOverrideKeys: new Set(),
   });
@@ -68,10 +124,10 @@ function testRemoveAlternativeMatchesNormalized(kpuzzle) {
   const upstreamAlgs = ["R U R' U'", "F R F'", "L U L' U'"];
   const normalizedAlt = applyAlgRules("F R F'", kpuzzle);
   const overrides = {
-    [FIXTURE_CASE_ID]: { removeAlternatives: [normalizedAlt] },
+    'oll-2look-line': { removeAlternatives: [normalizedAlt] },
   };
 
-  const resolved = applyAlgorithmOverrides(FIXTURE_CASE_ID, upstreamAlgs, overrides, {
+  const resolved = applyAlgorithmOverrides('oll-2look-line', upstreamAlgs, overrides, {
     kpuzzle,
     appliedOverrideKeys: new Set(),
   });
@@ -82,10 +138,10 @@ function testRemoveAlternativeMatchesNormalized(kpuzzle) {
 function testPromoteAlt(kpuzzle) {
   const upstreamAlgs = ["R U R' U'", "F R F'", "L U L' U'"];
   const overrides = {
-    [FIXTURE_CASE_ID]: { primaryAlg: "F R F'" },
+    'oll-2look-line': { primaryAlg: "F R F'" },
   };
 
-  const resolved = applyAlgorithmOverrides(FIXTURE_CASE_ID, upstreamAlgs, overrides, {
+  const resolved = applyAlgorithmOverrides('oll-2look-line', upstreamAlgs, overrides, {
     kpuzzle,
     appliedOverrideKeys: new Set(),
   });
@@ -95,13 +151,13 @@ function testPromoteAlt(kpuzzle) {
   assert(resolved[1] === "L U L' U'", 'other alternatives remain');
 }
 
-function testUnknownId(kpuzzle) {
+function testUnknownCaseId(kpuzzle) {
   const overrides = {
     'oll-2look-typo-id': { primaryAlg: "R U R' U'" },
   };
   const appliedOverrideKeys = new Set();
 
-  transform2LookOLL([FIXTURE_RAW_ITEM], kpuzzle, { overrides, appliedOverrideKeys });
+  transform2LookOLL([OLL_2LOOK_FIXTURE], kpuzzle, { overrides, appliedOverrideKeys });
 
   assertThrows(
     () => assertNoUnusedOverrides(overrides, appliedOverrideKeys),
@@ -111,11 +167,11 @@ function testUnknownId(kpuzzle) {
 
 function testUnmatchedRemove(kpuzzle) {
   const overrides = {
-    [FIXTURE_CASE_ID]: { removeAlternatives: ['NONEXISTENT_ALG'] },
+    'oll-2look-line': { removeAlternatives: ['NONEXISTENT_ALG'] },
   };
 
   assertThrows(
-    () => applyAlgorithmOverrides(FIXTURE_CASE_ID, ["R U R' U'", "F R F'"], overrides, {
+    () => applyAlgorithmOverrides('oll-2look-line', ["R U R' U'", "F R F'"], overrides, {
       kpuzzle,
       appliedOverrideKeys: new Set(),
     }),
@@ -123,35 +179,96 @@ function testUnmatchedRemove(kpuzzle) {
   );
 }
 
-function testTransformReplacePrimary(kpuzzle) {
-  const overrides = {
-    [FIXTURE_CASE_ID]: { primaryAlg: "R U R' U'" },
-  };
-  const appliedOverrideKeys = new Set();
-
-  const cases = transform2LookOLL([FIXTURE_RAW_ITEM], kpuzzle, { overrides, appliedOverrideKeys });
-  const lineCase = cases.find(c => c.id === FIXTURE_CASE_ID);
-
-  assert(lineCase, 'fixture case was transformed');
-  assert(lineCase.primaryAlg === "R U R' U'", 'transform path applied primaryAlg override');
-  assert(appliedOverrideKeys.has(FIXTURE_CASE_ID), 'override key was tracked as applied');
+function testUnknownOverrideValueKey() {
+  assertThrows(
+    () => validateOverrideEntry('oll-2look-line', { primaryalg: "R U R' U'" }),
+    'unrecognized keys',
+  );
 }
 
-function testTransformRemoveAlternative(kpuzzle) {
+function testEmptyOverrideEntry() {
+  assertThrows(
+    () => validateOverrideEntry('oll-2look-line', {}),
+    'is empty',
+  );
+}
+
+function testEmptyRemoveAlternatives() {
+  assertThrows(
+    () => validateOverrideEntry('oll-2look-line', { removeAlternatives: [] }),
+    'empty removeAlternatives',
+  );
+}
+
+function testEmptyPrimaryAlg() {
+  assertThrows(
+    () => validateOverrideEntry('oll-2look-line', { primaryAlg: '' }),
+    'empty or invalid primaryAlg',
+  );
+}
+
+function testTransformPath(label, transformFn, rawFixture, caseId, kpuzzle) {
   const overrides = {
-    [FIXTURE_CASE_ID]: { removeAlternatives: ["L U L' U'"] },
+    [caseId]: { primaryAlg: "R U R' U'" },
   };
   const appliedOverrideKeys = new Set();
 
-  const cases = transform2LookOLL([FIXTURE_RAW_ITEM], kpuzzle, { overrides, appliedOverrideKeys });
-  const lineCase = cases.find(c => c.id === FIXTURE_CASE_ID);
+  const cases = transformFn(rawFixture, kpuzzle, { overrides, appliedOverrideKeys });
+  const outputCase = cases.find(entry => entry.id === caseId);
 
-  assert(lineCase, 'fixture case was transformed');
-  assert(
-    !lineCase.alternativeAlgs.includes("L U L' U'"),
-    'transform path removed the targeted alternative',
+  assert(outputCase, `${label} fixture case was transformed`);
+  assert(outputCase.primaryAlg === "R U R' U'", `${label} transform path applied primaryAlg override`);
+  assert(appliedOverrideKeys.has(caseId), `${label} override key was tracked as applied`);
+}
+
+function testAllDatasetTransformersRegistered() {
+  assert(CFOP_DATASET_TRANSFORMERS.length === 4, 'all four dataset transformers are registered');
+  const names = CFOP_DATASET_TRANSFORMERS.map(([label]) => label);
+  assert(names.includes('2-Look OLL'), '2-Look OLL transformer registered');
+  assert(names.includes('2-Look PLL'), '2-Look PLL transformer registered');
+  assert(names.includes('Full OLL'), 'Full OLL transformer registered');
+  assert(names.includes('Full PLL'), 'Full PLL transformer registered');
+}
+
+function testSyncAssertAllUsed(kpuzzle) {
+  const overrides = {
+    'oll-2look-line': { primaryAlg: "R U R' U'" },
+    'unused-override-key': { primaryAlg: "R U R' U'" },
+  };
+
+  assertThrows(
+    () => transformAllCfopDatasets(
+      {
+        oll2Look: [OLL_2LOOK_FIXTURE],
+        pll2Look: [PLL_2LOOK_FIXTURE],
+        ollFull: [OLL_FULL_FIXTURE],
+        pllFull: [PLL_FULL_FIXTURE],
+      },
+      kpuzzle,
+      overrides,
+    ),
+    'no transformer applied',
   );
-  assert(lineCase.alternativeAlgs.length === 1, 'remaining alternative was preserved');
+}
+
+function testSyncPipelineAppliesOverrides(kpuzzle) {
+  const overrides = {
+    'oll-2look-line': { primaryAlg: "R U R' U'" },
+  };
+
+  const results = transformAllCfopDatasets(
+    {
+      oll2Look: [OLL_2LOOK_FIXTURE],
+      pll2Look: [PLL_2LOOK_FIXTURE],
+      ollFull: [OLL_FULL_FIXTURE],
+      pllFull: [PLL_FULL_FIXTURE],
+    },
+    kpuzzle,
+    overrides,
+  );
+
+  const lineCase = results.oll2LookCases.find(entry => entry.id === 'oll-2look-line');
+  assert(lineCase?.primaryAlg === "R U R' U'", 'sync pipeline applied override before assertAllUsed');
 }
 
 async function main() {
@@ -161,10 +278,19 @@ async function main() {
     ['remove-alternative', () => testRemoveAlternative(kpuzzle)],
     ['remove-alternative-normalized', () => testRemoveAlternativeMatchesNormalized(kpuzzle)],
     ['promote-alt', () => testPromoteAlt(kpuzzle)],
-    ['unknown-id', () => testUnknownId(kpuzzle)],
+    ['unknown-case-id', () => testUnknownCaseId(kpuzzle)],
     ['unmatched-remove', () => testUnmatchedRemove(kpuzzle)],
-    ['transform-replace-primary', () => testTransformReplacePrimary(kpuzzle)],
-    ['transform-remove-alternative', () => testTransformRemoveAlternative(kpuzzle)],
+    ['unknown-override-value-key', () => testUnknownOverrideValueKey()],
+    ['empty-override-entry', () => testEmptyOverrideEntry()],
+    ['empty-remove-alternatives', () => testEmptyRemoveAlternatives()],
+    ['empty-primary-alg', () => testEmptyPrimaryAlg()],
+    ['all-dataset-transformers-registered', () => testAllDatasetTransformersRegistered()],
+    ['sync-assert-all-used', () => testSyncAssertAllUsed(kpuzzle)],
+    ['sync-pipeline-applies-overrides', () => testSyncPipelineAppliesOverrides(kpuzzle)],
+    ...TRANSFORM_FIXTURES.map(({ label, fn, raw, caseId }) => [
+      `transform-${label.toLowerCase().replace(/\s+/g, '-')}`,
+      () => testTransformPath(label, fn, raw, caseId, kpuzzle),
+    ]),
   ];
 
   let failed = false;
