@@ -11,6 +11,8 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const QUARTER_TURN_ROTATIONS = ["y'", "x'", "x", "y", "z'", "z"];
 const HALF_TURN_ROTATIONS = ['y2', 'x2', 'z2'];
 const SINGLE_ROTATIONS = [...QUARTER_TURN_ROTATIONS, ...HALF_TURN_ROTATIONS];
+/** Look-1 keeps U on top — only y-axis whole-cube turns are valid frame changes. */
+const LOOK1_Y_ROTATIONS = ["y'", 'y', 'y2'];
 const TOP_EDGE_INDICES = [0, 1, 2, 3];
 const AUF_CANDIDATES = ["U'", 'U', 'U2'];
 
@@ -103,7 +105,8 @@ function topEdgesOriented(transf) {
 }
 
 /**
- * True when a solved Look-1 case state is reached up to whole-cube rotation.
+ * True when a solved Look-1 case state is reached up to y-axis whole-cube rotation.
+ * x/z turns reassign which physical edges occupy U slots and must not be used here.
  *
  * @param {any} kpuzzle
  * @param {import('cubing/puzzles').KTransformation} resultTransf
@@ -113,7 +116,7 @@ function look1CaseSolvedModuloRotation(kpuzzle, resultTransf) {
     return true;
   }
 
-  for (const rot of SINGLE_ROTATIONS) {
+  for (const rot of LOOK1_Y_ROTATIONS) {
     const rotTransf = kpuzzle.algToTransformation(new Alg(rot));
     if (topEdgesOriented(rotTransf.apply(resultTransf))) {
       return true;
@@ -121,6 +124,34 @@ function look1CaseSolvedModuloRotation(kpuzzle, resultTransf) {
   }
 
   return false;
+}
+
+/**
+ * Negative controls: cross-case / wrong-family algs must not pass Look-1 check.
+ *
+ * @param {any} kpuzzle
+ * @param {object[]} look1OllCases
+ */
+function assertLook1NegativeControls(kpuzzle, look1OllCases, oll2Look) {
+  const byId = Object.fromEntries(look1OllCases.map(c => [c.id, c]));
+  const dotCase = byId['oll-2look-dot'];
+  const lineCase = byId['oll-2look-line'];
+  const lshapeCase = byId['oll-2look-lshape'];
+  const suneAlg = oll2Look.find(c => c.id === 'oll-2look-sune')?.primaryAlg ?? "R U R' U R U2 R'";
+
+  const controls = [
+    { label: 'dot setup + line primary', caseAlg: dotCase.primaryAlg, alg: lineCase.primaryAlg },
+    { label: 'dot setup + sune (wrong family)', caseAlg: dotCase.primaryAlg, alg: suneAlg },
+    { label: 'line setup + lshape primary', caseAlg: lineCase.primaryAlg, alg: lshapeCase.primaryAlg },
+  ];
+
+  for (const { label, caseAlg, alg } of controls) {
+    const caseTransf = kpuzzle.algToTransformation(new Alg(caseAlg)).invert();
+    const resultTransf = caseTransf.apply(kpuzzle.algToTransformation(new Alg(alg)));
+    if (look1CaseSolvedModuloRotation(kpuzzle, resultTransf)) {
+      throw new Error(`Look-1 negative control failed: ${label} incorrectly passed`);
+    }
+  }
 }
 
 async function runVerification() {
@@ -229,6 +260,9 @@ async function runVerification() {
   );
 
   // 3. Look-1 OLL: edge orientation only — corners/permutation out of scope
+  assertLook1NegativeControls(kpuzzle, look1OllCases, oll2Look);
+  console.log('✓ Look-1 negative controls: cross-case algs correctly rejected (y-axis rotation only)');
+
   let invariant3Count = 0;
   for (const c of look1OllCases) {
     const caseTransf = kpuzzle.algToTransformation(new Alg(c.primaryAlg)).invert();
@@ -244,7 +278,7 @@ async function runVerification() {
     }
   }
   console.log(
-    `✓ Invariant 3: ${invariant3Count} Look-1 OLL algorithm variations orient all U-layer edges (edge orientation only; corners/permutation out of scope)`,
+    `✓ Invariant 3: ${invariant3Count} Look-1 OLL algorithm variations orient all U-layer edges (y/y'/y2 frame only; corners/permutation out of scope)`,
   );
 
   console.log(`✓ Total algorithm variations parse-simulated: ${totalSimulated}`);
