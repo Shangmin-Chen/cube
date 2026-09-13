@@ -5,11 +5,13 @@ import { getAllCases, getDeckById } from '../services/algService';
 import { invertMoveString } from '../utils/cubeLogic';
 import {
   applyCardOutcome,
+  goToPreviousCard,
   initRoundState,
   progressPercent as computeProgressPercent,
   reviewMissedCases,
   shuffleArray,
   type CardOutcome,
+  type TrainerRoundState,
 } from './trainerSessionLogic';
 
 export function useTrainerSession(deckId: string, bookmarkedIds: string[], methodId = 'cfop-4look') {
@@ -142,12 +144,21 @@ export function useTrainerSession(deckId: string, bookmarkedIds: string[], metho
   }, [currentIndex, activeQueue.length]);
 
   const prev = useCallback(() => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-      setIsFlipped(false);
-      setShowHint(false);
-    }
-  }, [currentIndex]);
+    const prior: TrainerRoundState = {
+      activeQueue,
+      currentIndex,
+      roundNumber,
+      isRoundFinished,
+      masteredIds,
+      learningIds,
+    };
+    const previous = goToPreviousCard(prior);
+    if (!previous) return;
+    setCurrentIndex(previous.currentIndex);
+    setIsRoundFinished(previous.isRoundFinished);
+    setIsFlipped(false);
+    setShowHint(false);
+  }, [activeQueue, currentIndex, isRoundFinished, learningIds, masteredIds, roundNumber]);
 
   // Mastery handlers
   const markMastered = useCallback(() => {
