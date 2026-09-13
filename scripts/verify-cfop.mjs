@@ -98,6 +98,54 @@ async function runVerification() {
   }
   console.log('✓ Invariant 2: Edges-Only PLLs leave all CORNERS in identity permutation and 0 orientation delta');
 
+  // 3. 2-Look OLL edge-case hold descriptions must match inverse→forward simulation
+  //    (cubing.js kpuzzle U-layer slot order: UF=0, UL=1, UB=2, UR=3)
+  const U_EDGE_SLOTS = ['UF', 'UL', 'UB', 'UR'];
+  const CLOCK = { UF: '6', UL: '9', UB: '12', UR: '3' };
+
+  function orientedUEdgeSlots(pattern) {
+    const edges = pattern.patternData.EDGES;
+    return U_EDGE_SLOTS.filter((_, i) => edges.orientation[i] === 0);
+  }
+
+  function clocksFromSlots(slots) {
+    return slots.map(s => CLOCK[s]).sort((a, b) => Number(a) - Number(b));
+  }
+
+  function parseClocksFromDescription(description) {
+    const match = description.match(/(\d+)\s+and\s+(\d+)\s+o-clock/i);
+    if (!match) return null;
+    return [match[1], match[2]].sort((a, b) => Number(a) - Number(b));
+  }
+
+  for (const c of oll2Look) {
+    if (!c.group?.includes('Edges')) continue;
+
+    const inverse = kpuzzle.algToTransformation(new Alg(c.primaryAlg)).invert();
+    const casePattern = kpuzzle.defaultPattern().applyTransformation(inverse);
+    const holdSlots = orientedUEdgeSlots(casePattern);
+    const expectedClocks = clocksFromSlots(holdSlots);
+
+    const forward = kpuzzle.algToTransformation(new Alg(c.primaryAlg));
+    const afterForward = casePattern.applyTransformation(forward);
+    const uEdgesSolved = [0, 1, 2, 3].every(
+      i => afterForward.patternData.EDGES.orientation[i] === 0,
+    );
+    if (!uEdgesSolved) {
+      throw new Error(
+        `Hold AC failure: primaryAlg for ${c.id} does not orient U edges from inverse hold (${holdSlots.join('+')})`,
+      );
+    }
+
+    const descClocks = parseClocksFromDescription(c.description);
+    if (descClocks && descClocks.join('&') !== expectedClocks.join('&')) {
+      throw new Error(
+        `Hold description mismatch for ${c.id}: description says ${descClocks.join(' & ')} o-clock but simulation gives ${expectedClocks.join(' & ')} o-clock (${holdSlots.join('+')})`,
+      );
+    }
+  }
+  console.log('✓ Invariant 3: 2-Look OLL edge-case hold descriptions match inverse→forward simulation');
+
   console.log(`✓ Total algorithm variations successfully simulated: ${totalSimulated}`);
   console.log('--- All verifications and semantic invariant checks passed! ---');
 }

@@ -25,7 +25,7 @@ const OLL_2LOOK_META = {
     name: 'L-Shape (Small L)',
     group: 'Edges (Look 1)',
     probability: '4/8',
-    description: 'Hold yellow L with oriented edges at 3 and 6 o-clock, then execute.',
+    description: 'Hold yellow L with oriented edges at 6 and 9 o-clock, then execute.',
     why: "Wide f turns two layers simultaneously, flipping adjacent edges instead of opposite edges before f' restores layers.",
   },
   'Sune': {
