@@ -279,7 +279,7 @@
     ],
     "probability": "1/108",
     "description": "OLL Case 21 (Cross group).",
-    "why": "Yellow cross already completed. Uses corner twists to orient the remaining misoriented top-layer corners yellow-up without flipping any edges."
+    "why": "Yellow cross already completed. Orients the remaining misoriented top-layer corners yellow-up without flipping any edges."
   },
   {
     "id": "oll-22",
@@ -291,7 +291,7 @@
     "alternativeAlgs": [],
     "probability": "1/54",
     "description": "OLL Case 22 (Cross group).",
-    "why": "Yellow cross already completed. Uses corner twists to orient the remaining misoriented top-layer corners yellow-up without flipping any edges."
+    "why": "Yellow cross already completed. Orients the remaining misoriented top-layer corners yellow-up without flipping any edges."
   },
   {
     "id": "oll-23",
@@ -305,7 +305,7 @@
     ],
     "probability": "1/54",
     "description": "OLL Case 23 (Cross group).",
-    "why": "Yellow cross already completed. Uses corner twists to orient the remaining misoriented top-layer corners yellow-up without flipping any edges."
+    "why": "Yellow cross already completed. Orients the remaining misoriented top-layer corners yellow-up without flipping any edges."
   },
   {
     "id": "oll-24",
@@ -319,7 +319,7 @@
     ],
     "probability": "1/54",
     "description": "OLL Case 24 (Cross group).",
-    "why": "Yellow cross already completed. Uses corner twists to orient the remaining misoriented top-layer corners yellow-up without flipping any edges."
+    "why": "Yellow cross already completed. Orients the remaining misoriented top-layer corners yellow-up without flipping any edges."
   },
   {
     "id": "oll-25",
@@ -333,7 +333,7 @@
     ],
     "probability": "1/54",
     "description": "OLL Case 25 (Cross group).",
-    "why": "Yellow cross already completed. Uses corner twists to orient the remaining misoriented top-layer corners yellow-up without flipping any edges."
+    "why": "Yellow cross already completed. Orients the remaining misoriented top-layer corners yellow-up without flipping any edges."
   },
   {
     "id": "oll-26",
@@ -347,7 +347,7 @@
     ],
     "probability": "1/54",
     "description": "OLL Case 26 (Cross group).",
-    "why": "Yellow cross already completed. Uses corner twists to orient the remaining misoriented top-layer corners yellow-up without flipping any edges."
+    "why": "Yellow cross already completed. Orients the remaining misoriented top-layer corners yellow-up without flipping any edges."
   },
   {
     "id": "oll-27",
@@ -361,7 +361,7 @@
     ],
     "probability": "1/54",
     "description": "OLL Case 27 (Cross group).",
-    "why": "Yellow cross already completed. Uses corner twists to orient the remaining misoriented top-layer corners yellow-up without flipping any edges."
+    "why": "Yellow cross already completed. Orients the remaining misoriented top-layer corners yellow-up without flipping any edges."
   },
   {
     "id": "oll-28",

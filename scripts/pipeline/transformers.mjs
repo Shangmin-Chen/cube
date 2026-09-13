@@ -66,7 +66,7 @@ const OLL_2LOOK_META = {
     group: 'Corners (Look 2)',
     probability: '4/27',
     description: '2 corners facing UP on right. Headlights on left side.',
-    why: "R2 D stages a misoriented corner cubie into the D layer for setup. U2 and R-trigger cycles swap the two misoriented corner cubies through working slots below the U layer, and the final R' orients both yellow-up without flipping any cross edges.",
+    why: "R2 D stages a misoriented corner into the D layer. U2/R-trigger cycles route both misoriented corners through D-layer slots; the final R' orients the last two U-layer corners yellow-up without flipping cross edges.",
   },
   'T': {
     id: 'oll-2look-chameleon',
@@ -74,7 +74,7 @@ const OLL_2LOOK_META = {
     group: 'Corners (Look 2)',
     probability: '4/27',
     description: '2 corners facing UP on right. Front-left & back-left stickers point out.',
-    why: "Wide Sexy (r U R' U') moves the oriented U-layer corners out of the way, then Wide Sledgehammer (r' F R F') twists the two misoriented corner cubies yellow-up.",
+    why: "Wide Sexy (r U R' U') moves one oriented U-layer corner off U, then Wide Sledgehammer (r' F R F') twists the two misoriented corner cubies yellow-up.",
   },
   'L': {
     id: 'oll-2look-bowtie',
@@ -271,7 +271,7 @@ export function transform2LookPLL(rawAlgs, kpuzzle) {
  */
 const OLL_GROUP_EXPLANATIONS = {
   'Dot': 'Zero edges oriented. Uses wide turns or chained F-triggers to create an edge cross.',
-  'Cross': 'Yellow cross already completed. Uses corner twists to orient the remaining misoriented top-layer corners yellow-up without flipping any edges.',
+  'Cross': 'Yellow cross already completed. Orients the remaining misoriented top-layer corners yellow-up without flipping any edges.',
   'Square Shape': '2x2 yellow block. Uses wide l/r turns to pair and orient adjacent edge stickers.',
   'Small Lightning Bolt': 'Lightning silhouette. Uses Sune-derived triggers to pivot misoriented corners.',
   'Big Lightning Bolt': 'Extended lightning pattern. Uses wide insertions to rotate the last layer stickers.',
