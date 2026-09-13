@@ -1,10 +1,12 @@
 import {
   applyCardOutcome,
+  goToPreviousCard,
   initRoundState,
   makeMockCase,
   progressPercent,
   reviewMissedCases,
   roundSummaryMetrics,
+  roundSummaryWithCarriedMastery,
   setsAreDisjoint,
 } from '../src/hooks/trainerSessionLogic.ts';
 
@@ -52,10 +54,28 @@ function runVerification(): void {
   const { state: round2 } = runRound(round2Start!, ['mastered', 'mastered']);
   const summary = roundSummaryMetrics(round2);
   assert(summary.masteredCount === 2, `Repro 1: masteredCount=${summary.masteredCount}, expected 2`);
+  assert(summary.learningCount === 0, `Repro 1: learningCount=${summary.learningCount}, expected 0`);
   assert(summary.totalCards === 2, `Repro 1: totalCards=${summary.totalCards}, expected 2`);
   assert(summary.accuracyPercent === 100, `Repro 1: accuracy=${summary.accuracyPercent}%, expected 100%`);
-  assert(summary.masteredCount <= summary.totalCards, 'Repro 1: mastered must not exceed total');
-  console.log('Repro 1: round 2 summary 2/2 mastered, 100% accuracy');
+
+  const staleSummary = roundSummaryWithCarriedMastery(round1, round2);
+  assert(
+    staleSummary.masteredCount === 5,
+    `Repro 1: pre-fix carried mastery would report mastered=${staleSummary.masteredCount}, expected 5`,
+  );
+  assert(
+    staleSummary.totalCards === 2,
+    `Repro 1: pre-fix carried mastery would report total=${staleSummary.totalCards}, expected 2`,
+  );
+  assert(
+    staleSummary.accuracyPercent === 250,
+    `Repro 1: pre-fix carried mastery would report accuracy=${staleSummary.accuracyPercent}%, expected 250%`,
+  );
+  assert(
+    summary.masteredCount !== staleSummary.masteredCount,
+    'Repro 1: fixed summary must differ from carried-over mastery bug',
+  );
+  console.log('Repro 1: round 2 summary 2/2 mastered, 100% (not stale 5/2 at 250%)');
 
   // Repro 2a: confetti must not fire when last card is Still Learning (4 mastered, 1 learning)
   const round2a = initRoundState(baseCases, false, 1);
@@ -88,15 +108,25 @@ function runVerification(): void {
   assert(confetti2c.slice(0, -1).every(flag => !flag), 'Repro 2c: confetti only on round completion');
   console.log('Repro 2c: confetti fires when all cards mastered');
 
-  // Repro 3: masteredIds and learningIds stay disjoint when toggling outcome
-  let toggleState = initRoundState([makeMockCase('card-a')], false, 1);
-  toggleState = applyCardOutcome(toggleState, 'mastered', 'card-a').nextState;
-  toggleState = { ...toggleState, currentIndex: 0, isRoundFinished: false };
-  toggleState = applyCardOutcome(toggleState, 'learning', 'card-a').nextState;
-  assert(setsAreDisjoint(toggleState.masteredIds, toggleState.learningIds), 'Repro 3: sets must be disjoint');
-  assert(!toggleState.masteredIds.has('card-a'), 'Repro 3: card-a must not remain mastered');
-  assert(toggleState.learningIds.has('card-a'), 'Repro 3: card-a must be learning');
-  console.log('Repro 3: markLearning clears prior mastery');
+  // Repro 3: back-then-relabel mid-round keeps mastery sets disjoint
+  const threeCards = ['card-a', 'card-b', 'card-c'].map(makeMockCase);
+  let relabelState = initRoundState(threeCards, false, 1);
+  relabelState = applyCardOutcome(relabelState, 'mastered', 'card-a').nextState;
+  assert(relabelState.currentIndex === 1, 'Repro 3: should advance to index 1 after mastering card-a');
+  assert(relabelState.masteredIds.has('card-a'), 'Repro 3: card-a should be mastered before going back');
+
+  const backState = goToPreviousCard(relabelState);
+  assert(backState !== null, 'Repro 3: goToPreviousCard should succeed mid-round');
+  assert(backState!.currentIndex === 0, 'Repro 3: should return to index 0');
+  relabelState = backState!;
+
+  relabelState = applyCardOutcome(relabelState, 'learning', 'card-a').nextState;
+  assert(relabelState.currentIndex === 1, 'Repro 3: relabel should advance to index 1');
+  assert(setsAreDisjoint(relabelState.masteredIds, relabelState.learningIds), 'Repro 3: sets must be disjoint');
+  assert(!relabelState.masteredIds.has('card-a'), 'Repro 3: card-a must not remain mastered after relabel');
+  assert(relabelState.learningIds.has('card-a'), 'Repro 3: card-a must be learning after relabel');
+  assert(relabelState.masteredIds.size === 0, 'Repro 3: no other cards should remain mastered');
+  console.log('Repro 3: mastered → prev → still learning keeps sets disjoint');
 
   // Repro 4: progress bar reads 100% on the last card
   const tenCards = Array.from({ length: 10 }, (_, i) => makeMockCase(`c${i + 1}`));

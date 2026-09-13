@@ -111,6 +111,31 @@ export function setsAreDisjoint(masteredIds: Set<string>, learningIds: Set<strin
   return true;
 }
 
+/** Navigate to the previous card in the active queue (mirrors hook `prev`). */
+export function goToPreviousCard(state: TrainerRoundState): TrainerRoundState | null {
+  if (state.currentIndex <= 0) return null;
+  return {
+    ...state,
+    currentIndex: state.currentIndex - 1,
+    isRoundFinished: false,
+  };
+}
+
+/**
+ * Simulates round-2 summary stats when mastery sets were carried over from round 1
+ * (the pre-fix bug: initRound only cleared sets on round === 1).
+ */
+export function roundSummaryWithCarriedMastery(
+  priorRound: TrainerRoundState,
+  currentRound: TrainerRoundState,
+): ReturnType<typeof roundSummaryMetrics> {
+  return roundSummaryMetrics({
+    ...currentRound,
+    masteredIds: new Set([...priorRound.masteredIds, ...currentRound.masteredIds]),
+    learningIds: new Set([...priorRound.learningIds, ...currentRound.learningIds]),
+  });
+}
+
 export function makeMockCase(id: string): AlgCase {
   return {
     id,
