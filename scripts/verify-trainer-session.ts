@@ -6,7 +6,6 @@ import {
   progressPercent,
   reviewMissedCases,
   roundSummaryMetrics,
-  roundSummaryWithCarriedMastery,
   setsAreDisjoint,
 } from '../src/hooks/trainerSessionLogic.ts';
 
@@ -58,24 +57,17 @@ function runVerification(): void {
   assert(summary.totalCards === 2, `Repro 1: totalCards=${summary.totalCards}, expected 2`);
   assert(summary.accuracyPercent === 100, `Repro 1: accuracy=${summary.accuracyPercent}%, expected 100%`);
 
-  const staleSummary = roundSummaryWithCarriedMastery(round1, round2);
+  for (const priorOnlyId of ['a', 'b', 'c']) {
+    assert(
+      !round2.masteredIds.has(priorOnlyId),
+      `Repro 1: round-2 mastery must not carry over "${priorOnlyId}" from round 1`,
+    );
+  }
   assert(
-    staleSummary.masteredCount === 5,
-    `Repro 1: pre-fix carried mastery would report mastered=${staleSummary.masteredCount}, expected 5`,
+    round2.masteredIds.has('d') && round2.masteredIds.has('e'),
+    'Repro 1: round-2 should master only the two missed cards',
   );
-  assert(
-    staleSummary.totalCards === 2,
-    `Repro 1: pre-fix carried mastery would report total=${staleSummary.totalCards}, expected 2`,
-  );
-  assert(
-    staleSummary.accuracyPercent === 250,
-    `Repro 1: pre-fix carried mastery would report accuracy=${staleSummary.accuracyPercent}%, expected 250%`,
-  );
-  assert(
-    summary.masteredCount !== staleSummary.masteredCount,
-    'Repro 1: fixed summary must differ from carried-over mastery bug',
-  );
-  console.log('Repro 1: round 2 summary 2/2 mastered, 100% (not stale 5/2 at 250%)');
+  console.log('Repro 1: round 2 summary 2/2 mastered, 100% (round-1 cards excluded)');
 
   // Repro 2a: confetti must not fire when last card is Still Learning (4 mastered, 1 learning)
   const round2a = initRoundState(baseCases, false, 1);
