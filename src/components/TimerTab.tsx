@@ -9,6 +9,7 @@ import { Shuffle, Trash2, Award, History, RotateCcw } from 'lucide-react';
 export const TimerTab: React.FC = () => {
   const [scramble, setScramble] = useState<string>('');
   const [scrambleLoading, setScrambleLoading] = useState<boolean>(true);
+  const [scrambleError, setScrambleError] = useState<string | null>(null);
   const [solves, setSolves] = useState<SolveRecord[]>(() => {
     try {
       const saved = localStorage.getItem('cfop_solves');
@@ -27,6 +28,12 @@ export const TimerTab: React.FC = () => {
   const startTimeRef = useRef<number>(0);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrambleGenIdRef = useRef(0);
+  const scrambleRef = useRef('');
+  const activeSolveScrambleRef = useRef('');
+
+  const scrambleReady = scramble.length > 0 && !scrambleLoading;
+  const timerActive = timerState !== 'idle';
 
   // Unmount cleanup
   useEffect(() => {
@@ -36,12 +43,25 @@ export const TimerTab: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    scrambleRef.current = scramble;
+  }, [scramble]);
+
   const handleNewScramble = useCallback(async () => {
+    const genId = ++scrambleGenIdRef.current;
     setScrambleLoading(true);
+    setScrambleError(null);
     try {
-      setScramble(await generateScramble());
+      const next = await generateScramble();
+      if (genId !== scrambleGenIdRef.current) return;
+      setScramble(next);
+    } catch {
+      if (genId !== scrambleGenIdRef.current) return;
+      setScrambleError('Failed to generate scramble.');
     } finally {
-      setScrambleLoading(false);
+      if (genId === scrambleGenIdRef.current) {
+        setScrambleLoading(false);
+      }
     }
   }, []);
 
@@ -52,6 +72,9 @@ export const TimerTab: React.FC = () => {
 
   // Start actual timer
   const startTimer = useCallback(() => {
+    const solveScramble = scrambleRef.current;
+    if (!solveScramble) return;
+    activeSolveScrambleRef.current = solveScramble;
     setTimerState('running');
     startTimeRef.current = performance.now();
     timerIntervalRef.current = setInterval(() => {
@@ -62,14 +85,21 @@ export const TimerTab: React.FC = () => {
   // Stop timer and record solve
   const stopTimer = useCallback(() => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    const recordedScramble = activeSolveScrambleRef.current;
+    if (!recordedScramble) {
+      setTimerState('idle');
+      return;
+    }
+
     const finalTime = performance.now() - startTimeRef.current;
     setElapsedTime(finalTime);
     setTimerState('idle');
+    activeSolveScrambleRef.current = '';
 
     const newRecord: SolveRecord = {
       id: Date.now().toString(),
       time: Math.round(finalTime),
-      scramble,
+      scramble: recordedScramble,
       date: Date.now(),
       penalty: 'none',
     };
@@ -85,12 +115,13 @@ export const TimerTab: React.FC = () => {
     });
 
     void handleNewScramble();
-  }, [scramble, handleNewScramble]);
+  }, [handleNewScramble]);
 
   const handleTriggerPress = useCallback(() => {
     if (timerState === 'running') {
       stopTimer();
     } else if (timerState === 'idle') {
+      if (!scrambleReady) return;
       setTimerState('holding');
       holdTimerRef.current = setTimeout(() => {
         setTimerState('ready');
@@ -98,7 +129,7 @@ export const TimerTab: React.FC = () => {
     } else if (timerState === 'inspection') {
       startTimer();
     }
-  }, [timerState, startTimer, stopTimer]);
+  }, [timerState, scrambleReady, startTimer, stopTimer]);
 
   const handleTriggerRelease = useCallback(() => {
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
@@ -187,13 +218,28 @@ export const TimerTab: React.FC = () => {
           <Shuffle className="w-3.5 h-3.5" /> WCA Official 3x3 Scramble
         </Badge>
         <div className="text-lg md:text-2xl font-mono font-bold text-white tracking-wide leading-relaxed max-w-3xl">
-          {scrambleLoading ? 'Generating scramble…' : scramble}
+          {scrambleLoading && !scramble
+            ? 'Generating scramble…'
+            : scramble || (scrambleError ? 'Scramble unavailable' : 'Generating scramble…')}
         </div>
+        {scrambleError && (
+          <p className="text-xs text-rose-400 flex items-center gap-2">
+            {scrambleError}
+            <button
+              type="button"
+              onClick={() => void handleNewScramble()}
+              disabled={scrambleLoading || timerActive}
+              className="underline hover:text-rose-300 disabled:opacity-50 disabled:no-underline"
+            >
+              Retry
+            </button>
+          </p>
+        )}
         <button
           type="button"
           aria-label="Generate new WCA scramble"
           onClick={() => void handleNewScramble()}
-          disabled={scrambleLoading}
+          disabled={scrambleLoading || timerActive}
           className="px-4 py-2 rounded-lg bg-[#2d2d2d] hover:bg-[#383838] border border-[#383838] text-[#d4d4d4] text-xs font-semibold flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <RotateCcw className="w-3.5 h-3.5" /> New Scramble
@@ -229,7 +275,10 @@ export const TimerTab: React.FC = () => {
               handleTriggerRelease();
             }
           }}
-          className="lg:col-span-7 flex flex-col items-center justify-center p-10 min-h-[340px] relative select-none cursor-pointer outline-none"
+          aria-disabled={!scrambleReady && timerState === 'idle'}
+          className={`lg:col-span-7 flex flex-col items-center justify-center p-10 min-h-[340px] relative select-none outline-none ${
+            scrambleReady || timerActive ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
+          }`}
         >
           {/* Inspection Mode Toggle */}
           <div
@@ -266,7 +315,8 @@ export const TimerTab: React.FC = () => {
 
           {/* Status Instruction */}
           <p className="text-xs font-medium text-[#888888] mt-6 tracking-wider uppercase">
-            {timerState === 'idle' && 'Press and Hold Spacebar (or Touch Screen) to Ready'}
+            {timerState === 'idle' && !scrambleReady && (scrambleLoading ? 'Generating scramble…' : 'Waiting for scramble…')}
+            {timerState === 'idle' && scrambleReady && 'Press and Hold Spacebar (or Touch Screen) to Ready'}
             {timerState === 'holding' && 'Hold...'}
             {timerState === 'ready' && 'Release Spacebar to Start!'}
             {timerState === 'inspection' && 'Inspecting... Press Spacebar or Touch to Start Solve!'}
