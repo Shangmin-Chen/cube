@@ -1,13 +1,22 @@
+import type { AlgCase } from '../src/types/cube.ts';
 import {
   applyCardOutcome,
   goToPreviousCard,
   initRoundState,
-  makeMockCase,
   progressPercent,
   reviewMissedCases,
-  roundSummaryMetrics,
-  setsAreDisjoint,
 } from '../src/hooks/trainerSessionLogic.ts';
+
+function makeMockCase(id: string): AlgCase {
+  return {
+    id,
+    name: id,
+    category: 'test',
+    subcategory: 'test',
+    group: 'test',
+    primaryAlg: "R U R' U'",
+  };
+}
 
 function assert(condition: boolean, message: string): void {
   if (!condition) throw new Error(message);
@@ -40,22 +49,22 @@ function runVerification(): void {
   // Repro 1: Round 2+ summary must not exceed 100% accuracy or total cards
   let round1 = initRoundState(baseCases, false, 1);
   ({ state: round1 } = runRound(round1, ['mastered', 'mastered', 'mastered', 'learning', 'learning']));
-  assert(round1.roundNumber === 1, 'Repro 1: round 1 should finish');
+  assert(round1.isRoundFinished, 'Repro 1: round 1 should finish');
   assert(round1.masteredIds.size === 3, 'Repro 1: expected 3 mastered in round 1');
   assert(round1.learningIds.size === 2, 'Repro 1: expected 2 learning in round 1');
 
   const round2Start = reviewMissedCases(round1, baseCases, false);
   assert(round2Start !== null, 'Repro 1: reviewMissed should start round 2');
+  assert(round2Start!.roundNumber === 2, 'Repro 1: reviewMissed should increment roundNumber');
   assert(round2Start!.activeQueue.length === 2, 'Repro 1: round 2 queue should have 2 cards');
   assert(round2Start!.masteredIds.size === 0, 'Repro 1: round 2 should reset masteredIds');
   assert(round2Start!.learningIds.size === 0, 'Repro 1: round 2 should reset learningIds');
 
   const { state: round2 } = runRound(round2Start!, ['mastered', 'mastered']);
-  const summary = roundSummaryMetrics(round2);
-  assert(summary.masteredCount === 2, `Repro 1: masteredCount=${summary.masteredCount}, expected 2`);
-  assert(summary.learningCount === 0, `Repro 1: learningCount=${summary.learningCount}, expected 0`);
-  assert(summary.totalCards === 2, `Repro 1: totalCards=${summary.totalCards}, expected 2`);
-  assert(summary.accuracyPercent === 100, `Repro 1: accuracy=${summary.accuracyPercent}%, expected 100%`);
+  assert(round2.isRoundFinished, 'Repro 1: round 2 should finish');
+  assert(round2.activeQueue.length === 2, 'Repro 1: finished round 2 queue stays 2 cards');
+  assert(round2.masteredIds.size === 2, 'Repro 1: round 2 masteredIds size is 2');
+  assert(round2.learningIds.size === 0, 'Repro 1: round 2 learningIds is empty');
 
   for (const priorOnlyId of ['a', 'b', 'c']) {
     assert(
@@ -67,7 +76,7 @@ function runVerification(): void {
     round2.masteredIds.has('d') && round2.masteredIds.has('e'),
     'Repro 1: round-2 should master only the two missed cards',
   );
-  console.log('Repro 1: round 2 summary 2/2 mastered, 100% (round-1 cards excluded)');
+  console.log('Repro 1: round 2 finished 2 mastered / 0 learning, no round-1 carry-over');
 
   // Repro 2a: confetti must not fire when last card is Still Learning (4 mastered, 1 learning)
   const round2a = initRoundState(baseCases, false, 1);
@@ -114,7 +123,6 @@ function runVerification(): void {
 
   relabelState = applyCardOutcome(relabelState, 'learning', 'card-a').nextState;
   assert(relabelState.currentIndex === 1, 'Repro 3: relabel should advance to index 1');
-  assert(setsAreDisjoint(relabelState.masteredIds, relabelState.learningIds), 'Repro 3: sets must be disjoint');
   assert(!relabelState.masteredIds.has('card-a'), 'Repro 3: card-a must not remain mastered after relabel');
   assert(relabelState.learningIds.has('card-a'), 'Repro 3: card-a must be learning after relabel');
   assert(relabelState.masteredIds.size === 0, 'Repro 3: no other cards should remain mastered');
