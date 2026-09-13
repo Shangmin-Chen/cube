@@ -22,7 +22,7 @@ function formatInspectionTime(elapsedMs: number): string {
 }
 
 function inspectionPenaltyForElapsed(elapsedMs: number): 'none' | '+2' | 'DNF' {
-  if (elapsedMs > INSPECTION_DNF_MS) return 'DNF';
+  if (elapsedMs >= INSPECTION_DNF_MS) return 'DNF';
   if (elapsedMs > INSPECTION_LIMIT_MS) return '+2';
   return 'none';
 }
@@ -309,10 +309,11 @@ export const TimerTab: React.FC = () => {
   const displayTime =
     timerState === 'inspection' ? formatInspectionTime(inspectionElapsed) : formatTime(elapsedTime);
 
+  const inspectionPenalty = inspectionPenaltyForElapsed(inspectionElapsed);
   const inspectionStatus =
-    inspectionElapsed > INSPECTION_DNF_MS
+    inspectionPenalty === 'DNF'
       ? 'Inspection over 17s — DNF'
-      : inspectionElapsed > INSPECTION_LIMIT_MS
+      : inspectionPenalty === '+2'
       ? '+2 penalty if you start now'
       : 'Inspecting... Press Spacebar or Touch to Start Solve!';
 
