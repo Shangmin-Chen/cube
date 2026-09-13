@@ -8,6 +8,7 @@ import { Shuffle, Trash2, Award, History, RotateCcw } from 'lucide-react';
 
 export const TimerTab: React.FC = () => {
   const [scramble, setScramble] = useState<string>('');
+  const [scrambleLoading, setScrambleLoading] = useState<boolean>(true);
   const [solves, setSolves] = useState<SolveRecord[]>(() => {
     try {
       const saved = localStorage.getItem('cfop_solves');
@@ -35,14 +36,19 @@ export const TimerTab: React.FC = () => {
     };
   }, []);
 
-  // Generate initial scramble
-  useEffect(() => {
-    setScramble(generateScramble(21));
+  const handleNewScramble = useCallback(async () => {
+    setScrambleLoading(true);
+    try {
+      setScramble(await generateScramble());
+    } finally {
+      setScrambleLoading(false);
+    }
   }, []);
 
-  const handleNewScramble = () => {
-    setScramble(generateScramble(21));
-  };
+  // Generate initial scramble
+  useEffect(() => {
+    void handleNewScramble();
+  }, [handleNewScramble]);
 
   // Start actual timer
   const startTimer = useCallback(() => {
@@ -78,8 +84,8 @@ export const TimerTab: React.FC = () => {
       return updated;
     });
 
-    handleNewScramble();
-  }, [scramble]);
+    void handleNewScramble();
+  }, [scramble, handleNewScramble]);
 
   const handleTriggerPress = useCallback(() => {
     if (timerState === 'running') {
@@ -181,13 +187,14 @@ export const TimerTab: React.FC = () => {
           <Shuffle className="w-3.5 h-3.5" /> WCA Official 3x3 Scramble
         </Badge>
         <div className="text-lg md:text-2xl font-mono font-bold text-white tracking-wide leading-relaxed max-w-3xl">
-          {scramble}
+          {scrambleLoading ? 'Generating scramble…' : scramble}
         </div>
         <button
           type="button"
           aria-label="Generate new WCA scramble"
-          onClick={handleNewScramble}
-          className="px-4 py-2 rounded-lg bg-[#2d2d2d] hover:bg-[#383838] border border-[#383838] text-[#d4d4d4] text-xs font-semibold flex items-center gap-2 transition-colors"
+          onClick={() => void handleNewScramble()}
+          disabled={scrambleLoading}
+          className="px-4 py-2 rounded-lg bg-[#2d2d2d] hover:bg-[#383838] border border-[#383838] text-[#d4d4d4] text-xs font-semibold flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <RotateCcw className="w-3.5 h-3.5" /> New Scramble
         </button>

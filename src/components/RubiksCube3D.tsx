@@ -602,8 +602,8 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
     jumpToStateIndex(0);
   };
 
-  const handleScrambleNew = () => {
-    const newScramble = generateScramble(21);
+  const handleScrambleNew = async () => {
+    const newScramble = await generateScramble();
     const parsed = parseMoveString(newScramble);
     setMoves(parsed);
     const computedStates = computeAllStatesForPhase(parsed, 'solve');

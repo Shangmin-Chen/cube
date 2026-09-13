@@ -1,19 +1,7 @@
 import { Alg } from 'cubing/alg';
+import { randomScrambleForEvent } from 'cubing/scramble';
 
 // Helper functions for Rubik's Cube scrambles, move parsing, and state calculations
-
-const FACES = ['U', 'D', 'F', 'B', 'R', 'L'];
-const MODIFIERS = ['', "'", '2'];
-
-// Opposite faces so scrambles don't repeat redundant faces (e.g. U D U)
-const OPPOSITES: Record<string, string> = {
-  U: 'D',
-  D: 'U',
-  F: 'B',
-  B: 'F',
-  R: 'L',
-  L: 'R',
-};
 
 export interface TriggerChunk {
   text: string;
@@ -22,28 +10,10 @@ export interface TriggerChunk {
   type: 'sexy' | 'wide-sexy' | 'inverse-sexy' | 'left-sexy' | 'sledge' | 'wide-sledge' | 'hedge' | 'sune' | 'palindrome' | 'normal';
 }
 
-export function generateScramble(length = 20): string {
-  const scramble: string[] = [];
-  let lastFace = '';
-  let secondLastFace = '';
-
-  for (let i = 0; i < length; i++) {
-    let availableFaces = FACES.filter(f => f !== lastFace);
-    
-    // If the last two moves were on opposite faces (e.g., U then D), don't allow U again
-    if (lastFace && OPPOSITES[lastFace] === secondLastFace) {
-      availableFaces = availableFaces.filter(f => f !== secondLastFace);
-    }
-
-    const face = availableFaces[Math.floor(Math.random() * availableFaces.length)];
-    const modifier = MODIFIERS[Math.floor(Math.random() * MODIFIERS.length)];
-
-    scramble.push(face + modifier);
-    secondLastFace = lastFace;
-    lastFace = face;
-  }
-
-  return scramble.join(' ');
+/** WCA random-state 3x3 scramble via cubing/scramble. */
+export async function generateScramble(): Promise<string> {
+  const scramble = await randomScrambleForEvent('333');
+  return scramble.toString();
 }
 
 export function parseMoveString(movesStr: string): string[] {
