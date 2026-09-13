@@ -62,6 +62,14 @@ export function validateOverrideEntry(caseId, override) {
     if (override.removeAlternatives.length === 0) {
       throw new Error(`Override for ${caseId} has empty removeAlternatives`);
     }
+    const invalidEntries = override.removeAlternatives.filter(
+      item => typeof item !== 'string' || item.trim() === '',
+    );
+    if (invalidEntries.length > 0) {
+      throw new Error(
+        `Override for ${caseId} has invalid removeAlternatives entries; each must be a non-empty string`,
+      );
+    }
   }
 }
 
@@ -154,6 +162,15 @@ function dedupeAlternativesAgainstPrimary(algs, kpuzzle, ruleOptions) {
 }
 
 /**
+ * @param {string[]} algs
+ * @param {any} kpuzzle
+ * @param {{ isEdgesOnly?: boolean, isAdjacentCornerSwap?: boolean }} ruleOptions
+ */
+function normalizeAlgList(algs, kpuzzle, ruleOptions) {
+  return algs.map(alg => applyAlgRules(alg, kpuzzle, ruleOptions));
+}
+
+/**
  * Apply per-case algorithm overrides to an upstream raw algorithm list.
  *
  * @param {string} caseId
@@ -221,7 +238,12 @@ export function applyAlgorithmOverrides(
     algs = dedupeAlternativesAgainstPrimary(algs, kpuzzle, ruleOptions);
   }
 
-  if (algs.length === originalAlgs.length && algs.every((alg, index) => alg === originalAlgs[index])) {
+  const originalNormalized = normalizeAlgList(originalAlgs, kpuzzle, ruleOptions);
+  const resolvedNormalized = normalizeAlgList(algs, kpuzzle, ruleOptions);
+  if (
+    resolvedNormalized.length === originalNormalized.length
+    && resolvedNormalized.every((alg, index) => alg === originalNormalized[index])
+  ) {
     throw new Error(`Override for ${caseId} made no change to upstream algorithms`);
   }
 
