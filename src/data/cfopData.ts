@@ -13,8 +13,8 @@ export const CROSS_CASES: AlgCase[] = [
     group: 'Top Layer Insertion',
     primaryAlg: "R U' R'",
     description: 'The front cross edge sits at UF on the top layer with the white sticker facing up.',
-    tips: "Use U' to position the edge above the front slot, then R / R' to insert it.",
-    why: "U' turns the top layer to align the white-up edge above the front-bottom slot, and the R / R' pair drops it into the cross.",
+    tips: "The edge is already above the front slot; use U' to bring it to the right side, then R' to insert it.",
+    why: "With white already facing up at UF, U' rotates the edge to UR so R' can drop it into the front cross slot.",
   },
   {
     id: 'cross-u-white-side',
@@ -35,8 +35,8 @@ export const CROSS_CASES: AlgCase[] = [
     group: 'Middle Layer Extraction',
     primaryAlg: "R' D R",
     description: 'The front cross edge is stuck in the FR middle-layer slot.',
-    tips: "R' lifts the edge from the middle layer, D aligns the bottom, and R inserts it.",
-    why: "R' pulls the edge out of the front-right middle slot, D rotates the bottom to open the front slot, and R completes the insertion.",
+    tips: "D shifts the edge from the front-right to the front-left middle slot, then R inserts it into the cross.",
+    why: "D moves the misplaced edge from FR to FL along the middle layer, and R drops it into the front cross slot.",
   },
   {
     id: 'cross-middle-br',
@@ -46,8 +46,8 @@ export const CROSS_CASES: AlgCase[] = [
     group: 'Middle Layer Extraction',
     primaryAlg: "F L F'",
     description: 'The left cross edge is stuck in the BR middle-layer slot.',
-    tips: "F and L move the edge out of the middle layer before F' inserts it into the cross.",
-    why: "F and L lift the edge from the back-right middle slot to the top layer, and F' inserts it into the left cross slot.",
+    tips: "F and L extract the edge from the middle layer and slot it into the cross; F' restores the front face.",
+    why: "F and L lift the edge from the back-right middle slot and place it into the left cross slot; F' finishes by resetting the front layer.",
   },
 ];
 

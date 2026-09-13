@@ -13,6 +13,9 @@ const CFOP_DATA_PATH = path.join(ROOT_DIR, 'src/data/cfopData.ts');
 const EDGE_NAMES = ['UF', 'UR', 'UB', 'UL', 'FR', 'FL', 'BL', 'BR', 'DF', 'DR', 'DB', 'DL'];
 const CROSS_SLOTS = ['DF', 'DR', 'DB', 'DL'];
 
+const FORBIDDEN_IDS = new Set(['cross-sample-1']);
+const FORBIDDEN_ALGS = new Set(['D2 R F L B'].map(canonicalAlgKey));
+
 /**
  * Parse hand-written CROSS_CASES from cfopData.ts (trainer uses invert(primaryAlg) unless setupMoves is set).
  */
@@ -30,11 +33,21 @@ function parseCrossCases(content) {
       ?? body.match(/primaryAlg:\s*"((?:\\"|[^"])*)"/)?.[1];
     const setupMoves = body.match(/setupMoves:\s*'((?:\\'|[^'])*)'|"((?:\\"|[^"])*)"/)?.[1]
       ?? body.match(/setupMoves:\s*"((?:\\"|[^"])*)"/)?.[1];
+    const description = body.match(/description:\s*'((?:\\'|[^'])*)'|"((?:\\"|[^"])*)"/)?.[1]
+      ?? body.match(/description:\s*"((?:\\"|[^"])*)"/)?.[1];
+    const tips = body.match(/tips:\s*'((?:\\'|[^'])*)'|"((?:\\"|[^"])*)"/)?.[1]
+      ?? body.match(/tips:\s*"((?:\\"|[^"])*)"/)?.[1];
+    const why = body.match(/why:\s*'((?:\\'|[^'])*)'|"((?:\\"|[^"])*)"/)?.[1]
+      ?? body.match(/why:\s*"((?:\\"|[^"])*)"/)?.[1];
     if (id && primaryAlg) {
-      cases.push({ id, primaryAlg, setupMoves });
+      cases.push({ id, primaryAlg, setupMoves, description, tips, why });
     }
   }
   return cases;
+}
+
+function canonicalAlgKey(algStr) {
+  return new Alg(algStr).toString();
 }
 
 function invertAlg(algStr) {
@@ -65,61 +78,194 @@ function analyzeCross(pattern) {
   return { pieces, orientation, broken, crossSolved, brokenCount: broken.length };
 }
 
-/** Per-case setup invariants matched to description/why claims (trainer inverse-from-solved model). */
+function brokenIncludes(pieces, orientation, slotName) {
+  const slot = EDGE_NAMES.indexOf(slotName);
+  return pieces[slot] !== slot || orientation[slot] !== 0;
+}
+
+function expectEdgeLocation(actual, expected, label) {
+  if (actual.slot !== expected.slot || actual.ori !== expected.ori) {
+    throw new Error(
+      `${label}: expected ${expected.slot}(o${expected.ori}), got ${actual.slot}(o${actual.ori})`
+    );
+  }
+}
+
+/** Per-case setup invariants matched to description claims (trainer inverse-from-solved model). */
 const SETUP_EXPECTATIONS = {
   'cross-u-white-up': ({ pieces, orientation, brokenCount }) => {
     if (brokenCount !== 1 || !brokenIncludes(pieces, orientation, 'DF')) {
       throw new Error('Expected exactly one missing cross edge: DF');
     }
-    const loc = locateEdge(pieces, orientation, 'DF');
-    if (loc.slot !== 'UF' || loc.ori !== 0) {
-      throw new Error(`DF edge should be at UF with white up (ori 0); got ${loc.slot}(o${loc.ori})`);
-    }
+    expectEdgeLocation(locateEdge(pieces, orientation, 'DF'), { slot: 'UF', ori: 0 }, 'setup');
   },
   'cross-u-white-side': ({ pieces, orientation, brokenCount }) => {
     if (brokenCount !== 1 || !brokenIncludes(pieces, orientation, 'DR')) {
       throw new Error('Expected exactly one missing cross edge: DR');
     }
-    const loc = locateEdge(pieces, orientation, 'DR');
-    if (loc.slot !== 'UR' || loc.ori !== 1) {
-      throw new Error(`DR edge should be at UR with white facing side (ori 1); got ${loc.slot}(o${loc.ori})`);
-    }
+    expectEdgeLocation(locateEdge(pieces, orientation, 'DR'), { slot: 'UR', ori: 1 }, 'setup');
   },
   'cross-middle-fr': ({ pieces, orientation, brokenCount }) => {
     if (brokenCount !== 1 || !brokenIncludes(pieces, orientation, 'DF')) {
       throw new Error('Expected exactly one missing cross edge: DF');
     }
-    const loc = locateEdge(pieces, orientation, 'DF');
-    if (loc.slot !== 'FR' || loc.ori !== 0) {
-      throw new Error(`DF edge should be in FR middle slot; got ${loc.slot}(o${loc.ori})`);
-    }
+    expectEdgeLocation(locateEdge(pieces, orientation, 'DF'), { slot: 'FR', ori: 0 }, 'setup');
   },
   'cross-middle-br': ({ pieces, orientation, brokenCount }) => {
     if (brokenCount !== 1 || !brokenIncludes(pieces, orientation, 'DL')) {
       throw new Error('Expected exactly one missing cross edge: DL');
     }
-    const loc = locateEdge(pieces, orientation, 'DL');
-    if (loc.slot !== 'BR' || loc.ori !== 0) {
-      throw new Error(`DL edge should be in BR middle slot; got ${loc.slot}(o${loc.ori})`);
+    expectEdgeLocation(locateEdge(pieces, orientation, 'DL'), { slot: 'BR', ori: 0 }, 'setup');
+  },
+};
+
+/**
+ * Step-by-step edge tracking for the target cross edge. Catches false move narratives
+ * (e.g. F' insertion, U' positioning above front when already at UF).
+ */
+const ALG_STEP_EXPECTATIONS = {
+  'cross-u-white-up': {
+    target: 'DF',
+    steps: [
+      { prefix: '', location: { slot: 'UF', ori: 0 } },
+      { prefix: 'R', location: { slot: 'UF', ori: 0 } },
+      { prefix: "R U'", location: { slot: 'UR', ori: 0 }, notAt: 'UF' },
+      { prefix: "R U' R'", location: { slot: 'DF', ori: 0 }, crossSolved: true },
+    ],
+  },
+  'cross-u-white-side': {
+    target: 'DR',
+    steps: [
+      { prefix: '', location: { slot: 'UR', ori: 1 } },
+      { prefix: 'F', location: { slot: 'UR', ori: 1 } },
+      { prefix: 'F U', location: { slot: 'UF', ori: 1 } },
+      { prefix: "F U F'", location: { slot: 'DR', ori: 0 }, crossSolved: true },
+    ],
+  },
+  'cross-middle-fr': {
+    target: 'DF',
+    steps: [
+      { prefix: '', location: { slot: 'FR', ori: 0 } },
+      { prefix: "R'", location: { slot: 'FR', ori: 0 } },
+      { prefix: "R' D", location: { slot: 'FL', ori: 0 }, notAt: 'FR' },
+      { prefix: "R' D R", location: { slot: 'DF', ori: 0 }, crossSolved: true },
+    ],
+  },
+  'cross-middle-br': {
+    target: 'DL',
+    steps: [
+      { prefix: '', location: { slot: 'BR', ori: 0 } },
+      { prefix: 'F', location: { slot: 'BR', ori: 0 } },
+      { prefix: 'F L', location: { slot: 'DL', ori: 0 }, crossSolved: false },
+      { prefix: "F L F'", location: { slot: 'DL', ori: 0 }, crossSolved: true },
+    ],
+  },
+};
+
+/** Prose must not contradict step simulation for known false narratives. */
+const PROSE_CHECKS = {
+  'cross-u-white-up': (prose, steps) => {
+    if (/U'.*(?:above|position).*(?:front slot|front-bottom)/i.test(prose)) {
+      throw new Error(
+        "why/tips falsely claim U' positions the edge above the front slot; setup already has it at UF and U' moves it to UR"
+      );
+    }
+    if (steps["R U'"].location.slot !== 'UR') {
+      throw new Error("U' must move the DF edge from UF to UR before R' insertion");
+    }
+  },
+  'cross-middle-br': (prose, steps) => {
+    if (/F'.*insert/i.test(prose)) {
+      throw new Error("why/tips falsely claim F' performs insertion; F L places the edge into the cross slot before F'");
+    }
+    if (steps['F L']?.location.slot !== 'DL') {
+      throw new Error('F L must place the DL edge into the left cross slot before F\'');
+    }
+  },
+  'cross-middle-fr': (prose) => {
+    if (/open the front slot/i.test(prose)) {
+      throw new Error("why/tips overstate D's effect; D shifts the edge FR→FL, it does not open the front slot");
     }
   },
 };
 
-function brokenIncludes(pieces, orientation, slotName) {
-  const slot = EDGE_NAMES.indexOf(slotName);
-  return pieces[slot] !== slot || orientation[slot] !== 0;
+function buildStepStates(kpuzzle, solved, setup, primaryAlg) {
+  const states = {};
+  const tokens = primaryAlg.split(/\s+/).filter(Boolean);
+  for (let i = 0; i <= tokens.length; i++) {
+    const prefix = tokens.slice(0, i).join(' ');
+    const alg = prefix ? `${setup} ${prefix}` : setup;
+    const pattern = solved.applyTransformation(kpuzzle.algToTransformation(new Alg(alg)));
+    states[prefix] = analyzeCross(pattern);
+  }
+  return states;
+}
+
+function validateForbiddenCases(cases) {
+  for (const c of cases) {
+    if (FORBIDDEN_IDS.has(c.id)) {
+      throw new Error(`Forbidden cross case id must not be present: ${c.id}`);
+    }
+    const algKey = canonicalAlgKey(c.primaryAlg);
+    if (FORBIDDEN_ALGS.has(algKey)) {
+      throw new Error(`Forbidden false algorithm must not be present: ${c.primaryAlg}`);
+    }
+  }
+}
+
+function validateAlgSteps(kpuzzle, solved, caseDef, setup) {
+  const spec = ALG_STEP_EXPECTATIONS[caseDef.id];
+  if (!spec) throw new Error(`Missing ALG_STEP_EXPECTATIONS for ${caseDef.id}`);
+
+  const stepStates = buildStepStates(kpuzzle, solved, setup, caseDef.primaryAlg);
+  const trackedSteps = {};
+
+  for (const step of spec.steps) {
+    const state = stepStates[step.prefix];
+    if (!state) {
+      throw new Error(`${caseDef.id}: missing simulation state for prefix "${step.prefix}"`);
+    }
+
+    const loc = locateEdge(state.pieces, state.orientation, spec.target);
+    trackedSteps[step.prefix || 'setup'] = { location: loc, crossSolved: state.crossSolved };
+    expectEdgeLocation(loc, step.location, `${caseDef.id} after "${step.prefix || 'setup'}"`);
+
+    if (step.notAt && loc.slot === step.notAt) {
+      throw new Error(
+        `${caseDef.id} after "${step.prefix}": edge should not remain at ${step.notAt}`
+      );
+    }
+    if (step.crossSolved && !state.crossSolved) {
+      throw new Error(`${caseDef.id} after "${step.prefix}": cross should be solved`);
+    }
+    if (step.crossSolved === false && state.crossSolved) {
+      throw new Error(`${caseDef.id} after "${step.prefix}": cross should not yet be solved`);
+    }
+  }
+
+  return trackedSteps;
+}
+
+function validateProse(caseDef, trackedSteps) {
+  const prose = [caseDef.description, caseDef.tips, caseDef.why].filter(Boolean).join(' ');
+  if (!prose.trim()) {
+    throw new Error(`${caseDef.id}: missing description/tips/why prose`);
+  }
+
+  const checker = PROSE_CHECKS[caseDef.id];
+  if (checker) {
+    checker(prose, trackedSteps);
+  }
 }
 
 async function runVerification() {
   console.log('--- Cross Case Verification ---');
 
   const cfopContent = fs.readFileSync(CFOP_DATA_PATH, 'utf8');
-  if (cfopContent.includes('cross-sample-1') || cfopContent.includes('D2 R F L B')) {
-    throw new Error('Removed false cross-sample-1 must not be present');
-  }
-
   const cases = parseCrossCases(cfopContent);
   if (cases.length === 0) throw new Error('No CROSS_CASES found');
+
+  validateForbiddenCases(cases);
 
   for (const c of cases) {
     if (!SETUP_EXPECTATIONS[c.id]) {
@@ -140,6 +286,9 @@ async function runVerification() {
     }
 
     SETUP_EXPECTATIONS[c.id](before);
+
+    const trackedSteps = validateAlgSteps(kpuzzle, solved, c, setup);
+    validateProse(c, trackedSteps);
 
     const afterPattern = setupPattern.applyTransformation(
       kpuzzle.algToTransformation(new Alg(c.primaryAlg))

@@ -9,7 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "sync:algs": "node scripts/sync-algorithms.mjs",
-    "verify:algs": "node scripts/verify-cfop.mjs",
+    "verify:algs": "node scripts/verify-cfop.mjs && node scripts/verify-cross-cases.mjs",
     "verify:cross": "node scripts/verify-cross-cases.mjs"
   },
   "dependencies": {
