@@ -27,6 +27,13 @@ function inspectionPenaltyForElapsed(elapsedMs: number): 'none' | '+2' | 'DNF' {
   return 'none';
 }
 
+function shouldLetNativeSpaceThrough(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  const tag = target.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON';
+}
+
 export const TimerTab: React.FC = () => {
   const [scramble, setScramble] = useState<string>(() => generateScramble(21));
   const [solves, setSolves] = useState<SolveRecord[]>(() => {
@@ -53,6 +60,7 @@ export const TimerTab: React.FC = () => {
   const inspectionPenaltyRef = useRef<'none' | '+2' | 'DNF'>('none');
   const inspectionActiveRef = useRef(false);
   const timerStateRef = useRef(timerState);
+  const activePointerIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     timerStateRef.current = timerState;
@@ -233,6 +241,8 @@ export const TimerTab: React.FC = () => {
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (e.button !== 0) return;
+      if (activePointerIdRef.current !== null) return;
+      activePointerIdRef.current = e.pointerId;
       e.preventDefault();
       e.currentTarget.setPointerCapture(e.pointerId);
       handleTriggerPress();
@@ -242,7 +252,8 @@ export const TimerTab: React.FC = () => {
 
   const handlePointerUp = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (e.button !== 0) return;
+      if (activePointerIdRef.current !== e.pointerId) return;
+      activePointerIdRef.current = null;
       e.preventDefault();
       if (e.currentTarget.hasPointerCapture(e.pointerId)) {
         e.currentTarget.releasePointerCapture(e.pointerId);
@@ -256,12 +267,18 @@ export const TimerTab: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || e.repeat) return;
+      if (shouldLetNativeSpaceThrough(e.target) || shouldLetNativeSpaceThrough(document.activeElement)) {
+        return;
+      }
       e.preventDefault();
       handleTriggerPress();
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || e.repeat) return;
+      if (shouldLetNativeSpaceThrough(e.target) || shouldLetNativeSpaceThrough(document.activeElement)) {
+        return;
+      }
       e.preventDefault();
       handleTriggerRelease();
     };
