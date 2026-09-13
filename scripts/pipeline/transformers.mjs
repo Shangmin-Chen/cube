@@ -65,8 +65,8 @@ const OLL_2LOOK_META = {
     name: 'U Case (Headlights)',
     group: 'Corners (Look 2)',
     probability: '4/27',
-    description: '2 corners facing UP at UBR and UBL (back pair, slots 1 and 2). Headlights on left side.',
-    why: 'D slice moves isolate bottom layers while pivoting left headlights into top orientation.',
+    description: '2 corners facing UP at UBR and UBL (back pair, slots 1 and 2). Headlights on front face.',
+    why: 'D slice moves isolate bottom layers while pivoting front headlights into top orientation.',
   },
   'T': {
     id: 'oll-2look-chameleon',

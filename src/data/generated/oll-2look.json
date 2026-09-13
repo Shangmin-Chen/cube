@@ -111,8 +111,8 @@
     "primaryAlg": "R2 D R' U2 R D' R' U2 R'",
     "alternativeAlgs": [],
     "probability": "4/27",
-    "description": "2 corners facing UP at UBR and UBL (back pair, slots 1 and 2). Headlights on left side.",
-    "why": "D slice moves isolate bottom layers while pivoting left headlights into top orientation.",
+    "description": "2 corners facing UP at UBR and UBL (back pair, slots 1 and 2). Headlights on front face.",
+    "why": "D slice moves isolate bottom layers while pivoting front headlights into top orientation.",
     "is2Look": true
   },
   {
