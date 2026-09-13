@@ -96,21 +96,6 @@ export function reviewMissedCases(
   return initRoundState(missed, shuffle, state.roundNumber + 1, shuffleFn);
 }
 
-export function roundSummaryMetrics(state: TrainerRoundState) {
-  const totalCards = state.activeQueue.length;
-  const masteredCount = state.masteredIds.size;
-  const learningCount = state.learningIds.size;
-  const accuracyPercent = totalCards > 0 ? Math.round((masteredCount / totalCards) * 100) : 0;
-  return { totalCards, masteredCount, learningCount, accuracyPercent };
-}
-
-export function setsAreDisjoint(masteredIds: Set<string>, learningIds: Set<string>): boolean {
-  for (const id of masteredIds) {
-    if (learningIds.has(id)) return false;
-  }
-  return true;
-}
-
 /** Navigate to the previous card in the active queue (mirrors hook `prev`). */
 export function goToPreviousCard(state: TrainerRoundState): TrainerRoundState | null {
   if (state.currentIndex <= 0) return null;
@@ -118,16 +103,5 @@ export function goToPreviousCard(state: TrainerRoundState): TrainerRoundState | 
     ...state,
     currentIndex: state.currentIndex - 1,
     isRoundFinished: false,
-  };
-}
-
-export function makeMockCase(id: string): AlgCase {
-  return {
-    id,
-    name: id,
-    category: 'test',
-    subcategory: 'test',
-    group: 'test',
-    primaryAlg: "R U R' U'",
   };
 }
