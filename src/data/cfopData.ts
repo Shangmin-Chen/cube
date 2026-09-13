@@ -6,22 +6,48 @@ import pllFullJson from './generated/pll-full.json';
 
 export const CROSS_CASES: AlgCase[] = [
   {
-    id: 'cross-sample-1',
-    name: 'Bottom Cross Edge Insertion',
+    id: 'cross-u-white-up',
+    name: 'White Edge on Top (White Up)',
     category: 'cross',
     subcategory: 'Cross (C)',
-    group: 'Cross Step',
-    primaryAlg: 'D2 R F L B',
-    description: 'Align bottom cross edge with center and insert into bottom white face.',
-    tips: 'Always solve the cross on bottom during inspection.',
-    why: 'D2 aligns bottom centers while R F L B places all four edge stickers directly into white bottom face.',
-    topGrid: ['G', 'G', 'G', 'G', 'W', 'G', 'G', 'G', 'G'],
-    borderColors: {
-      top: ['G', 'G_GREEN', 'G'],
-      right: ['G', 'R', 'G'],
-      bottom: ['G', 'B', 'G'],
-      left: ['G', 'O', 'G'],
-    },
+    group: 'Top Layer Insertion',
+    primaryAlg: "R U' R'",
+    description: 'The front cross edge sits at UF on the top layer with the white sticker facing up.',
+    tips: "Use U' to position the edge above the front slot, then R / R' to insert it.",
+    why: "U' turns the top layer to align the white-up edge above the front-bottom slot, and the R / R' pair drops it into the cross.",
+  },
+  {
+    id: 'cross-u-white-side',
+    name: 'White Edge on Top (White Facing Side)',
+    category: 'cross',
+    subcategory: 'Cross (C)',
+    group: 'Top Layer Insertion',
+    primaryAlg: "F U F'",
+    description: 'The right cross edge sits at UR on the top layer with the white sticker facing the right side.',
+    tips: 'F and U reposition the misoriented edge before F\' inserts it.',
+    why: "F and U reposition the top-layer edge so its white sticker can enter the right cross slot, then F' inserts it.",
+  },
+  {
+    id: 'cross-middle-fr',
+    name: 'Edge in Front-Right Middle Slot',
+    category: 'cross',
+    subcategory: 'Cross (C)',
+    group: 'Middle Layer Extraction',
+    primaryAlg: "R' D R",
+    description: 'The front cross edge is stuck in the FR middle-layer slot.',
+    tips: "R' lifts the edge from the middle layer, D aligns the bottom, and R inserts it.",
+    why: "R' pulls the edge out of the front-right middle slot, D rotates the bottom to open the front slot, and R completes the insertion.",
+  },
+  {
+    id: 'cross-middle-br',
+    name: 'Edge in Back-Right Middle Slot',
+    category: 'cross',
+    subcategory: 'Cross (C)',
+    group: 'Middle Layer Extraction',
+    primaryAlg: "F L F'",
+    description: 'The left cross edge is stuck in the BR middle-layer slot.',
+    tips: "F and L move the edge out of the middle layer before F' inserts it into the cross.",
+    why: "F and L lift the edge from the back-right middle slot to the top layer, and F' inserts it into the left cross slot.",
   },
 ];
 
@@ -113,7 +139,7 @@ export const CFOP_STEPS: MethodStep[] = [
 ];
 
 /**
- * 4-Look LL (Beginner CFOP): Cross (1), F2L (4), 2-Look OLL (10), 2-Look PLL (6) = 21 cases
+ * 4-Look LL (Beginner CFOP): Cross (4), F2L (4), 2-Look OLL (10), 2-Look PLL (6) = 24 cases
  */
 export const CFOP_4LOOK_METHOD: AlgMethod = {
   id: 'cfop-4look',
@@ -130,7 +156,7 @@ export const CFOP_4LOOK_METHOD: AlgMethod = {
 };
 
 /**
- * 3-Look LL (Intermediate CFOP): Cross (1), F2L (4), 2-Look OLL (10), Full PLL (21) = 36 cases
+ * 3-Look LL (Intermediate CFOP): Cross (4), F2L (4), 2-Look OLL (10), Full PLL (21) = 39 cases
  */
 export const CFOP_3LOOK_METHOD: AlgMethod = {
   id: 'cfop-3look',
@@ -147,7 +173,7 @@ export const CFOP_3LOOK_METHOD: AlgMethod = {
 };
 
 /**
- * 2-Look LL (Full CFOP): Cross (1), F2L (4), Full OLL (57), Full PLL (21) = 83 cases
+ * 2-Look LL (Full CFOP): Cross (4), F2L (4), Full OLL (57), Full PLL (21) = 86 cases
  */
 export const CFOP_2LOOK_METHOD: AlgMethod = {
   id: 'cfop-2look',
