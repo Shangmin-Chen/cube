@@ -1,5 +1,15 @@
-import { applyAlgorithmOverrides } from './algorithm-overrides.mjs';
+import { ALGORITHM_OVERRIDES, applyAlgorithmOverrides } from './algorithm-overrides.mjs';
 import { applyAlgRules, validateAlg } from './rules.mjs';
+
+/**
+ * @param {{ overrides?: typeof ALGORITHM_OVERRIDES, appliedOverrideKeys?: Set<string> }} [options]
+ */
+function resolveOverrideContext(options = {}) {
+  return {
+    overrides: options.overrides ?? ALGORITHM_OVERRIDES,
+    appliedOverrideKeys: options.appliedOverrideKeys,
+  };
+}
 
 /**
  * Mapping table from J Perm names to standard 2-Look OLL definitions
@@ -92,9 +102,11 @@ const OLL_2LOOK_META = {
  *
  * @param {Array<any>} rawAlgs
  * @param {any} kpuzzle
+ * @param {{ overrides?: typeof ALGORITHM_OVERRIDES, appliedOverrideKeys?: Set<string> }} [options]
  * @returns {Array<any>}
  */
-export function transform2LookOLL(rawAlgs, kpuzzle) {
+export function transform2LookOLL(rawAlgs, kpuzzle, options = {}) {
+  const { overrides, appliedOverrideKeys } = resolveOverrideContext(options);
   const cases = [];
 
   for (const item of rawAlgs) {
@@ -108,12 +120,17 @@ export function transform2LookOLL(rawAlgs, kpuzzle) {
       why: `Orient ${item.group?.includes('Edges') ? 'edges' : 'corners'} into solved orientation.`,
     };
 
-    const resolvedAlgs = applyAlgorithmOverrides(meta.id, item.alg);
-    const primaryAlg = applyAlgRules(resolvedAlgs[0], kpuzzle);
+    const ruleOptions = {};
+    const resolvedAlgs = applyAlgorithmOverrides(meta.id, item.alg, overrides, {
+      kpuzzle,
+      ruleOptions,
+      appliedOverrideKeys,
+    });
+    const primaryAlg = applyAlgRules(resolvedAlgs[0], kpuzzle, ruleOptions);
     validateAlg(kpuzzle, primaryAlg, meta.id);
 
     const alternativeAlgs = (resolvedAlgs.slice(1) || []).map(algStr => {
-      const norm = applyAlgRules(algStr, kpuzzle);
+      const norm = applyAlgRules(algStr, kpuzzle, ruleOptions);
       validateAlg(kpuzzle, norm, meta.id);
       return norm;
     });
@@ -211,9 +228,11 @@ const PLL_2LOOK_META = {
  *
  * @param {Array<any>} rawAlgs
  * @param {any} kpuzzle
+ * @param {{ overrides?: typeof ALGORITHM_OVERRIDES, appliedOverrideKeys?: Set<string> }} [options]
  * @returns {Array<any>}
  */
-export function transform2LookPLL(rawAlgs, kpuzzle) {
+export function transform2LookPLL(rawAlgs, kpuzzle, options = {}) {
+  const { overrides, appliedOverrideKeys } = resolveOverrideContext(options);
   const cases = [];
 
   for (const item of rawAlgs) {
@@ -227,15 +246,21 @@ export function transform2LookPLL(rawAlgs, kpuzzle) {
       why: `Permute ${item.group?.includes('Corners') ? 'corners' : 'edges'} into solved position.`,
     };
 
-    const isEdgesOnly = meta.group.includes('Edges');
-    const isAdjacentCornerSwap = rawName === 'Headlights' || meta.id.includes('tperm');
+    const ruleOptions = {
+      isEdgesOnly: meta.group.includes('Edges'),
+      isAdjacentCornerSwap: rawName === 'Headlights' || meta.id.includes('tperm'),
+    };
 
-    const resolvedAlgs = applyAlgorithmOverrides(meta.id, item.alg);
-    const primaryAlg = applyAlgRules(resolvedAlgs[0], kpuzzle, { isEdgesOnly, isAdjacentCornerSwap });
+    const resolvedAlgs = applyAlgorithmOverrides(meta.id, item.alg, overrides, {
+      kpuzzle,
+      ruleOptions,
+      appliedOverrideKeys,
+    });
+    const primaryAlg = applyAlgRules(resolvedAlgs[0], kpuzzle, ruleOptions);
     validateAlg(kpuzzle, primaryAlg, meta.id);
 
     const alternativeAlgs = (resolvedAlgs.slice(1) || []).map(algStr => {
-      const norm = applyAlgRules(algStr, kpuzzle, { isEdgesOnly, isAdjacentCornerSwap });
+      const norm = applyAlgRules(algStr, kpuzzle, ruleOptions);
       validateAlg(kpuzzle, norm, meta.id);
       return norm;
     });
@@ -295,9 +320,11 @@ const OLL_GROUP_EXPLANATIONS = {
  *
  * @param {Array<any>} rawAlgs
  * @param {any} kpuzzle
+ * @param {{ overrides?: typeof ALGORITHM_OVERRIDES, appliedOverrideKeys?: Set<string> }} [options]
  * @returns {Array<any>}
  */
-export function transformFullOLL(rawAlgs, kpuzzle) {
+export function transformFullOLL(rawAlgs, kpuzzle, options = {}) {
+  const { overrides, appliedOverrideKeys } = resolveOverrideContext(options);
   const cases = [];
 
   for (const item of rawAlgs) {
@@ -309,12 +336,17 @@ export function transformFullOLL(rawAlgs, kpuzzle) {
     // Probability: prob 4 -> 4/216 = 1/54, prob 2 -> 2/216 = 1/108, prob 1 -> 1/216
     const probStr = item.prob === 4 ? '1/54' : item.prob === 2 ? '1/108' : '1/216';
 
-    const resolvedAlgs = applyAlgorithmOverrides(id, item.alg);
-    const primaryAlg = applyAlgRules(resolvedAlgs[0], kpuzzle);
+    const ruleOptions = {};
+    const resolvedAlgs = applyAlgorithmOverrides(id, item.alg, overrides, {
+      kpuzzle,
+      ruleOptions,
+      appliedOverrideKeys,
+    });
+    const primaryAlg = applyAlgRules(resolvedAlgs[0], kpuzzle, ruleOptions);
     validateAlg(kpuzzle, primaryAlg, id);
 
     const alternativeAlgs = (resolvedAlgs.slice(1) || []).map(algStr => {
-      const norm = applyAlgRules(algStr, kpuzzle);
+      const norm = applyAlgRules(algStr, kpuzzle, ruleOptions);
       validateAlg(kpuzzle, norm, id);
       return norm;
     });
@@ -378,9 +410,11 @@ const PLL_META = {
  *
  * @param {Array<any>} rawAlgs
  * @param {any} kpuzzle
+ * @param {{ overrides?: typeof ALGORITHM_OVERRIDES, appliedOverrideKeys?: Set<string> }} [options]
  * @returns {Array<any>}
  */
-export function transformFullPLL(rawAlgs, kpuzzle) {
+export function transformFullPLL(rawAlgs, kpuzzle, options = {}) {
+  const { overrides, appliedOverrideKeys } = resolveOverrideContext(options);
   const cases = [];
 
   for (const item of rawAlgs) {
@@ -395,15 +429,21 @@ export function transformFullPLL(rawAlgs, kpuzzle) {
     // Probability: prob 4 -> 4/72 = 1/18, prob 2 -> 2/72 = 1/36, prob 1 -> 1/72
     const probStr = item.prob === 4 ? '1/18' : item.prob === 2 ? '1/36' : '1/72';
 
-    const isEdgesOnly = meta.group === 'Edges Only';
-    const isAdjacentCornerSwap = ['ja', 'jb', 'ra', 'rb', 't', 'f'].includes(rawKey);
+    const ruleOptions = {
+      isEdgesOnly: meta.group === 'Edges Only',
+      isAdjacentCornerSwap: ['ja', 'jb', 'ra', 'rb', 't', 'f'].includes(rawKey),
+    };
 
-    const resolvedAlgs = applyAlgorithmOverrides(id, item.alg);
-    const primaryAlg = applyAlgRules(resolvedAlgs[0], kpuzzle, { isEdgesOnly, isAdjacentCornerSwap });
+    const resolvedAlgs = applyAlgorithmOverrides(id, item.alg, overrides, {
+      kpuzzle,
+      ruleOptions,
+      appliedOverrideKeys,
+    });
+    const primaryAlg = applyAlgRules(resolvedAlgs[0], kpuzzle, ruleOptions);
     validateAlg(kpuzzle, primaryAlg, id);
 
     const alternativeAlgs = (resolvedAlgs.slice(1) || []).map(algStr => {
-      const norm = applyAlgRules(algStr, kpuzzle, { isEdgesOnly, isAdjacentCornerSwap });
+      const norm = applyAlgRules(algStr, kpuzzle, ruleOptions);
       validateAlg(kpuzzle, norm, id);
       return norm;
     });

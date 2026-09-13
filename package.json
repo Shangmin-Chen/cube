@@ -9,6 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "sync:algs": "node scripts/sync-algorithms.mjs",
+    "test:overrides": "node scripts/test-algorithm-overrides.mjs",
     "verify:algs": "node scripts/verify-cfop.mjs"
   },
   "dependencies": {
