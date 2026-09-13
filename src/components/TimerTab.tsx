@@ -169,6 +169,9 @@ export const TimerTab: React.FC = () => {
 
   // Stop timer and record solve
   const stopTimer = useCallback(() => {
+    if (timerStateRef.current !== 'running') return;
+    timerStateRef.current = 'idle';
+
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     const finalTime = performance.now() - startTimeRef.current;
     setElapsedTime(finalTime);
@@ -193,8 +196,12 @@ export const TimerTab: React.FC = () => {
     if (state === 'running') {
       stopTimer();
     } else if (state === 'idle') {
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+      timerStateRef.current = 'holding';
       setTimerState('holding');
       holdTimerRef.current = setTimeout(() => {
+        holdTimerRef.current = null;
+        timerStateRef.current = 'ready';
         setTimerState('ready');
       }, 300);
     } else if (state === 'inspection') {
@@ -222,9 +229,32 @@ export const TimerTab: React.FC = () => {
         startTimer();
       }
     } else if (state === 'holding') {
+      timerStateRef.current = 'idle';
       setTimerState('idle');
     }
   }, [beginInspection, startTimer, useInspection]);
+
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      handleTriggerPress();
+    },
+    [handleTriggerPress]
+  );
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+      handleTriggerRelease();
+    },
+    [handleTriggerRelease]
+  );
 
   // Keyboard events for spacebar timer control (window-level only to avoid double-firing)
   useEffect(() => {
@@ -332,17 +362,15 @@ export const TimerTab: React.FC = () => {
           role="button"
           tabIndex={0}
           aria-label="Timer press area"
-          onMouseDown={handleTriggerPress}
-          onMouseUp={handleTriggerRelease}
-          onTouchStart={handleTriggerPress}
-          onTouchEnd={handleTriggerRelease}
-          className="lg:col-span-7 flex flex-col items-center justify-center p-10 min-h-[340px] relative select-none cursor-pointer outline-none"
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          className="lg:col-span-7 flex flex-col items-center justify-center p-10 min-h-[340px] relative select-none cursor-pointer outline-none touch-none"
         >
           {/* Inspection Mode Toggle */}
           <div
             onClick={e => e.stopPropagation()}
-            onMouseDown={e => e.stopPropagation()}
-            onTouchStart={e => e.stopPropagation()}
+            onPointerDown={e => e.stopPropagation()}
             className="absolute top-4 right-4 flex items-center gap-2 text-xs text-[#888888] z-10"
           >
             <input
