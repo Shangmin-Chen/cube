@@ -112,7 +112,7 @@
     "alternativeAlgs": [],
     "probability": "4/27",
     "description": "2 corners facing UP on right. Headlights on left side.",
-    "why": "D slice moves isolate bottom layers while pivoting left headlights into top orientation.",
+    "why": "R2 and D send the misoriented UFL piece into the D layer. U2 moves the UBR piece into the UBR slot without fixing it; R and D' reposition both pieces below. R' twists UFL yellow-up, the second U2 returns it to UFL, and the trailing R' twists the UBR piece yellow-up.",
     "is2Look": true
   },
   {
@@ -125,7 +125,7 @@
     "alternativeAlgs": [],
     "probability": "4/27",
     "description": "2 corners facing UP on right. Front-left & back-left stickers point out.",
-    "why": "Wide r lift paired with F R F' slot insert rotates corner stickers into top face.",
+    "why": "Wide Sexy (r U R' U') shifts the right oriented pair aside, then Wide Sledgehammer (r' F R F') twists the misoriented UFL and UBR corners yellow-up.",
     "is2Look": true
   },
   {

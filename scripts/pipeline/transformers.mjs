@@ -66,7 +66,7 @@ const OLL_2LOOK_META = {
     group: 'Corners (Look 2)',
     probability: '4/27',
     description: '2 corners facing UP on right. Headlights on left side.',
-    why: 'D slice moves isolate bottom layers while pivoting left headlights into top orientation.',
+    why: "R2 and D send the misoriented UFL piece into the D layer. U2 moves the UBR piece into the UBR slot without fixing it; R and D' reposition both pieces below. R' twists UFL yellow-up, the second U2 returns it to UFL, and the trailing R' twists the UBR piece yellow-up.",
   },
   'T': {
     id: 'oll-2look-chameleon',
@@ -74,7 +74,7 @@ const OLL_2LOOK_META = {
     group: 'Corners (Look 2)',
     probability: '4/27',
     description: '2 corners facing UP on right. Front-left & back-left stickers point out.',
-    why: "Wide r lift paired with F R F' slot insert rotates corner stickers into top face.",
+    why: "Wide Sexy (r U R' U') shifts the right oriented pair aside, then Wide Sledgehammer (r' F R F') twists the misoriented UFL and UBR corners yellow-up.",
   },
   'L': {
     id: 'oll-2look-bowtie',
@@ -271,7 +271,7 @@ export function transform2LookPLL(rawAlgs, kpuzzle) {
  */
 const OLL_GROUP_EXPLANATIONS = {
   'Dot': 'Zero edges oriented. Uses wide turns or chained F-triggers to create an edge cross.',
-  'Cross': 'Yellow cross already completed. Solves corner orientations in a single look.',
+  'Cross': 'Yellow cross already completed. Twists the four misoriented corner stickers yellow-up without flipping any edges.',
   'Square Shape': '2x2 yellow block. Uses wide l/r turns to pair and orient adjacent edge stickers.',
   'Small Lightning Bolt': 'Lightning silhouette. Uses Sune-derived triggers to pivot misoriented corners.',
   'Big Lightning Bolt': 'Extended lightning pattern. Uses wide insertions to rotate the last layer stickers.',
@@ -316,7 +316,7 @@ export function transformFullOLL(rawAlgs, kpuzzle) {
     });
 
     const description = `OLL Case ${caseNum} (${group} group).`;
-    const why = OLL_GROUP_EXPLANATIONS[group] || `Full OLL ${group} case. Orients all top layer yellow stickers.`;
+    const why = OLL_GROUP_EXPLANATIONS[group] || `Full OLL ${group} case. Orients the misaligned top-layer corner and edge stickers for this shape.`;
 
     cases.push({
       id,
@@ -385,7 +385,7 @@ export function transformFullPLL(rawAlgs, kpuzzle) {
     const meta = PLL_META[rawKey] || {
       name: `${item.name} Permutation`,
       group: item.group || 'Full PLL',
-      why: 'Permutes the final layer pieces into their solved positions.',
+      why: 'Swaps or cycles the permuted top-layer corners and edges into solved position without changing their orientation.',
     };
 
     // Probability: prob 4 -> 4/72 = 1/18, prob 2 -> 2/72 = 1/36, prob 1 -> 1/72
