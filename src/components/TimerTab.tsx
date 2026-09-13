@@ -1,10 +1,31 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { generateScramble, formatTime, calculateAO } from '../utils/cubeLogic';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { generateScramble, formatTime, calculateAO, invertMoveString } from '../utils/cubeLogic';
 import type { SolveRecord } from '../types/cube';
 import { RubiksCube3D } from './RubiksCube3D';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Shuffle, Trash2, Award, History, RotateCcw } from 'lucide-react';
+
+const INSPECTION_LIMIT_MS = 15000;
+const INSPECTION_DNF_MS = 17000;
+
+function createSolveId(): string {
+  return `${Date.now()}-${crypto.randomUUID()}`;
+}
+
+function formatInspectionTime(elapsedMs: number): string {
+  const remainingMs = INSPECTION_LIMIT_MS - elapsedMs;
+  if (remainingMs >= 0) {
+    return formatTime(remainingMs);
+  }
+  return `+${formatTime(elapsedMs - INSPECTION_LIMIT_MS)}`;
+}
+
+function inspectionPenaltyForElapsed(elapsedMs: number): 'none' | '+2' | 'DNF' {
+  if (elapsedMs > INSPECTION_DNF_MS) return 'DNF';
+  if (elapsedMs > INSPECTION_LIMIT_MS) return '+2';
+  return 'none';
+}
 
 export const TimerTab: React.FC = () => {
   const [scramble, setScramble] = useState<string>('');
@@ -21,17 +42,56 @@ export const TimerTab: React.FC = () => {
   // Timer states: 'idle' | 'holding' | 'ready' | 'inspection' | 'running'
   const [timerState, setTimerState] = useState<'idle' | 'holding' | 'ready' | 'inspection' | 'running'>('idle');
   const [elapsedTime, setElapsedTime] = useState<number>(0);
+  const [inspectionElapsed, setInspectionElapsed] = useState<number>(0);
   const [useInspection, setUseInspection] = useState<boolean>(false);
 
   const startTimeRef = useRef<number>(0);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inspectionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const inspectionStartRef = useRef<number>(0);
+  const inspectionPenaltyRef = useRef<'none' | '+2' | 'DNF'>('none');
+  const inspectionActiveRef = useRef(false);
+  const timerStateRef = useRef(timerState);
+
+  useEffect(() => {
+    timerStateRef.current = timerState;
+  }, [timerState]);
+
+  const scramblePreviewAlgorithm = useMemo(
+    () => (scramble ? invertMoveString(scramble).join(' ') : ''),
+    [scramble]
+  );
+
+  const persistSolves = useCallback((updated: SolveRecord[]) => {
+    try {
+      localStorage.setItem('cfop_solves', JSON.stringify(updated));
+    } catch {
+      // Fallback
+    }
+  }, []);
+
+  const appendSolve = useCallback(
+    (record: Omit<SolveRecord, 'id'> & { id?: string }) => {
+      const newRecord: SolveRecord = {
+        ...record,
+        id: record.id ?? createSolveId(),
+      };
+      setSolves(prev => {
+        const updated = [newRecord, ...prev];
+        persistSolves(updated);
+        return updated;
+      });
+    },
+    [persistSolves]
+  );
 
   // Unmount cleanup
   useEffect(() => {
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+      if (inspectionIntervalRef.current) clearInterval(inspectionIntervalRef.current);
     };
   }, []);
 
@@ -40,18 +100,69 @@ export const TimerTab: React.FC = () => {
     setScramble(generateScramble(21));
   }, []);
 
-  const handleNewScramble = () => {
+  const handleNewScramble = useCallback(() => {
     setScramble(generateScramble(21));
-  };
+  }, []);
+
+  const clearInspectionTimer = useCallback(() => {
+    if (inspectionIntervalRef.current) {
+      clearInterval(inspectionIntervalRef.current);
+      inspectionIntervalRef.current = null;
+    }
+  }, []);
+
+  const recordInspectionDnf = useCallback(() => {
+    if (!inspectionActiveRef.current) return;
+    inspectionActiveRef.current = false;
+
+    clearInspectionTimer();
+    inspectionPenaltyRef.current = 'none';
+    setInspectionElapsed(0);
+    setElapsedTime(0);
+    setTimerState('idle');
+    appendSolve({
+      time: 0,
+      scramble,
+      date: Date.now(),
+      penalty: 'DNF',
+    });
+    handleNewScramble();
+  }, [appendSolve, clearInspectionTimer, handleNewScramble, scramble]);
+
+  const beginInspection = useCallback(() => {
+    clearInspectionTimer();
+    inspectionActiveRef.current = true;
+    inspectionPenaltyRef.current = 'none';
+    inspectionStartRef.current = performance.now();
+    setInspectionElapsed(0);
+    setElapsedTime(0);
+    setTimerState('inspection');
+
+    inspectionIntervalRef.current = setInterval(() => {
+      const elapsed = performance.now() - inspectionStartRef.current;
+      setInspectionElapsed(elapsed);
+      if (elapsed >= INSPECTION_DNF_MS) {
+        recordInspectionDnf();
+      }
+    }, 10);
+  }, [clearInspectionTimer, recordInspectionDnf]);
 
   // Start actual timer
-  const startTimer = useCallback(() => {
-    setTimerState('running');
-    startTimeRef.current = performance.now();
-    timerIntervalRef.current = setInterval(() => {
-      setElapsedTime(performance.now() - startTimeRef.current);
-    }, 10);
-  }, []);
+  const startTimer = useCallback(
+    (inspectionPenalty: 'none' | '+2' | 'DNF' = 'none') => {
+      inspectionActiveRef.current = false;
+      clearInspectionTimer();
+      inspectionPenaltyRef.current = inspectionPenalty;
+      setInspectionElapsed(0);
+      setElapsedTime(0);
+      setTimerState('running');
+      startTimeRef.current = performance.now();
+      timerIntervalRef.current = setInterval(() => {
+        setElapsedTime(performance.now() - startTimeRef.current);
+      }, 10);
+    },
+    [clearInspectionTimer]
+  );
 
   // Stop timer and record solve
   const stopTimer = useCallback(() => {
@@ -60,55 +171,57 @@ export const TimerTab: React.FC = () => {
     setElapsedTime(finalTime);
     setTimerState('idle');
 
-    const newRecord: SolveRecord = {
-      id: Date.now().toString(),
+    const inspectionPenalty = inspectionPenaltyRef.current;
+    inspectionPenaltyRef.current = 'none';
+
+    appendSolve({
       time: Math.round(finalTime),
       scramble,
       date: Date.now(),
-      penalty: 'none',
-    };
-
-    setSolves(prev => {
-      const updated = [newRecord, ...prev];
-      try {
-        localStorage.setItem('cfop_solves', JSON.stringify(updated));
-      } catch {
-        // Fallback
-      }
-      return updated;
+      penalty: inspectionPenalty,
     });
 
     handleNewScramble();
-  }, [scramble]);
+  }, [appendSolve, handleNewScramble, scramble]);
 
   const handleTriggerPress = useCallback(() => {
-    if (timerState === 'running') {
+    const state = timerStateRef.current;
+
+    if (state === 'running') {
       stopTimer();
-    } else if (timerState === 'idle') {
+    } else if (state === 'idle') {
       setTimerState('holding');
       holdTimerRef.current = setTimeout(() => {
         setTimerState('ready');
       }, 300);
-    } else if (timerState === 'inspection') {
-      startTimer();
+    } else if (state === 'inspection') {
+      const elapsed = performance.now() - inspectionStartRef.current;
+      const penalty = inspectionPenaltyForElapsed(elapsed);
+      if (penalty === 'DNF') {
+        recordInspectionDnf();
+        return;
+      }
+      startTimer(penalty);
     }
-  }, [timerState, startTimer, stopTimer]);
+  }, [recordInspectionDnf, startTimer, stopTimer]);
 
   const handleTriggerRelease = useCallback(() => {
+    const state = timerStateRef.current;
+
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
 
-    if (timerState === 'ready') {
+    if (state === 'ready') {
       if (useInspection) {
-        setTimerState('inspection');
+        beginInspection();
       } else {
         startTimer();
       }
-    } else if (timerState === 'holding') {
+    } else if (state === 'holding') {
       setTimerState('idle');
     }
-  }, [timerState, useInspection, startTimer]);
+  }, [beginInspection, startTimer, useInspection]);
 
-  // Keyboard events for spacebar timer control
+  // Keyboard events for spacebar timer control (window-level only to avoid double-firing)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || e.repeat) return;
@@ -117,7 +230,7 @@ export const TimerTab: React.FC = () => {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code !== 'Space') return;
+      if (e.code !== 'Space' || e.repeat) return;
       e.preventDefault();
       handleTriggerRelease();
     };
@@ -134,11 +247,7 @@ export const TimerTab: React.FC = () => {
   const handlePenalty = (id: string, penalty: 'none' | '+2' | 'DNF') => {
     setSolves(prev => {
       const updated = prev.map(s => (s.id === id ? { ...s, penalty } : s));
-      try {
-        localStorage.setItem('cfop_solves', JSON.stringify(updated));
-      } catch {
-        // Fallback
-      }
+      persistSolves(updated);
       return updated;
     });
   };
@@ -146,11 +255,7 @@ export const TimerTab: React.FC = () => {
   const handleDeleteSolve = (id: string) => {
     setSolves(prev => {
       const updated = prev.filter(s => s.id !== id);
-      try {
-        localStorage.setItem('cfop_solves', JSON.stringify(updated));
-      } catch {
-        // Fallback
-      }
+      persistSolves(updated);
       return updated;
     });
   };
@@ -165,6 +270,16 @@ export const TimerTab: React.FC = () => {
       }
     }
   };
+
+  const displayTime =
+    timerState === 'inspection' ? formatInspectionTime(inspectionElapsed) : formatTime(elapsedTime);
+
+  const inspectionStatus =
+    inspectionElapsed > INSPECTION_DNF_MS
+      ? 'Inspection over 17s — DNF'
+      : inspectionElapsed > INSPECTION_LIMIT_MS
+      ? '+2 penalty if you start now'
+      : 'Inspecting... Press Spacebar or Touch to Start Solve!';
 
   // Stats calculation
   const timesArray = solves.map(s => (s.penalty === 'DNF' ? -1 : s.time + (s.penalty === '+2' ? 2000 : 0)));
@@ -198,7 +313,13 @@ export const TimerTab: React.FC = () => {
         {/* Left: 3D Scramble Visualizer */}
         <div className="lg:col-span-5 flex flex-col gap-3">
           <h3 className="text-xs font-bold text-[#888888] uppercase tracking-wider px-1">Scramble Preview</h3>
-          <RubiksCube3D initialAlgorithm={scramble} autoPlay={false} size="h-[320px]" />
+          <RubiksCube3D
+            initialAlgorithm={scramblePreviewAlgorithm}
+            mode="scramble"
+            autoPlay={false}
+            showControls={false}
+            size="h-[320px]"
+          />
         </div>
 
         {/* Center: Digital Timer with Touch & Mouse support */}
@@ -210,18 +331,6 @@ export const TimerTab: React.FC = () => {
           onMouseUp={handleTriggerRelease}
           onTouchStart={handleTriggerPress}
           onTouchEnd={handleTriggerRelease}
-          onKeyDown={e => {
-            if (e.key === ' ' || e.key === 'Enter') {
-              e.preventDefault();
-              handleTriggerPress();
-            }
-          }}
-          onKeyUp={e => {
-            if (e.key === ' ' || e.key === 'Enter') {
-              e.preventDefault();
-              handleTriggerRelease();
-            }
-          }}
           className="lg:col-span-7 flex flex-col items-center justify-center p-10 min-h-[340px] relative select-none cursor-pointer outline-none"
         >
           {/* Inspection Mode Toggle */}
@@ -254,7 +363,7 @@ export const TimerTab: React.FC = () => {
                 : 'text-[#d4d4d4]'
             }`}
           >
-            {formatTime(elapsedTime)}
+            {displayTime}
           </div>
 
           {/* Status Instruction */}
@@ -262,7 +371,7 @@ export const TimerTab: React.FC = () => {
             {timerState === 'idle' && 'Press and Hold Spacebar (or Touch Screen) to Ready'}
             {timerState === 'holding' && 'Hold...'}
             {timerState === 'ready' && 'Release Spacebar to Start!'}
-            {timerState === 'inspection' && 'Inspecting... Press Spacebar or Touch to Start Solve!'}
+            {timerState === 'inspection' && inspectionStatus}
             {timerState === 'running' && 'Press Spacebar / Touch to Stop'}
           </p>
         </Card>
