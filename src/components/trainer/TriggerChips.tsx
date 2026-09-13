@@ -7,9 +7,15 @@ interface TriggerChipsProps {
 
 export const TriggerChips: React.FC<TriggerChipsProps> = ({ algorithm }) => {
   const chunks = parseTriggers(algorithm);
+  const recognized = chunks.some(chunk => chunk.type !== 'normal');
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 my-1">
+      {!recognized && chunks.length > 0 && (
+        <span className="text-[10px] italic text-[#737373] px-1">
+          No recognized triggers
+        </span>
+      )}
       {chunks.map((chunk, idx) => {
         if (
           chunk.type === 'sexy' ||
