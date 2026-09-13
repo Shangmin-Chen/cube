@@ -1,5 +1,6 @@
 import { puzzles } from 'cubing/puzzles';
 import {
+  ALGORITHM_OVERRIDES,
   applyAlgorithmOverrides,
   assertNoUnusedOverrides,
   validateOverrideEntry,
@@ -216,9 +217,51 @@ function testIdentityPrimaryNoOpTransformPath(kpuzzle) {
   );
 }
 
+function testWhitespaceIdentityPrimaryNoOp(kpuzzle) {
+  assertThrows(
+    () => applyAlgorithmOverrides(
+      'oll-2look-line',
+      OLL_2LOOK_FIXTURE.alg,
+      { 'oll-2look-line': { primaryAlg: ` ${OLL_2LOOK_FIXTURE.alg[0]} ` } },
+      { kpuzzle, appliedOverrideKeys: new Set() },
+    ),
+    'made no change',
+  );
+}
+
+function testWhitespaceIdentityPrimaryNoOpTransformPath(kpuzzle) {
+  assertThrows(
+    () => transform2LookOLL([OLL_2LOOK_FIXTURE], kpuzzle, {
+      overrides: { 'oll-2look-line': { primaryAlg: ` ${OLL_2LOOK_FIXTURE.alg[0]} ` } },
+    }),
+    'made no change',
+  );
+}
+
 function testEmptyOverrideEntry() {
   assertThrows(
     () => validateOverrideEntry('oll-2look-line', {}),
+    'is empty',
+  );
+}
+
+function testEmptyOverrideEntryApply(kpuzzle) {
+  assertThrows(
+    () => applyAlgorithmOverrides(
+      'oll-2look-line',
+      OLL_2LOOK_FIXTURE.alg,
+      { 'oll-2look-line': {} },
+      { kpuzzle, appliedOverrideKeys: new Set() },
+    ),
+    'is empty',
+  );
+}
+
+function testEmptyOverrideEntryTransformPath(kpuzzle) {
+  assertThrows(
+    () => transform2LookOLL([OLL_2LOOK_FIXTURE], kpuzzle, {
+      overrides: { 'oll-2look-line': {} },
+    }),
     'is empty',
   );
 }
@@ -230,11 +273,89 @@ function testEmptyRemoveAlternatives() {
   );
 }
 
+function testEmptyRemoveAlternativesApply(kpuzzle) {
+  assertThrows(
+    () => applyAlgorithmOverrides(
+      'oll-2look-line',
+      OLL_2LOOK_FIXTURE.alg,
+      { 'oll-2look-line': { removeAlternatives: [] } },
+      { kpuzzle, appliedOverrideKeys: new Set() },
+    ),
+    'empty removeAlternatives',
+  );
+}
+
+function testEmptyRemoveAlternativesTransformPath(kpuzzle) {
+  assertThrows(
+    () => transform2LookOLL([OLL_2LOOK_FIXTURE], kpuzzle, {
+      overrides: { 'oll-2look-line': { removeAlternatives: [] } },
+    }),
+    'empty removeAlternatives',
+  );
+}
+
 function testEmptyPrimaryAlg() {
   assertThrows(
     () => validateOverrideEntry('oll-2look-line', { primaryAlg: '' }),
     'empty or invalid primaryAlg',
   );
+}
+
+function testEmptyPrimaryAlgApply(kpuzzle) {
+  assertThrows(
+    () => applyAlgorithmOverrides(
+      'oll-2look-line',
+      OLL_2LOOK_FIXTURE.alg,
+      { 'oll-2look-line': { primaryAlg: '' } },
+      { kpuzzle, appliedOverrideKeys: new Set() },
+    ),
+    'empty or invalid primaryAlg',
+  );
+}
+
+function testEmptyPrimaryAlgTransformPath(kpuzzle) {
+  assertThrows(
+    () => transform2LookOLL([OLL_2LOOK_FIXTURE], kpuzzle, {
+      overrides: { 'oll-2look-line': { primaryAlg: '' } },
+    }),
+    'empty or invalid primaryAlg',
+  );
+}
+
+function testInvalidRemoveAlternativesEntries() {
+  assertThrows(
+    () => validateOverrideEntry('oll-2look-line', { removeAlternatives: [123] }),
+    'invalid removeAlternatives entries',
+  );
+  assertThrows(
+    () => validateOverrideEntry('oll-2look-line', { removeAlternatives: [''] }),
+    'invalid removeAlternatives entries',
+  );
+}
+
+function testInvalidRemoveAlternativesEntriesApply(kpuzzle) {
+  assertThrows(
+    () => applyAlgorithmOverrides(
+      'oll-2look-line',
+      OLL_2LOOK_FIXTURE.alg,
+      { 'oll-2look-line': { removeAlternatives: [123] } },
+      { kpuzzle, appliedOverrideKeys: new Set() },
+    ),
+    'invalid removeAlternatives entries',
+  );
+  assertThrows(
+    () => applyAlgorithmOverrides(
+      'oll-2look-line',
+      OLL_2LOOK_FIXTURE.alg,
+      { 'oll-2look-line': { removeAlternatives: [''] } },
+      { kpuzzle, appliedOverrideKeys: new Set() },
+    ),
+    'invalid removeAlternatives entries',
+  );
+}
+
+function testProductionOverridesEmpty() {
+  assert(Object.keys(ALGORITHM_OVERRIDES).length === 0, 'production ALGORITHM_OVERRIDES must stay empty');
 }
 
 function testTransformPath(label, transformFn, rawFixture, caseId, kpuzzle) {
@@ -326,9 +447,20 @@ async function main() {
     ['unknown-override-value-key-transform', () => testUnknownOverrideValueKeyTransformPath(kpuzzle)],
     ['identity-primary-no-op', () => testIdentityPrimaryNoOp(kpuzzle)],
     ['identity-primary-no-op-transform', () => testIdentityPrimaryNoOpTransformPath(kpuzzle)],
+    ['whitespace-identity-primary-no-op', () => testWhitespaceIdentityPrimaryNoOp(kpuzzle)],
+    ['whitespace-identity-primary-no-op-transform', () => testWhitespaceIdentityPrimaryNoOpTransformPath(kpuzzle)],
     ['empty-override-entry', () => testEmptyOverrideEntry()],
+    ['empty-override-entry-apply', () => testEmptyOverrideEntryApply(kpuzzle)],
+    ['empty-override-entry-transform', () => testEmptyOverrideEntryTransformPath(kpuzzle)],
     ['empty-remove-alternatives', () => testEmptyRemoveAlternatives()],
+    ['empty-remove-alternatives-apply', () => testEmptyRemoveAlternativesApply(kpuzzle)],
+    ['empty-remove-alternatives-transform', () => testEmptyRemoveAlternativesTransformPath(kpuzzle)],
     ['empty-primary-alg', () => testEmptyPrimaryAlg()],
+    ['empty-primary-alg-apply', () => testEmptyPrimaryAlgApply(kpuzzle)],
+    ['empty-primary-alg-transform', () => testEmptyPrimaryAlgTransformPath(kpuzzle)],
+    ['invalid-remove-alternatives-entries', () => testInvalidRemoveAlternativesEntries()],
+    ['invalid-remove-alternatives-entries-apply', () => testInvalidRemoveAlternativesEntriesApply(kpuzzle)],
+    ['production-overrides-empty', () => testProductionOverridesEmpty()],
     ['all-dataset-transformers-registered', () => testAllDatasetTransformersRegistered()],
     ['sync-assert-all-used', () => testSyncAssertAllUsed(kpuzzle)],
     ['sync-pipeline-applies-overrides', () => testSyncPipelineAppliesOverrides(kpuzzle)],
