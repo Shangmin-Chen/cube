@@ -39,6 +39,7 @@ export interface AlgCase {
   primaryAlg: string;
   alternativeAlgs?: string[];
   setupMoves?: string;
+  /** Unconditional probability for this case within its 2-look sub-step (e.g. "2/3", "1/6"). Case probabilities plus the implicit skip probability for that sub-step sum to 1; decks with multiple sub-steps (e.g. 2-look PLL) do not sum to 1 across the whole deck. */
   probability?: string;
   description?: string;
   tips?: string;
