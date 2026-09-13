@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TRIGGER_PATTERNS, MIN_PALINDROME_MOVES } from '../src/utils/triggerPatterns.ts';
 import { detectAlgBadges, parseTriggers } from '../src/utils/cubeLogic.ts';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -14,9 +13,74 @@ const UI_HINT_SURFACES = [
   'src/components/trainer/RoundSummary.tsx',
 ] as const;
 
+/** Ground-truth palindrome threshold — not imported from production modules. */
+const ORACLE_MIN_PALINDROME_MOVES = 5;
+
+/**
+ * Ground-truth trigger table for verification only.
+ * Must stay in sync with production semantics but is NOT imported from triggerPatterns.ts,
+ * so a shared table bug cannot pass both sides without updating this file explicitly.
+ */
+const ORACLE_PATTERNS: readonly {
+  pattern: string;
+  tokens: readonly string[];
+  label: string;
+}[] = [
+  {
+    pattern: "R U R' U R U' R' U R U2 R'",
+    tokens: ['R', 'U', "R'", 'U', 'R', "U'", "R'", 'U', 'R', 'U2', "R'"],
+    label: 'Double Sune',
+  },
+  {
+    pattern: "R U R' U R U2 R'",
+    tokens: ['R', 'U', "R'", 'U', 'R', 'U2', "R'"],
+    label: 'Sune',
+  },
+  {
+    pattern: "R U2 R' U' R U' R'",
+    tokens: ['R', 'U2', "R'", "U'", 'R', "U'", "R'"],
+    label: 'Anti-Sune',
+  },
+  {
+    pattern: "R U R' U'",
+    tokens: ['R', 'U', "R'", "U'"],
+    label: 'Sexy Move',
+  },
+  {
+    pattern: "r U R' U'",
+    tokens: ['r', 'U', "R'", "U'"],
+    label: 'Wide Sexy',
+  },
+  {
+    pattern: "U R U' R'",
+    tokens: ['U', 'R', "U'", "R'"],
+    label: 'Inverse Sexy',
+  },
+  {
+    pattern: "L' U' L U",
+    tokens: ["L'", "U'", 'L', 'U'],
+    label: 'Left Sexy',
+  },
+  {
+    pattern: "r' F R F'",
+    tokens: ["r'", 'F', 'R', "F'"],
+    label: 'Wide Sledge',
+  },
+  {
+    pattern: "R' F R F'",
+    tokens: ["R'", 'F', 'R', "F'"],
+    label: 'Sledgehammer',
+  },
+  {
+    pattern: "F R' F' R",
+    tokens: ['F', "R'", "F'", 'R'],
+    label: 'Hedgeslammer',
+  },
+];
+
 type CaseRow = { id: string; primaryAlg: string };
 
-type IndependentMatch = {
+type OracleMatch = {
   start: number;
   end: number;
   label: string;
@@ -47,44 +111,48 @@ function arraysEqual(a: string[], b: string[]): boolean {
   return sortedA.every((val, idx) => val === sortedB[idx]);
 }
 
-/** Independent tokenizer — duplicated here so tests do not wrap production helpers. */
-function independentTokenize(movesStr: string): string[] {
+/** Independent tokenizer — local to this script, not production helpers. */
+function oracleTokenize(movesStr: string): string[] {
   const clean = movesStr.replace(/[(){}]/g, ' ').trim();
   if (!clean) return [];
   return clean.split(/\s+/).filter(Boolean);
 }
 
-function independentMatchesAt(
-  moves: readonly string[],
-  start: number,
-  patternTokens: readonly string[],
-): boolean {
-  if (start + patternTokens.length > moves.length) return false;
-  for (let j = 0; j < patternTokens.length; j++) {
-    if (moves[start + j] !== patternTokens[j]) return false;
-  }
-  return true;
+function escapeRegexToken(token: string): string {
+  return token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function independentFindMatches(moves: readonly string[]): IndependentMatch[] {
-  const matches: IndependentMatch[] = [];
-  for (let i = 0; i < moves.length; i++) {
-    for (const pattern of TRIGGER_PATTERNS) {
-      if (independentMatchesAt(moves, i, pattern.tokens)) {
-        matches.push({
-          start: i,
-          end: i + pattern.tokens.length,
-          label: pattern.badgeLabel,
-          tokenLen: pattern.tokens.length,
-        });
-        break;
-      }
+/**
+ * Regex boundary oracle: finds token-aligned hits via word-boundary matching on a
+ * space-padded move string. Structurally distinct from production's array scan in
+ * triggerPatterns.ts and would fail if production reintroduced .includes() badges.
+ */
+function oracleRegexMatches(moves: readonly string[]): OracleMatch[] {
+  if (moves.length === 0) return [];
+
+  const haystack = ` ${moves.join(' ')} `;
+  const matches: OracleMatch[] = [];
+
+  for (const entry of ORACLE_PATTERNS) {
+    const body = entry.tokens.map(escapeRegexToken).join('\\s+');
+    const re = new RegExp(`(?:^|\\s)(${body})(?=\\s|$)`, 'g');
+    let hit: RegExpExecArray | null;
+    while ((hit = re.exec(haystack)) !== null) {
+      const prefix = haystack.slice(0, hit.index).trim();
+      const start = prefix ? prefix.split(/\s+/).length : 0;
+      matches.push({
+        start,
+        end: start + entry.tokens.length,
+        label: entry.label,
+        tokenLen: entry.tokens.length,
+      });
     }
   }
+
   return matches;
 }
 
-function independentIsContained(inner: IndependentMatch, outer: IndependentMatch): boolean {
+function oracleIsContained(inner: OracleMatch, outer: OracleMatch): boolean {
   return (
     outer.tokenLen > inner.tokenLen &&
     outer.start <= inner.start &&
@@ -92,30 +160,30 @@ function independentIsContained(inner: IndependentMatch, outer: IndependentMatch
   );
 }
 
-function independentVisibleMatches(matches: readonly IndependentMatch[]): IndependentMatch[] {
+function oracleVisibleMatches(matches: readonly OracleMatch[]): OracleMatch[] {
   return matches.filter(
-    m => !matches.some(other => other !== m && independentIsContained(m, other)),
+    m => !matches.some(other => other !== m && oracleIsContained(m, other)),
   );
 }
 
-function independentIsPalindrome(moves: readonly string[]): boolean {
-  if (moves.length < MIN_PALINDROME_MOVES) return false;
+function oracleIsWholeAlgPalindrome(moves: readonly string[]): boolean {
+  if (moves.length < ORACLE_MIN_PALINDROME_MOVES) return false;
   for (let k = 0; k < Math.floor(moves.length / 2); k++) {
     if (moves[k] !== moves[moves.length - 1 - k]) return false;
   }
   return true;
 }
 
-/** Property oracle: badges from an independent token scan, not production shadowing helpers. */
-function independentExpectedBadges(movesStr: string): string[] {
-  const moves = independentTokenize(movesStr);
+/** Independent AC3/AC4 oracle — regex boundary matching over embedded ground-truth table. */
+function oracleExpectedBadges(movesStr: string): string[] {
+  const moves = oracleTokenize(movesStr);
   if (moves.length === 0) return [];
 
   const badges: string[] = [];
-  if (independentIsPalindrome(moves)) {
+  if (oracleIsWholeAlgPalindrome(moves)) {
     badges.push('Palindrome');
   }
-  for (const match of independentVisibleMatches(independentFindMatches(moves))) {
+  for (const match of oracleVisibleMatches(oracleRegexMatches(moves))) {
     badges.push(match.label);
   }
   return Array.from(new Set(badges));
@@ -159,15 +227,20 @@ function runVerification(): void {
     for (const chunk of parseTriggers(row.primaryAlg)) {
       if (chunk.type === 'palindrome') {
         const moveCount = chunk.text.split(/\s+/).filter(Boolean).length;
-        if (moveCount < MIN_PALINDROME_MOVES) {
+        if (moveCount < ORACLE_MIN_PALINDROME_MOVES) {
           shortPalindromeCount++;
           console.error(`AC1 fail: ${row.id} palindrome chip "${chunk.text}" (${moveCount} moves)`);
         }
       }
     }
   }
-  assert(shortPalindromeCount === 0, `AC1: ${shortPalindromeCount} palindrome chips < ${MIN_PALINDROME_MOVES} moves`);
-  console.log(`AC1: 0 palindrome chips shorter than ${MIN_PALINDROME_MOVES} moves (swept ${primaries.length} primaries)`);
+  assert(
+    shortPalindromeCount === 0,
+    `AC1: ${shortPalindromeCount} palindrome chips < ${ORACLE_MIN_PALINDROME_MOVES} moves`,
+  );
+  console.log(
+    `AC1: 0 palindrome chips shorter than ${ORACLE_MIN_PALINDROME_MOVES} moves (swept ${primaries.length} primaries)`,
+  );
 
   // Palindrome badge threshold (AC8): same ≥5 rule as chips
   assert(
@@ -180,10 +253,10 @@ function runVerification(): void {
   );
   console.log('Palindrome badge threshold: R2 U R2 rejected, R U2 R U2 R accepted');
 
-  // Property-based AC3/AC4: production badges must match independent oracle across all primaries
+  // Property-based AC3/AC4: production badges must match regex-boundary oracle (not production helpers)
   let propertyFailures = 0;
   for (const row of primaries) {
-    const expected = independentExpectedBadges(row.primaryAlg);
+    const expected = oracleExpectedBadges(row.primaryAlg);
     const actual = detectAlgBadges(row.primaryAlg);
     if (!arraysEqual(actual, expected)) {
       propertyFailures++;
@@ -193,7 +266,9 @@ function runVerification(): void {
     }
   }
   assert(propertyFailures === 0, `AC3/AC4: ${propertyFailures} badge property violations`);
-  console.log(`AC3/AC4: production badges match independent oracle for ${primaries.length} primaries`);
+  console.log(
+    `AC3/AC4: production badges match regex-boundary oracle for ${primaries.length} primaries`,
+  );
 
   // Named regression locks (supplement property checks, not replace them)
   const expectedById: Record<string, string[]> = {
@@ -262,19 +337,19 @@ function runVerification(): void {
   // False-positive sweep: fail if a badge is emitted for a substring-only (non-token-aligned) hit
   let substringBadgeViolations = 0;
   for (const row of primaries) {
-    const moves = independentTokenize(row.primaryAlg);
+    const moves = oracleTokenize(row.primaryAlg);
     const joined = moves.join(' ');
     const badges = detectAlgBadges(row.primaryAlg).filter(b => b !== 'Palindrome');
 
-    for (const pattern of TRIGGER_PATTERNS) {
+    for (const pattern of ORACLE_PATTERNS) {
       const hasSubstringHit = joined.includes(pattern.pattern);
-      const hasTokenHit = independentFindMatches(moves).some(
-        m => m.label === pattern.badgeLabel && m.tokenLen === pattern.tokens.length,
+      const hasTokenHit = oracleRegexMatches(moves).some(
+        m => m.label === pattern.label && m.tokenLen === pattern.tokens.length,
       );
-      if (hasSubstringHit && !hasTokenHit && badges.includes(pattern.badgeLabel)) {
+      if (hasSubstringHit && !hasTokenHit && badges.includes(pattern.label)) {
         substringBadgeViolations++;
         console.error(
-          `False-positive fail: ${row.id} badges "${pattern.badgeLabel}" from substring "${pattern.pattern}" without token alignment`,
+          `False-positive fail: ${row.id} badges "${pattern.label}" from substring "${pattern.pattern}" without token alignment`,
         );
       }
     }
@@ -282,10 +357,12 @@ function runVerification(): void {
   assert(substringBadgeViolations === 0, `False-positive sweep: ${substringBadgeViolations} substring badge violations`);
   console.log('False-positive sweep: 0 substring-only badges across 94 primaries');
 
-  for (let i = 0; i < TRIGGER_PATTERNS.length; i++) {
-    for (let j = i + 1; j < TRIGGER_PATTERNS.length; j++) {
-      if (TRIGGER_PATTERNS[i].pattern.startsWith(TRIGGER_PATTERNS[j].pattern)) {
-        throw new Error(`Pattern order violation: "${TRIGGER_PATTERNS[j].pattern}" before "${TRIGGER_PATTERNS[i].pattern}"`);
+  for (let i = 0; i < ORACLE_PATTERNS.length; i++) {
+    for (let j = i + 1; j < ORACLE_PATTERNS.length; j++) {
+      if (ORACLE_PATTERNS[i].pattern.startsWith(ORACLE_PATTERNS[j].pattern)) {
+        throw new Error(
+          `Pattern order violation: "${ORACLE_PATTERNS[j].pattern}" before "${ORACLE_PATTERNS[i].pattern}"`,
+        );
       }
     }
   }
