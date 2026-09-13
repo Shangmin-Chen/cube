@@ -1,9 +1,11 @@
+import { applyAlgRules } from './rules.mjs';
+
 /**
  * Per-case algorithm overrides applied during transform, before rule processing.
  *
  * Keys are canonical case ids (e.g. "oll-2look-line", "pll-t"). Values can:
  * - replace the upstream primary algorithm (`primaryAlg`)
- * - drop specific upstream alternatives by exact raw string match (`removeAlternatives`)
+ * - drop specific alternatives by raw upstream string or post-rule normalized form (`removeAlternatives`)
  *
  * Overrides are applied on every `npm run sync:algs`, so regenerated JSON reflects them
  * without hand-editing generated files.
@@ -16,28 +18,158 @@
 export const ALGORITHM_OVERRIDES = {};
 
 /**
+ * @param {typeof ALGORITHM_OVERRIDES} [overrides=ALGORITHM_OVERRIDES]
+ */
+export function createOverrideContext(overrides = ALGORITHM_OVERRIDES) {
+  const appliedOverrideKeys = new Set();
+  return {
+    overrides,
+    appliedOverrideKeys,
+    assertAllUsed() {
+      assertNoUnusedOverrides(overrides, appliedOverrideKeys);
+    },
+  };
+}
+
+/**
+ * @param {typeof ALGORITHM_OVERRIDES} overrides
+ * @param {Set<string>} appliedOverrideKeys
+ */
+export function assertNoUnusedOverrides(overrides, appliedOverrideKeys) {
+  const unused = Object.keys(overrides).filter(id => !appliedOverrideKeys.has(id));
+  if (unused.length > 0) {
+    throw new Error(
+      `ALGORITHM_OVERRIDES contains keys that no transformer applied: ${unused.join(', ')}`,
+    );
+  }
+}
+
+/**
+ * @param {string} algStr
+ * @param {any} kpuzzle
+ * @param {{ isEdgesOnly?: boolean, isAdjacentCornerSwap?: boolean }} ruleOptions
+ */
+function normalizeForMatch(algStr, kpuzzle, ruleOptions) {
+  return applyAlgRules(algStr, kpuzzle, ruleOptions);
+}
+
+/**
+ * @param {string} algStr
+ * @param {any} kpuzzle
+ * @param {{ isEdgesOnly?: boolean, isAdjacentCornerSwap?: boolean }} ruleOptions
+ * @returns {string | null}
+ */
+function safeNormalizeForMatch(algStr, kpuzzle, ruleOptions) {
+  try {
+    return normalizeForMatch(algStr, kpuzzle, ruleOptions);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * @param {string} algStr
+ * @param {string} target
+ * @param {any} kpuzzle
+ * @param {{ isEdgesOnly?: boolean, isAdjacentCornerSwap?: boolean }} ruleOptions
+ */
+function algMatchesTarget(algStr, target, kpuzzle, ruleOptions) {
+  if (algStr === target) {
+    return true;
+  }
+
+  const altNorm = safeNormalizeForMatch(algStr, kpuzzle, ruleOptions);
+  const targetNorm = safeNormalizeForMatch(target, kpuzzle, ruleOptions);
+  return altNorm !== null && targetNorm !== null && altNorm === targetNorm;
+}
+
+/**
+ * @param {string[]} algs
+ * @param {any} kpuzzle
+ * @param {{ isEdgesOnly?: boolean, isAdjacentCornerSwap?: boolean }} ruleOptions
+ */
+function dedupeAlternativesAgainstPrimary(algs, kpuzzle, ruleOptions) {
+  if (algs.length <= 1) {
+    return algs;
+  }
+
+  const primary = algs[0];
+  const primaryNorm = normalizeForMatch(primary, kpuzzle, ruleOptions);
+  const alternatives = algs.slice(1).filter(alt => {
+    if (alt === primary) {
+      return false;
+    }
+    return normalizeForMatch(alt, kpuzzle, ruleOptions) !== primaryNorm;
+  });
+
+  return [primary, ...alternatives];
+}
+
+/**
  * Apply per-case algorithm overrides to an upstream raw algorithm list.
  *
  * @param {string} caseId
  * @param {string[]} upstreamAlgs - raw `item.alg` from the source site
  * @param {typeof ALGORITHM_OVERRIDES} [overrides=ALGORITHM_OVERRIDES]
+ * @param {{
+ *   kpuzzle: any,
+ *   ruleOptions?: { isEdgesOnly?: boolean, isAdjacentCornerSwap?: boolean },
+ *   appliedOverrideKeys?: Set<string>,
+ * }} context
  * @returns {string[]} adjusted list with primary first, then alternatives
  */
-export function applyAlgorithmOverrides(caseId, upstreamAlgs, overrides = ALGORITHM_OVERRIDES) {
+export function applyAlgorithmOverrides(
+  caseId,
+  upstreamAlgs,
+  overrides = ALGORITHM_OVERRIDES,
+  { kpuzzle, ruleOptions = {}, appliedOverrideKeys } = {},
+) {
   const override = overrides[caseId];
   if (!override) {
     return [...upstreamAlgs];
   }
 
+  if (!kpuzzle) {
+    throw new Error(`kpuzzle is required to apply algorithm overrides for case ${caseId}`);
+  }
+
+  appliedOverrideKeys?.add(caseId);
+
   let algs = [...upstreamAlgs];
 
   if (override.removeAlternatives?.length) {
-    const toRemove = new Set(override.removeAlternatives);
-    algs = algs.filter((alg, index) => index === 0 || !toRemove.has(alg));
+    const unmatched = new Set(override.removeAlternatives);
+    const kept = [algs[0]];
+
+    for (let i = 1; i < algs.length; i++) {
+      const alt = algs[i];
+      let removed = false;
+
+      for (const target of override.removeAlternatives) {
+        if (algMatchesTarget(alt, target, kpuzzle, ruleOptions)) {
+          unmatched.delete(target);
+          removed = true;
+          break;
+        }
+      }
+
+      if (!removed) {
+        kept.push(alt);
+      }
+    }
+
+    if (unmatched.size > 0) {
+      throw new Error(
+        `removeAlternatives for ${caseId} did not match any upstream alternative: ${[...unmatched].join(', ')}`,
+      );
+    }
+
+    algs = kept;
   }
 
   if (override.primaryAlg !== undefined) {
     algs = [override.primaryAlg, ...algs.slice(1)];
+    algs = dedupeAlternativesAgainstPrimary(algs, kpuzzle, ruleOptions);
   }
 
   return algs;
