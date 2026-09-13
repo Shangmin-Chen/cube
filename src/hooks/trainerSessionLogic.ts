@@ -121,21 +121,6 @@ export function goToPreviousCard(state: TrainerRoundState): TrainerRoundState | 
   };
 }
 
-/**
- * Simulates round-2 summary stats when mastery sets were carried over from round 1
- * (the pre-fix bug: initRound only cleared sets on round === 1).
- */
-export function roundSummaryWithCarriedMastery(
-  priorRound: TrainerRoundState,
-  currentRound: TrainerRoundState,
-): ReturnType<typeof roundSummaryMetrics> {
-  return roundSummaryMetrics({
-    ...currentRound,
-    masteredIds: new Set([...priorRound.masteredIds, ...currentRound.masteredIds]),
-    learningIds: new Set([...priorRound.learningIds, ...currentRound.learningIds]),
-  });
-}
-
 export function makeMockCase(id: string): AlgCase {
   return {
     id,
