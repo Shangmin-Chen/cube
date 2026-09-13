@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "sync:algs": "node scripts/sync-algorithms.mjs",
     "verify:algs": "node scripts/verify-cfop.mjs",
+    "verify:trainer": "node scripts/verify-trainer-session.ts",
     "verify:upstream-pin": "node scripts/verify-upstream-pin.mjs"
   },
   "dependencies": {
