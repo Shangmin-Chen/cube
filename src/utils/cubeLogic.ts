@@ -1,11 +1,15 @@
 import { Alg } from 'cubing/alg';
-
-// Helper functions for Rubik's Cube scrambles, move parsing, and state calculations
+import {
+  detectTokenAlignedBadges,
+  findLongestPalindromeFrom,
+  findLongestPatternAt,
+  tokenizeAlgMoves,
+  type TriggerType,
+} from './triggerPatterns.ts';
 
 const FACES = ['U', 'D', 'F', 'B', 'R', 'L'];
 const MODIFIERS = ['', "'", '2'];
 
-// Opposite faces so scrambles don't repeat redundant faces (e.g. U D U)
 const OPPOSITES: Record<string, string> = {
   U: 'D',
   D: 'U',
@@ -19,7 +23,7 @@ export interface TriggerChunk {
   text: string;
   name?: string;
   description?: string;
-  type: 'sexy' | 'wide-sexy' | 'inverse-sexy' | 'left-sexy' | 'sledge' | 'wide-sledge' | 'hedge' | 'sune' | 'palindrome' | 'normal';
+  type: TriggerType;
 }
 
 export function generateScramble(length = 20): string {
@@ -29,8 +33,6 @@ export function generateScramble(length = 20): string {
 
   for (let i = 0; i < length; i++) {
     let availableFaces = FACES.filter(f => f !== lastFace);
-    
-    // If the last two moves were on opposite faces (e.g., U then D), don't allow U again
     if (lastFace && OPPOSITES[lastFace] === secondLastFace) {
       availableFaces = availableFaces.filter(f => f !== secondLastFace);
     }
@@ -61,7 +63,6 @@ export function parseMoveString(movesStr: string): string[] {
   }
 }
 
-// Invert an algorithm move sequence using WCA cubing/alg standard library
 export function invertMoveString(movesStr: string): string[] {
   try {
     const alg = new Alg(movesStr);
@@ -83,244 +84,47 @@ export function invertMoveString(movesStr: string): string[] {
   }
 }
 
-function isMovePalindrome(moves: string[]): boolean {
-  if (moves.length < 3) return false;
-  for (let k = 0; k < Math.floor(moves.length / 2); k++) {
-    if (moves[k] !== moves[moves.length - 1 - k]) {
-      return false;
-    }
-  }
-  return true;
-}
-
-// Identify intuitive building-block triggers in algorithm strings for human learners
 export function parseTriggers(movesStr: string): TriggerChunk[] {
-  const clean = movesStr.replace(/[\(\)\{\}]/g, ' ').trim();
-  if (!clean) return [];
+  const moves = tokenizeAlgMoves(movesStr);
+  if (moves.length === 0) return [];
 
   const chunks: TriggerChunk[] = [];
-  const moves = clean.split(/\s+/).filter(Boolean);
   let i = 0;
 
-  const startsWithPattern = (rem: string, pattern: string) => {
-    return rem === pattern || rem.startsWith(pattern + ' ');
-  };
-
   while (i < moves.length) {
-    const remainingMoves = moves.slice(i);
-    const remaining = remainingMoves.join(' ');
-
-    // 11-move trigger: Double Sune (R U R' U R U' R' U R U2 R')
-    if (startsWithPattern(remaining, "R U R' U R U' R' U R U2 R'")) {
+    const pattern = findLongestPatternAt(moves, i);
+    if (pattern) {
       chunks.push({
-        text: "R U R' U R U' R' U R U2 R'",
-        name: 'Double Sune',
-        description: "Chained Sune trigger where U2 R' + R U cancels R' R and combines U2 U into U'.",
-        type: 'sune',
+        text: pattern.pattern,
+        name: pattern.chunkName,
+        description: pattern.description,
+        type: pattern.type,
       });
-      i += 11;
+      i += pattern.tokens.length;
       continue;
     }
 
-    // 7-move trigger: Sune (R U R' U R U2 R')
-    if (startsWithPattern(remaining, "R U R' U R U2 R'")) {
+    const palindromeLen = findLongestPalindromeFrom(moves, i);
+    if (palindromeLen > 0) {
       chunks.push({
-        text: "R U R' U R U2 R'",
-        name: 'Sune Trigger',
-        description: 'Lifts F2L pair, spins top layer 360°, and re-slots pair. Cycles 3 corners.',
-        type: 'sune',
-      });
-      i += 7;
-      continue;
-    }
-
-    // 7-move trigger: Anti-Sune (R U2 R' U' R U' R')
-    if (startsWithPattern(remaining, "R U2 R' U' R U' R'")) {
-      chunks.push({
-        text: "R U2 R' U' R U' R'",
-        name: 'Anti-Sune Trigger',
-        description: 'Inverse Sune trigger. Pushes pair 2 steps left then returns home.',
-        type: 'sune',
-      });
-      i += 7;
-      continue;
-    }
-
-    // 4-move trigger: Sexy Move (R U R' U')
-    if (startsWithPattern(remaining, "R U R' U'")) {
-      chunks.push({
-        text: "R U R' U'",
-        name: 'Sexy Move',
-        description: 'Pops Front-Right F2L pair out to top layer and shifts U face left.',
-        type: 'sexy',
-      });
-      i += 4;
-      continue;
-    }
-
-    // 4-move trigger: Wide/Fat Sexy (r U R' U')
-    if (startsWithPattern(remaining, "r U R' U'")) {
-      chunks.push({
-        text: "r U R' U'",
-        name: 'Wide Sexy Move',
-        description: 'Double-layer Wide Sexy move used in OLL to orient slice edges.',
-        type: 'wide-sexy',
-      });
-      i += 4;
-      continue;
-    }
-
-    // 4-move trigger: Inverse Sexy (U R U' R')
-    if (startsWithPattern(remaining, "U R U' R'")) {
-      chunks.push({
-        text: "U R U' R'",
-        name: 'Inverse Sexy Move',
-        description: 'Inverse order Sexy Move trigger.',
-        type: 'inverse-sexy',
-      });
-      i += 4;
-      continue;
-    }
-
-    // 4-move trigger: Left-Handed Sexy (L' U' L U)
-    if (startsWithPattern(remaining, "L' U' L U")) {
-      chunks.push({
-        text: "L' U' L U",
-        name: 'Left-Handed Sexy',
-        description: 'Left-handed mirrored Sexy Move trigger.',
-        type: 'left-sexy',
-      });
-      i += 4;
-      continue;
-    }
-
-    // 4-move trigger: Wide Sledgehammer (r' F R F')
-    if (startsWithPattern(remaining, "r' F R F'")) {
-      chunks.push({
-        text: "r' F R F'",
-        name: 'Wide Sledgehammer',
-        description: 'Wide double-layer Sledgehammer trigger.',
-        type: 'wide-sledge',
-      });
-      i += 4;
-      continue;
-    }
-
-    // 4-move trigger: Sledgehammer (R' F R F')
-    if (startsWithPattern(remaining, "R' F R F'")) {
-      chunks.push({
-        text: "R' F R F'",
-        name: 'Sledgehammer',
-        description: 'Rotates FR slot and flips top-front edge sticker orientation.',
-        type: 'sledge',
-      });
-      i += 4;
-      continue;
-    }
-
-    // 4-move trigger: Hedgeslammer (F R' F' R)
-    if (startsWithPattern(remaining, "F R' F' R")) {
-      chunks.push({
-        text: "F R' F' R",
-        name: 'Hedgeslammer',
-        description: 'Front-face inverse sledgehammer trigger.',
-        type: 'hedge',
-      });
-      i += 4;
-      continue;
-    }
-
-    // Dynamic Palindrome Precalculation:
-    // Find the longest consecutive move palindrome substring starting at index i
-    let longestPalLen = 0;
-    for (let len = remainingMoves.length; len >= 3; len--) {
-      const sub = remainingMoves.slice(0, len);
-      if (isMovePalindrome(sub)) {
-        longestPalLen = len;
-        break;
-      }
-    }
-
-    if (longestPalLen > 0) {
-      const palText = remainingMoves.slice(0, longestPalLen).join(' ');
-      chunks.push({
-        text: palText,
+        text: moves.slice(i, i + palindromeLen).join(' '),
         name: 'Palindrome Substring',
         description: 'Symmetrical move sequence reading identical forwards and backwards.',
         type: 'palindrome',
       });
-      i += longestPalLen;
+      i += palindromeLen;
       continue;
     }
 
-    // Single move fallback
-    chunks.push({
-      text: moves[i],
-      type: 'normal',
-    });
+    chunks.push({ text: moves[i], type: 'normal' });
     i += 1;
   }
 
   return chunks;
 }
 
-// Detect overall pattern badges (Palindrome, Sexy Move, Sledgehammer, Double Sune, etc.)
 export function detectAlgBadges(movesStr: string): string[] {
-  const badges: string[] = [];
-  const clean = movesStr.replace(/[\(\)\{\}]/g, ' ').trim();
-  if (!clean) return badges;
-
-  const moves = clean.split(/\s+/).filter(Boolean);
-  if (moves.length === 0) return badges;
-
-  const normalizedStr = moves.join(' ');
-
-  // 1. Exact string palindrome (e.g. H Perm: M2 U M2 U2 M2 U M2)
-  const isExactStr = moves.join(' ') === [...moves].reverse().join(' ');
-  if (isExactStr) {
-    badges.push('Palindrome');
-  }
-
-  // Check for Double Sune first
-  const isDoubleSune = normalizedStr.includes("R U R' U R U' R' U R U2 R'");
-  if (isDoubleSune) {
-    badges.push('Double Sune');
-  }
-
-  // Check for Sune / Anti-Sune
-  if (normalizedStr.includes("R U R' U R U2 R'") && !isDoubleSune) {
-    badges.push('Sune');
-  }
-  if (normalizedStr.includes("R U2 R' U' R U' R'")) {
-    badges.push('Anti-Sune');
-  }
-
-  // Check for Sexy Move variants
-  if (normalizedStr.includes("R U R' U'")) {
-    badges.push('Sexy Move');
-  }
-  if (normalizedStr.includes("r U R' U'")) {
-    badges.push('Wide Sexy');
-  }
-  if (normalizedStr.includes("U R U' R'")) {
-    badges.push('Inverse Sexy');
-  }
-  if (normalizedStr.includes("L' U' L U")) {
-    badges.push('Left Sexy');
-  }
-
-  // Check for Sledgehammer variants
-  if (normalizedStr.includes("R' F R F'")) {
-    badges.push('Sledgehammer');
-  }
-  if (normalizedStr.includes("r' F R F'")) {
-    badges.push('Wide Sledge');
-  }
-  if (normalizedStr.includes("F R' F' R")) {
-    badges.push('Hedgeslammer');
-  }
-
-  return Array.from(new Set(badges));
+  return detectTokenAlignedBadges(movesStr);
 }
 
 export function formatTime(ms: number): string {
@@ -330,24 +134,19 @@ export function formatTime(ms: number): string {
   const minutes = Math.floor(seconds / 60);
   const remSec = seconds % 60;
 
-  const msStr = remainderMs.toString().padStart(3, '0').slice(0, 2); // show 2 decimals
+  const msStr = remainderMs.toString().padStart(3, '0').slice(0, 2);
   if (minutes > 0) {
     return `${minutes}:${remSec.toString().padStart(2, '0')}.${msStr}`;
   }
   return `${remSec}.${msStr}`;
 }
 
-/**
- * Calculates the Average of N (e.g. Ao5, Ao12) according to WCA rules.
- * Expects times in newest-first queue order (index 0 is the most recent solve).
- */
 export function calculateAO(times: number[], count: number): number | null {
   if (times.length < count) return null;
   const recent = times.slice(0, count);
   const dnfCount = recent.filter(t => t < 0).length;
   if (dnfCount >= 2) return -1;
 
-  // Map DNF (-1) to Infinity for WCA sorting so DNF is treated as worst (maximum) time
   const sorted = [...recent].sort((a, b) => {
     const valA = a < 0 ? Infinity : a;
     const valB = b < 0 ? Infinity : b;
