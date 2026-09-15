@@ -7,6 +7,10 @@ import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { parseTriggers, detectAlgBadges } from '../utils/cubeLogic';
 import {
+  NO_RECOGNIZED_TRIGGERS_HINT,
+  NO_RECOGNIZED_TRIGGERS_HINT_CLASS,
+} from '../utils/triggerHints';
+import {
   getAllCases,
   getSteps,
   isValidStep,
@@ -84,8 +88,14 @@ export const AlgReferenceTab: React.FC = () => {
   // Render trigger chunks with color badges
   const renderTriggerChunks = (algStr: string) => {
     const chunks = parseTriggers(algStr);
+    const recognized = chunks.some(chunk => chunk.type !== 'normal');
     return (
       <div className="flex flex-wrap items-center gap-1.5 my-1">
+        {!recognized && chunks.length > 0 && (
+          <span className={NO_RECOGNIZED_TRIGGERS_HINT_CLASS}>
+            {NO_RECOGNIZED_TRIGGERS_HINT}
+          </span>
+        )}
         {chunks.map((chunk, idx) => {
           if (chunk.type === 'sexy' || chunk.type === 'wide-sexy' || chunk.type === 'inverse-sexy' || chunk.type === 'left-sexy') {
             return (

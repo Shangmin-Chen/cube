@@ -9,7 +9,9 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "sync:algs": "node scripts/sync-algorithms.mjs",
-    "verify:algs": "node scripts/verify-cfop.mjs"
+    "verify:algs": "node scripts/verify-cfop.mjs",
+    "verify:triggers": "node --experimental-strip-types scripts/verify-triggers.ts",
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",
