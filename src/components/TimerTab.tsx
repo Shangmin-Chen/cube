@@ -6,6 +6,40 @@ import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Shuffle, Trash2, Award, History, RotateCcw } from 'lucide-react';
 
+const INSPECTION_LIMIT_MS = 15000;
+const INSPECTION_DNF_MS = 17000;
+
+function createSolveId(): string {
+  // crypto.randomUUID is only defined in a secure context, so it is absent when the
+  // app is opened over plain http on a LAN. Fall back to a random suffix rather than
+  // throwing mid-solve; uniqueness only has to hold within one solve list.
+  const suffix =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2, 10);
+  return `${Date.now()}-${suffix}`;
+}
+
+function formatInspectionTime(elapsedMs: number): string {
+  if (elapsedMs < INSPECTION_LIMIT_MS) {
+    return formatTime(INSPECTION_LIMIT_MS - elapsedMs);
+  }
+  return `+${formatTime(elapsedMs - INSPECTION_LIMIT_MS)}`;
+}
+
+function inspectionPenaltyForElapsed(elapsedMs: number): 'none' | '+2' | 'DNF' {
+  if (elapsedMs >= INSPECTION_DNF_MS) return 'DNF';
+  if (elapsedMs >= INSPECTION_LIMIT_MS) return '+2';
+  return 'none';
+}
+
+function shouldLetNativeSpaceThrough(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  const tag = target.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON';
+}
+
 export const TimerTab: React.FC = () => {
   const [scramble, setScramble] = useState<string>('');
   const [solves, setSolves] = useState<SolveRecord[]>(() => {
@@ -21,17 +55,59 @@ export const TimerTab: React.FC = () => {
   // Timer states: 'idle' | 'holding' | 'ready' | 'inspection' | 'running'
   const [timerState, setTimerState] = useState<'idle' | 'holding' | 'ready' | 'inspection' | 'running'>('idle');
   const [elapsedTime, setElapsedTime] = useState<number>(0);
+  const [inspectionElapsed, setInspectionElapsed] = useState<number>(0);
   const [useInspection, setUseInspection] = useState<boolean>(false);
 
   const startTimeRef = useRef<number>(0);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inspectionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const inspectionStartRef = useRef<number>(0);
+  const inspectionPenaltyRef = useRef<'none' | '+2' | 'DNF'>('none');
+  const inspectionActiveRef = useRef(false);
+  const timerStateRef = useRef(timerState);
+  const activePointerIdRef = useRef<number | null>(null);
+  const spaceHoldActiveRef = useRef(false);
+  const scrambleRef = useRef(scramble);
+  const attemptScrambleRef = useRef('');
+
+  useEffect(() => {
+    timerStateRef.current = timerState;
+  }, [timerState]);
+
+  useEffect(() => {
+    scrambleRef.current = scramble;
+  }, [scramble]);
+
+  const persistSolves = useCallback((updated: SolveRecord[]) => {
+    try {
+      localStorage.setItem('cfop_solves', JSON.stringify(updated));
+    } catch {
+      // Fallback
+    }
+  }, []);
+
+  const appendSolve = useCallback(
+    (record: Omit<SolveRecord, 'id'> & { id?: string }) => {
+      const newRecord: SolveRecord = {
+        ...record,
+        id: record.id ?? createSolveId(),
+      };
+      setSolves(prev => {
+        const updated = [newRecord, ...prev];
+        persistSolves(updated);
+        return updated;
+      });
+    },
+    [persistSolves]
+  );
 
   // Unmount cleanup
   useEffect(() => {
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+      if (inspectionIntervalRef.current) clearInterval(inspectionIntervalRef.current);
     };
   }, []);
 
@@ -40,84 +116,193 @@ export const TimerTab: React.FC = () => {
     setScramble(generateScramble(21));
   }, []);
 
-  const handleNewScramble = () => {
+  const handleNewScramble = useCallback(() => {
     setScramble(generateScramble(21));
-  };
+  }, []);
+
+  const clearInspectionTimer = useCallback(() => {
+    if (inspectionIntervalRef.current) {
+      clearInterval(inspectionIntervalRef.current);
+      inspectionIntervalRef.current = null;
+    }
+  }, []);
+
+  const recordInspectionDnf = useCallback(() => {
+    if (!inspectionActiveRef.current) return;
+    inspectionActiveRef.current = false;
+    timerStateRef.current = 'idle';
+
+    clearInspectionTimer();
+    inspectionPenaltyRef.current = 'none';
+    setInspectionElapsed(0);
+    setElapsedTime(0);
+    setTimerState('idle');
+    const recordedScramble = attemptScrambleRef.current || scrambleRef.current;
+    attemptScrambleRef.current = '';
+    appendSolve({
+      time: 0,
+      scramble: recordedScramble,
+      date: Date.now(),
+      penalty: 'DNF',
+    });
+    handleNewScramble();
+  }, [appendSolve, clearInspectionTimer, handleNewScramble]);
+
+  const beginInspection = useCallback(() => {
+    clearInspectionTimer();
+    inspectionActiveRef.current = true;
+    attemptScrambleRef.current = scrambleRef.current;
+    inspectionPenaltyRef.current = 'none';
+    inspectionStartRef.current = performance.now();
+    setInspectionElapsed(0);
+    setElapsedTime(0);
+    timerStateRef.current = 'inspection';
+    setTimerState('inspection');
+
+    inspectionIntervalRef.current = setInterval(() => {
+      const elapsed = performance.now() - inspectionStartRef.current;
+      setInspectionElapsed(elapsed);
+      if (inspectionPenaltyForElapsed(elapsed) === 'DNF') {
+        recordInspectionDnf();
+      }
+    }, 10);
+  }, [clearInspectionTimer, recordInspectionDnf]);
 
   // Start actual timer
-  const startTimer = useCallback(() => {
-    setTimerState('running');
-    startTimeRef.current = performance.now();
-    timerIntervalRef.current = setInterval(() => {
-      setElapsedTime(performance.now() - startTimeRef.current);
-    }, 10);
-  }, []);
+  const startTimer = useCallback(
+    (inspectionPenalty: 'none' | '+2' | 'DNF' = 'none') => {
+      inspectionActiveRef.current = false;
+      timerStateRef.current = 'running';
+      if (!attemptScrambleRef.current) {
+        attemptScrambleRef.current = scrambleRef.current;
+      }
+      clearInspectionTimer();
+      inspectionPenaltyRef.current = inspectionPenalty;
+      setInspectionElapsed(0);
+      setElapsedTime(0);
+      setTimerState('running');
+      startTimeRef.current = performance.now();
+      timerIntervalRef.current = setInterval(() => {
+        setElapsedTime(performance.now() - startTimeRef.current);
+      }, 10);
+    },
+    [clearInspectionTimer]
+  );
 
   // Stop timer and record solve
   const stopTimer = useCallback(() => {
+    if (timerStateRef.current !== 'running') return;
+    timerStateRef.current = 'idle';
+
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     const finalTime = performance.now() - startTimeRef.current;
     setElapsedTime(finalTime);
     setTimerState('idle');
 
-    const newRecord: SolveRecord = {
-      id: Date.now().toString(),
-      time: Math.round(finalTime),
-      scramble,
-      date: Date.now(),
-      penalty: 'none',
-    };
+    const inspectionPenalty = inspectionPenaltyRef.current;
+    inspectionPenaltyRef.current = 'none';
 
-    setSolves(prev => {
-      const updated = [newRecord, ...prev];
-      try {
-        localStorage.setItem('cfop_solves', JSON.stringify(updated));
-      } catch {
-        // Fallback
-      }
-      return updated;
+    const recordedScramble = attemptScrambleRef.current || scrambleRef.current;
+    attemptScrambleRef.current = '';
+
+    appendSolve({
+      time: Math.round(finalTime),
+      scramble: recordedScramble,
+      date: Date.now(),
+      penalty: inspectionPenalty,
     });
 
     handleNewScramble();
-  }, [scramble]);
+  }, [appendSolve, handleNewScramble]);
 
   const handleTriggerPress = useCallback(() => {
-    if (timerState === 'running') {
+    const state = timerStateRef.current;
+
+    if (state === 'running') {
       stopTimer();
-    } else if (timerState === 'idle') {
+    } else if (state === 'idle') {
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+      timerStateRef.current = 'holding';
       setTimerState('holding');
       holdTimerRef.current = setTimeout(() => {
+        holdTimerRef.current = null;
+        timerStateRef.current = 'ready';
         setTimerState('ready');
       }, 300);
-    } else if (timerState === 'inspection') {
-      startTimer();
+    } else if (state === 'inspection') {
+      if (!inspectionActiveRef.current) return;
+
+      const elapsed = performance.now() - inspectionStartRef.current;
+      const penalty = inspectionPenaltyForElapsed(elapsed);
+      if (penalty === 'DNF') {
+        recordInspectionDnf();
+        return;
+      }
+      startTimer(penalty);
     }
-  }, [timerState, startTimer, stopTimer]);
+  }, [recordInspectionDnf, startTimer, stopTimer]);
 
   const handleTriggerRelease = useCallback(() => {
+    const state = timerStateRef.current;
+
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
 
-    if (timerState === 'ready') {
+    if (state === 'ready') {
       if (useInspection) {
-        setTimerState('inspection');
+        beginInspection();
       } else {
         startTimer();
       }
-    } else if (timerState === 'holding') {
+    } else if (state === 'holding') {
+      timerStateRef.current = 'idle';
       setTimerState('idle');
     }
-  }, [timerState, useInspection, startTimer]);
+  }, [beginInspection, startTimer, useInspection]);
 
-  // Keyboard events for spacebar timer control
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.button !== 0) return;
+      if (spaceHoldActiveRef.current) return;
+      if (activePointerIdRef.current !== null) return;
+      activePointerIdRef.current = e.pointerId;
+      e.preventDefault();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      handleTriggerPress();
+    },
+    [handleTriggerPress]
+  );
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (spaceHoldActiveRef.current) return;
+      if (activePointerIdRef.current !== e.pointerId) return;
+      activePointerIdRef.current = null;
+      e.preventDefault();
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+      handleTriggerRelease();
+    },
+    [handleTriggerRelease]
+  );
+
+  // Keyboard events for spacebar timer control (window-level only to avoid double-firing)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || e.repeat) return;
+      if (activePointerIdRef.current !== null) return;
+      if (shouldLetNativeSpaceThrough(e.target) || shouldLetNativeSpaceThrough(document.activeElement)) {
+        return;
+      }
       e.preventDefault();
+      spaceHoldActiveRef.current = true;
       handleTriggerPress();
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code !== 'Space') return;
+      if (e.code !== 'Space' || e.repeat) return;
+      if (!spaceHoldActiveRef.current) return;
+      spaceHoldActiveRef.current = false;
       e.preventDefault();
       handleTriggerRelease();
     };
@@ -134,11 +319,7 @@ export const TimerTab: React.FC = () => {
   const handlePenalty = (id: string, penalty: 'none' | '+2' | 'DNF') => {
     setSolves(prev => {
       const updated = prev.map(s => (s.id === id ? { ...s, penalty } : s));
-      try {
-        localStorage.setItem('cfop_solves', JSON.stringify(updated));
-      } catch {
-        // Fallback
-      }
+      persistSolves(updated);
       return updated;
     });
   };
@@ -146,11 +327,7 @@ export const TimerTab: React.FC = () => {
   const handleDeleteSolve = (id: string) => {
     setSolves(prev => {
       const updated = prev.filter(s => s.id !== id);
-      try {
-        localStorage.setItem('cfop_solves', JSON.stringify(updated));
-      } catch {
-        // Fallback
-      }
+      persistSolves(updated);
       return updated;
     });
   };
@@ -165,6 +342,17 @@ export const TimerTab: React.FC = () => {
       }
     }
   };
+
+  const displayTime =
+    timerState === 'inspection' ? formatInspectionTime(inspectionElapsed) : formatTime(elapsedTime);
+
+  const inspectionPenalty = inspectionPenaltyForElapsed(inspectionElapsed);
+  const inspectionStatus =
+    inspectionPenalty === 'DNF'
+      ? 'Inspection over 17s — DNF'
+      : inspectionPenalty === '+2'
+      ? '+2 penalty if you start now'
+      : 'Inspecting... Press Spacebar or Touch to Start Solve!';
 
   // Stats calculation
   const timesArray = solves.map(s => (s.penalty === 'DNF' ? -1 : s.time + (s.penalty === '+2' ? 2000 : 0)));
@@ -198,7 +386,13 @@ export const TimerTab: React.FC = () => {
         {/* Left: 3D Scramble Visualizer */}
         <div className="lg:col-span-5 flex flex-col gap-3">
           <h3 className="text-xs font-bold text-[#888888] uppercase tracking-wider px-1">Scramble Preview</h3>
-          <RubiksCube3D initialAlgorithm={scramble} autoPlay={false} size="h-[320px]" />
+          <RubiksCube3D
+            initialAlgorithm={scramble}
+            mode="scramble"
+            autoPlay={false}
+            showControls={false}
+            size="h-[320px]"
+          />
         </div>
 
         {/* Center: Digital Timer with Touch & Mouse support */}
@@ -206,29 +400,15 @@ export const TimerTab: React.FC = () => {
           role="button"
           tabIndex={0}
           aria-label="Timer press area"
-          onMouseDown={handleTriggerPress}
-          onMouseUp={handleTriggerRelease}
-          onTouchStart={handleTriggerPress}
-          onTouchEnd={handleTriggerRelease}
-          onKeyDown={e => {
-            if (e.key === ' ' || e.key === 'Enter') {
-              e.preventDefault();
-              handleTriggerPress();
-            }
-          }}
-          onKeyUp={e => {
-            if (e.key === ' ' || e.key === 'Enter') {
-              e.preventDefault();
-              handleTriggerRelease();
-            }
-          }}
-          className="lg:col-span-7 flex flex-col items-center justify-center p-10 min-h-[340px] relative select-none cursor-pointer outline-none"
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          className="lg:col-span-7 flex flex-col items-center justify-center p-10 min-h-[340px] relative select-none cursor-pointer outline-none touch-none"
         >
           {/* Inspection Mode Toggle */}
           <div
             onClick={e => e.stopPropagation()}
-            onMouseDown={e => e.stopPropagation()}
-            onTouchStart={e => e.stopPropagation()}
+            onPointerDown={e => e.stopPropagation()}
             className="absolute top-4 right-4 flex items-center gap-2 text-xs text-[#888888] z-10"
           >
             <input
@@ -254,7 +434,7 @@ export const TimerTab: React.FC = () => {
                 : 'text-[#d4d4d4]'
             }`}
           >
-            {formatTime(elapsedTime)}
+            {displayTime}
           </div>
 
           {/* Status Instruction */}
@@ -262,7 +442,7 @@ export const TimerTab: React.FC = () => {
             {timerState === 'idle' && 'Press and Hold Spacebar (or Touch Screen) to Ready'}
             {timerState === 'holding' && 'Hold...'}
             {timerState === 'ready' && 'Release Spacebar to Start!'}
-            {timerState === 'inspection' && 'Inspecting... Press Spacebar or Touch to Start Solve!'}
+            {timerState === 'inspection' && inspectionStatus}
             {timerState === 'running' && 'Press Spacebar / Touch to Stop'}
           </p>
         </Card>
