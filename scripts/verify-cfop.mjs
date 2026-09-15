@@ -28,76 +28,6 @@ function centersAreIdentity(kpuzzle, algStr) {
   return centers.every((val, idx) => val === idx);
 }
 
-/**
- * Undo net whole-cube rotation so semantic PLL invariants can be checked on
- * primaries and alternatives alike (unbalanced rotation suffixes are valid).
- *
- * @param {any} kpuzzle
- * @param {string} algStr
- * @returns {string}
- */
-function normalizeRotation(kpuzzle, algStr) {
-  if (centersAreIdentity(kpuzzle, algStr)) {
-    return algStr;
-  }
-
-  for (const rot of SINGLE_ROTATIONS) {
-    const candidate = new Alg(`${algStr} ${rot}`).toString();
-    if (centersAreIdentity(kpuzzle, candidate)) {
-      return candidate;
-    }
-  }
-
-  for (const r1 of SINGLE_ROTATIONS) {
-    for (const r2 of SINGLE_ROTATIONS) {
-      const candidate = new Alg(`${algStr} ${r1} ${r2}`).toString();
-      if (centersAreIdentity(kpuzzle, candidate)) {
-        return candidate;
-      }
-    }
-  }
-
-  return algStr;
-}
-
-/** @param {any} kpuzzle @param {string} algStr */
-function getNormalizedTransformation(kpuzzle, algStr) {
-  const normalized = normalizeRotation(kpuzzle, algStr);
-  return kpuzzle.algToTransformation(new Alg(normalized));
-}
-
-/**
- * Edges-only PLLs may need AUF after rotation balancing; mirrors pipeline rule.
- *
- * @param {any} kpuzzle
- * @param {string} algStr
- * @returns {import('cubing/puzzles').KTransformation}
- */
-function getEdgesOnlyTransformation(kpuzzle, algStr) {
-  const normalized = normalizeRotation(kpuzzle, algStr);
-  let transf = kpuzzle.algToTransformation(new Alg(normalized));
-  const cornersPerm = transf.transformationData.CORNERS.permutation;
-  const cornersOri = transf.transformationData.CORNERS.orientationDelta;
-  const cornersOk =
-    cornersPerm.every((val, idx) => val === idx) &&
-    cornersOri.every(val => val === 0);
-  if (cornersOk) {
-    return transf;
-  }
-
-  for (const auf of AUF_CANDIDATES) {
-    const candidate = new Alg(`${normalized} ${auf}`).toString();
-    const candidateTransf = kpuzzle.algToTransformation(new Alg(candidate));
-    const cPerm = candidateTransf.transformationData.CORNERS.permutation;
-    const cOri = candidateTransf.transformationData.CORNERS.orientationDelta;
-    if (cPerm.every((val, idx) => val === idx) && cOri.every(val => val === 0)) {
-      return candidateTransf;
-    }
-  }
-
-  return transf;
-}
-
 /** @param {import('cubing/puzzles').KTransformation} transf */
 function topEdgesOriented(transf) {
   const ori = transf.transformationData.EDGES.orientationDelta;
@@ -154,6 +84,33 @@ function assertLook1NegativeControls(kpuzzle, look1OllCases, oll2Look) {
   }
 }
 
+/**
+ * Derive the U-layer edge slot order from the puzzle definition. Writing it down by
+ * hand is how UR and UL came to be transposed, which silently relabelled 3 o'clock
+ * as 9 and made the hold invariant agree with a wrong description.
+ *
+ * @param {any} kp
+ * @returns {string[]}
+ */
+function deriveUEdgeSlots(kp) {
+  const faceOf = {};
+  for (const face of ['U', 'F', 'R', 'B', 'L']) {
+    const pattern = kp.defaultPattern().applyTransformation(kp.algToTransformation(new Alg(face)));
+    for (let i = 0; i < 4; i++) {
+      if (pattern.patternData.EDGES.pieces[i] !== i) {
+        (faceOf[i] ||= []).push(face);
+      }
+    }
+  }
+  return [0, 1, 2, 3].map(i => {
+    const faces = (faceOf[i] || []).filter(f => f !== 'U');
+    if (faces.length !== 1) {
+      throw new Error(`Could not derive U-layer slot ${i}: touched by faces ${faces.join('+')}`);
+    }
+    return `U${faces[0]}`;
+  });
+}
+
 async function runVerification() {
   console.log('--- CFOP Architecture Verification ---');
 
@@ -199,14 +156,15 @@ async function runVerification() {
   const allPllCases = [...pll2Look, ...pllFull];
   const look1OllCases = oll2Look.filter(c => c.group === 'Edges (Look 1)');
 
-  // 1. Centers identity for every PLL primary and alternative (after rotation normalize)
+  // 1. Centers identity for every PLL primary and alternative.
+  //    Asserted strictly: #41 balanced every emitted algorithm, so any net whole-cube
+  //    rotation reaching this point is a regression. An earlier draft normalised the
+  //    rotation away first, which made this invariant unfalsifiable.
   let invariant1Count = 0;
   for (const c of allPllCases) {
     for (const alg of getAllAlgs(c)) {
-      const transf = getNormalizedTransformation(kpuzzle, alg);
-      const centers = transf.transformationData.CENTERS.permutation;
-      const isCentersIdentity = centers.every((val, idx) => val === idx);
-      if (!isCentersIdentity) {
+      if (!centersAreIdentity(kpuzzle, alg)) {
+        const centers = kpuzzle.algToTransformation(new Alg(alg)).transformationData.CENTERS.permutation;
         throw new Error(
           `Semantic invariant failure: CENTERS not identity for ${c.id} (${alg}). Got: ${JSON.stringify(centers)}`,
         );
@@ -215,7 +173,7 @@ async function runVerification() {
     }
   }
   console.log(
-    `✓ Invariant 1: ${invariant1Count} PLL algorithm variations (primaries + alternatives) preserve CENTERS permutation after rotation normalization`,
+    `✓ Invariant 1: ${invariant1Count} PLL algorithm variations (primaries + alternatives) preserve CENTERS permutation [0, 1, 2, 3, 4, 5]`,
   );
 
   // 2. Edges-Only PLLs: corners identity for every primary and alternative
@@ -235,7 +193,7 @@ async function runVerification() {
     const c = allPllCases.find(item => item.id === id);
     if (!c) throw new Error(`Missing expected edges-only PLL case: ${id}`);
     for (const alg of getAllAlgs(c)) {
-      const transf = getEdgesOnlyTransformation(kpuzzle, alg);
+      const transf = kpuzzle.algToTransformation(new Alg(alg));
       const cornersPerm = transf.transformationData.CORNERS.permutation;
       const cornersOri = transf.transformationData.CORNERS.orientationDelta;
 
@@ -259,11 +217,16 @@ async function runVerification() {
     `✓ Invariant 2: ${invariant2Count} edges-only PLL algorithm variations leave CORNERS in identity permutation and 0 orientation delta`,
   );
 
-  // 3. Look-1 OLL: edge orientation only — corners/permutation out of scope
+  // 3. Look-1 OLL: every alternative must solve the same case as its primary.
+  //    The case state is defined as inverse(primaryAlg), so the primary itself
+  //    returns to solved by construction — it is counted as a smoke test, and the
+  //    alternatives are the assertion that can actually fail. The negative controls
+  //    below prove the check discriminates.
   assertLook1NegativeControls(kpuzzle, look1OllCases, oll2Look);
   console.log('✓ Look-1 negative controls: cross-case algs correctly rejected (y-axis rotation only)');
 
-  let invariant3Count = 0;
+  let look1Primaries = 0;
+  let look1Alternatives = 0;
   for (const c of look1OllCases) {
     const caseTransf = kpuzzle.algToTransformation(new Alg(c.primaryAlg)).invert();
     for (const alg of getAllAlgs(c)) {
@@ -274,16 +237,78 @@ async function runVerification() {
           `Semantic invariant failure: Look-1 OLL algorithm did not orient all U edges for ${c.id} (${alg})`,
         );
       }
-      invariant3Count++;
+      if (alg === c.primaryAlg) look1Primaries++;
+      else look1Alternatives++;
     }
   }
   console.log(
-    `✓ Invariant 3: ${invariant3Count} Look-1 OLL algorithm variations orient all U-layer edges (y/y'/y2 frame only; corners/permutation out of scope)`,
+    `✓ Invariant 3: ${look1Alternatives} Look-1 OLL alternatives solve the same case as their primary ` +
+      `(+${look1Primaries} primaries, identity by construction; y/y'/y2 frame only)`,
+  );
+
+  // 4. Look-1 OLL hold descriptions must match the simulated case state.
+  //    The U-layer slot order is re-derived from the puzzle definition rather than
+  //    written down: hard-coding it once transposed UR and UL, which relabelled
+  //    3 o'clock as 9 and made this check agree with a wrong description.
+  const U_EDGE_SLOTS = deriveUEdgeSlots(kpuzzle);
+  const CLOCK = { UB: '12', UR: '3', UF: '6', UL: '9' };
+
+  /** Clock positions of the already-oriented U edges in a case state. */
+  function holdClocksFor(algStr, slots = U_EDGE_SLOTS) {
+    const inverse = kpuzzle.algToTransformation(new Alg(algStr)).invert();
+    const casePattern = kpuzzle.defaultPattern().applyTransformation(inverse);
+    const orientation = casePattern.patternData.EDGES.orientation;
+    return slots
+      .filter((_, i) => orientation[i] === 0)
+      .map(slot => CLOCK[slot])
+      .sort((a, b) => Number(a) - Number(b));
+  }
+
+  function parseClocksFromDescription(description) {
+    const match = description.match(/(\d+)\s+and\s+(\d+)\s+o-?'?clock/i);
+    if (!match) return null;
+    return [match[1], match[2]].sort((a, b) => Number(a) - Number(b));
+  }
+
+  // The slot order must be load-bearing. If transposing UR and UL changed no result,
+  // this invariant could not have caught the bug it exists to prevent.
+  const transposed = [U_EDGE_SLOTS[0], U_EDGE_SLOTS[3], U_EDGE_SLOTS[2], U_EDGE_SLOTS[1]];
+  if (
+    !look1OllCases.some(
+      c => holdClocksFor(c.primaryAlg).join('&') !== holdClocksFor(c.primaryAlg, transposed).join('&'),
+    )
+  ) {
+    throw new Error(
+      'Hold invariant is not load-bearing: transposing the U-layer slot table changed no result',
+    );
+  }
+
+  for (const c of look1OllCases) {
+    const expectedClocks = holdClocksFor(c.primaryAlg);
+    const descClocks = parseClocksFromDescription(c.description);
+
+    // Fail closed: a case with a nameable two-edge hold must name it.
+    if (expectedClocks.length === 2 && !descClocks) {
+      throw new Error(
+        `Hold description missing for ${c.id}: the case has a two-edge hold at ` +
+          `${expectedClocks.join(' & ')} o-clock but the description states no clock positions`,
+      );
+    }
+    if (descClocks && descClocks.join('&') !== expectedClocks.join('&')) {
+      throw new Error(
+        `Hold description mismatch for ${c.id}: description says ${descClocks.join(' & ')} o-clock ` +
+          `but simulation gives ${expectedClocks.join(' & ')} o-clock`,
+      );
+    }
+  }
+  console.log(
+    `✓ Invariant 4: ${look1OllCases.length} Look-1 OLL hold descriptions match simulation ` +
+      `(U-layer slot order re-derived: ${U_EDGE_SLOTS.join(', ')})`,
   );
 
   console.log(`✓ Total algorithm variations parse-simulated: ${totalSimulated}`);
   console.log(
-    `✓ Semantic invariants checked on ${invariant1Count + invariant2Count + invariant3Count} algorithm variations (primaries + alternatives, group-scoped)`,
+    `✓ Semantic invariants checked on ${invariant1Count + invariant2Count + look1Primaries + look1Alternatives} algorithm variations plus ${look1OllCases.length} hold descriptions (primaries + alternatives, group-scoped)`,
   );
   console.log('--- All verifications and semantic invariant checks passed! ---');
 }
