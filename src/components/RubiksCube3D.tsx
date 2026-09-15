@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, type FC } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo, type FC } from 'react';
 import * as THREE from 'three';
 import { Play, Pause, SkipBack, SkipForward, Shuffle, Target, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, RotateCcw } from 'lucide-react';
 import { parseMoveString, generateScramble, invertMoveString } from '../utils/cubeLogic';
@@ -318,11 +318,28 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
     cubeGroupRef.current.rotation.set(0, 0, 0);
   };
 
-  // Parse move string and compute state sequence whenever initialAlgorithm or practicePhase changes
+  /**
+   * In 'algorithm' mode `initialAlgorithm` is a case solution: solve-phase state 0 is
+   * the unsolved case (solved with the inverse applied) and playing forward reaches
+   * solved. A scramble needs the opposite reading — the viewer wants to see the cube
+   * as it will look *after* the scramble — so in 'scramble' mode the component feeds
+   * the inverted scramble through the same machinery, which lands state 0 on the
+   * scrambled cube. Callers pass the scramble as written; the inversion lives here so
+   * there is one place that knows about it.
+   */
+  const effectiveAlgorithm = useMemo(
+    () =>
+      mode === 'scramble' && initialAlgorithm
+        ? invertMoveString(initialAlgorithm).join(' ')
+        : initialAlgorithm,
+    [initialAlgorithm, mode]
+  );
+
+  // Parse move string and compute state sequence whenever the algorithm or phase changes
   useEffect(() => {
-    if (initialAlgorithm) {
-      const parsed = parseMoveString(initialAlgorithm);
-      const activeMoves = practicePhase === 'setup' ? invertMoveString(initialAlgorithm) : parsed;
+    if (effectiveAlgorithm) {
+      const parsed = parseMoveString(effectiveAlgorithm);
+      const activeMoves = practicePhase === 'setup' ? invertMoveString(effectiveAlgorithm) : parsed;
       setMoves(activeMoves);
 
       const computedStates = computeAllStatesForPhase(parsed, practicePhase);
@@ -338,7 +355,7 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
       setIsPlaying(false);
       jumpToStateIndex(0);
     }
-  }, [initialAlgorithm, autoPlay, practicePhase, computeAllStatesForPhase, jumpToStateIndex]);
+  }, [effectiveAlgorithm, autoPlay, practicePhase, computeAllStatesForPhase, jumpToStateIndex]);
 
   // Set up Three.js Scene ONCE on mount or highlightMode change
   useEffect(() => {

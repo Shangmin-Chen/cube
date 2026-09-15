@@ -6,6 +6,40 @@ import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Shuffle, Trash2, Award, History, RotateCcw } from 'lucide-react';
 
+const INSPECTION_LIMIT_MS = 15000;
+const INSPECTION_DNF_MS = 17000;
+
+function createSolveId(): string {
+  // crypto.randomUUID is only defined in a secure context, so it is absent when the
+  // app is opened over plain http on a LAN. Fall back to a random suffix rather than
+  // throwing mid-solve; uniqueness only has to hold within one solve list.
+  const suffix =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2, 10);
+  return `${Date.now()}-${suffix}`;
+}
+
+function formatInspectionTime(elapsedMs: number): string {
+  if (elapsedMs < INSPECTION_LIMIT_MS) {
+    return formatTime(INSPECTION_LIMIT_MS - elapsedMs);
+  }
+  return `+${formatTime(elapsedMs - INSPECTION_LIMIT_MS)}`;
+}
+
+function inspectionPenaltyForElapsed(elapsedMs: number): 'none' | '+2' | 'DNF' {
+  if (elapsedMs >= INSPECTION_DNF_MS) return 'DNF';
+  if (elapsedMs >= INSPECTION_LIMIT_MS) return '+2';
+  return 'none';
+}
+
+function shouldLetNativeSpaceThrough(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  const tag = target.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON';
+}
+
 export const TimerTab: React.FC = () => {
   const [scramble, setScramble] = useState<string>('');
   const [scrambleLoading, setScrambleLoading] = useState<boolean>(true);
@@ -23,30 +57,74 @@ export const TimerTab: React.FC = () => {
   // Timer states: 'idle' | 'holding' | 'ready' | 'inspection' | 'running'
   const [timerState, setTimerState] = useState<'idle' | 'holding' | 'ready' | 'inspection' | 'running'>('idle');
   const [elapsedTime, setElapsedTime] = useState<number>(0);
+  const [inspectionElapsed, setInspectionElapsed] = useState<number>(0);
   const [useInspection, setUseInspection] = useState<boolean>(false);
 
   const startTimeRef = useRef<number>(0);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inspectionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const inspectionStartRef = useRef<number>(0);
+  const inspectionPenaltyRef = useRef<'none' | '+2' | 'DNF'>('none');
+  const inspectionActiveRef = useRef(false);
+  const timerStateRef = useRef(timerState);
+  const activePointerIdRef = useRef<number | null>(null);
+  const spaceHoldActiveRef = useRef(false);
+  const scrambleRef = useRef(scramble);
   const scrambleGenIdRef = useRef(0);
-  const scrambleRef = useRef('');
-  const activeSolveScrambleRef = useRef('');
+  const scrambleLoadingRef = useRef(true);
+  const attemptScrambleRef = useRef('');
 
-  const scrambleReady = scramble.length > 0 && !scrambleLoading;
-  const timerActive = timerState !== 'idle';
+  useEffect(() => {
+    timerStateRef.current = timerState;
+  }, [timerState]);
+
+  useEffect(() => {
+    scrambleRef.current = scramble;
+  }, [scramble]);
+
+  useEffect(() => {
+    scrambleLoadingRef.current = scrambleLoading;
+  }, [scrambleLoading]);
+
+  const persistSolves = useCallback((updated: SolveRecord[]) => {
+    try {
+      localStorage.setItem('cfop_solves', JSON.stringify(updated));
+    } catch {
+      // Fallback
+    }
+  }, []);
+
+  const appendSolve = useCallback(
+    (record: Omit<SolveRecord, 'id'> & { id?: string }) => {
+      const newRecord: SolveRecord = {
+        ...record,
+        id: record.id ?? createSolveId(),
+      };
+      setSolves(prev => {
+        const updated = [newRecord, ...prev];
+        persistSolves(updated);
+        return updated;
+      });
+    },
+    [persistSolves]
+  );
 
   // Unmount cleanup
   useEffect(() => {
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+      if (inspectionIntervalRef.current) clearInterval(inspectionIntervalRef.current);
     };
   }, []);
 
-  useEffect(() => {
-    scrambleRef.current = scramble;
-  }, [scramble]);
-
+  /**
+   * WCA scrambles are generated from a random state by a WASM worker, so this is
+   * async and can be superseded. Each call takes a generation id and a late
+   * resolution is discarded, which keeps a slow first scramble from overwriting a
+   * newer one the user asked for.
+   */
   const handleNewScramble = useCallback(async () => {
     const genId = ++scrambleGenIdRef.current;
     setScrambleLoading(true);
@@ -57,104 +135,203 @@ export const TimerTab: React.FC = () => {
       setScramble(next);
     } catch {
       if (genId !== scrambleGenIdRef.current) return;
-      setScrambleError('Failed to generate scramble.');
+      setScrambleError('Could not generate a scramble. Try again.');
     } finally {
-      if (genId === scrambleGenIdRef.current) {
-        setScrambleLoading(false);
-      }
+      if (genId === scrambleGenIdRef.current) setScrambleLoading(false);
     }
   }, []);
 
-  // Generate initial scramble
+  // Generate the first scramble on mount.
   useEffect(() => {
     void handleNewScramble();
   }, [handleNewScramble]);
 
-  // Start actual timer
-  const startTimer = useCallback(() => {
-    const solveScramble = scrambleRef.current;
-    if (!solveScramble) return;
-    activeSolveScrambleRef.current = solveScramble;
-    setTimerState('running');
-    startTimeRef.current = performance.now();
-    timerIntervalRef.current = setInterval(() => {
-      setElapsedTime(performance.now() - startTimeRef.current);
-    }, 10);
+  const clearInspectionTimer = useCallback(() => {
+    if (inspectionIntervalRef.current) {
+      clearInterval(inspectionIntervalRef.current);
+      inspectionIntervalRef.current = null;
+    }
   }, []);
+
+  const recordInspectionDnf = useCallback(() => {
+    if (!inspectionActiveRef.current) return;
+    inspectionActiveRef.current = false;
+    timerStateRef.current = 'idle';
+
+    clearInspectionTimer();
+    inspectionPenaltyRef.current = 'none';
+    setInspectionElapsed(0);
+    setElapsedTime(0);
+    setTimerState('idle');
+    const recordedScramble = attemptScrambleRef.current || scrambleRef.current;
+    attemptScrambleRef.current = '';
+    appendSolve({
+      time: 0,
+      scramble: recordedScramble,
+      date: Date.now(),
+      penalty: 'DNF',
+    });
+    void handleNewScramble();
+  }, [appendSolve, clearInspectionTimer, handleNewScramble]);
+
+  const beginInspection = useCallback(() => {
+    clearInspectionTimer();
+    inspectionActiveRef.current = true;
+    attemptScrambleRef.current = scrambleRef.current;
+    inspectionPenaltyRef.current = 'none';
+    inspectionStartRef.current = performance.now();
+    setInspectionElapsed(0);
+    setElapsedTime(0);
+    timerStateRef.current = 'inspection';
+    setTimerState('inspection');
+
+    inspectionIntervalRef.current = setInterval(() => {
+      const elapsed = performance.now() - inspectionStartRef.current;
+      setInspectionElapsed(elapsed);
+      if (inspectionPenaltyForElapsed(elapsed) === 'DNF') {
+        recordInspectionDnf();
+      }
+    }, 10);
+  }, [clearInspectionTimer, recordInspectionDnf]);
+
+  // Start actual timer
+  const startTimer = useCallback(
+    (inspectionPenalty: 'none' | '+2' | 'DNF' = 'none') => {
+      inspectionActiveRef.current = false;
+      timerStateRef.current = 'running';
+      if (!attemptScrambleRef.current) {
+        attemptScrambleRef.current = scrambleRef.current;
+      }
+      clearInspectionTimer();
+      inspectionPenaltyRef.current = inspectionPenalty;
+      setInspectionElapsed(0);
+      setElapsedTime(0);
+      setTimerState('running');
+      startTimeRef.current = performance.now();
+      timerIntervalRef.current = setInterval(() => {
+        setElapsedTime(performance.now() - startTimeRef.current);
+      }, 10);
+    },
+    [clearInspectionTimer]
+  );
 
   // Stop timer and record solve
   const stopTimer = useCallback(() => {
-    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    const recordedScramble = activeSolveScrambleRef.current;
-    if (!recordedScramble) {
-      setTimerState('idle');
-      return;
-    }
+    if (timerStateRef.current !== 'running') return;
+    timerStateRef.current = 'idle';
 
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     const finalTime = performance.now() - startTimeRef.current;
     setElapsedTime(finalTime);
     setTimerState('idle');
-    activeSolveScrambleRef.current = '';
 
-    const newRecord: SolveRecord = {
-      id: Date.now().toString(),
+    const inspectionPenalty = inspectionPenaltyRef.current;
+    inspectionPenaltyRef.current = 'none';
+
+    const recordedScramble = attemptScrambleRef.current || scrambleRef.current;
+    attemptScrambleRef.current = '';
+
+    appendSolve({
       time: Math.round(finalTime),
       scramble: recordedScramble,
       date: Date.now(),
-      penalty: 'none',
-    };
-
-    setSolves(prev => {
-      const updated = [newRecord, ...prev];
-      try {
-        localStorage.setItem('cfop_solves', JSON.stringify(updated));
-      } catch {
-        // Fallback
-      }
-      return updated;
+      penalty: inspectionPenalty,
     });
 
     void handleNewScramble();
-  }, [handleNewScramble]);
+  }, [appendSolve, handleNewScramble]);
 
   const handleTriggerPress = useCallback(() => {
-    if (timerState === 'running') {
+    const state = timerStateRef.current;
+
+    if (state === 'running') {
       stopTimer();
-    } else if (timerState === 'idle') {
-      if (!scrambleReady) return;
+    } else if (state === 'idle') {
+      // Nothing to time until a scramble exists: generation is async now, and a solve
+      // started before it resolves would be recorded against an empty scramble.
+      if (!scrambleRef.current || scrambleLoadingRef.current) return;
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+      timerStateRef.current = 'holding';
       setTimerState('holding');
       holdTimerRef.current = setTimeout(() => {
+        holdTimerRef.current = null;
+        timerStateRef.current = 'ready';
         setTimerState('ready');
       }, 300);
-    } else if (timerState === 'inspection') {
-      startTimer();
+    } else if (state === 'inspection') {
+      if (!inspectionActiveRef.current) return;
+
+      const elapsed = performance.now() - inspectionStartRef.current;
+      const penalty = inspectionPenaltyForElapsed(elapsed);
+      if (penalty === 'DNF') {
+        recordInspectionDnf();
+        return;
+      }
+      startTimer(penalty);
     }
-  }, [timerState, scrambleReady, startTimer, stopTimer]);
+  }, [recordInspectionDnf, startTimer, stopTimer]);
 
   const handleTriggerRelease = useCallback(() => {
+    const state = timerStateRef.current;
+
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
 
-    if (timerState === 'ready') {
+    if (state === 'ready') {
       if (useInspection) {
-        setTimerState('inspection');
+        beginInspection();
       } else {
         startTimer();
       }
-    } else if (timerState === 'holding') {
+    } else if (state === 'holding') {
+      timerStateRef.current = 'idle';
       setTimerState('idle');
     }
-  }, [timerState, useInspection, startTimer]);
+  }, [beginInspection, startTimer, useInspection]);
 
-  // Keyboard events for spacebar timer control
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.button !== 0) return;
+      if (spaceHoldActiveRef.current) return;
+      if (activePointerIdRef.current !== null) return;
+      activePointerIdRef.current = e.pointerId;
+      e.preventDefault();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      handleTriggerPress();
+    },
+    [handleTriggerPress]
+  );
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (spaceHoldActiveRef.current) return;
+      if (activePointerIdRef.current !== e.pointerId) return;
+      activePointerIdRef.current = null;
+      e.preventDefault();
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+      handleTriggerRelease();
+    },
+    [handleTriggerRelease]
+  );
+
+  // Keyboard events for spacebar timer control (window-level only to avoid double-firing)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || e.repeat) return;
+      if (activePointerIdRef.current !== null) return;
+      if (shouldLetNativeSpaceThrough(e.target) || shouldLetNativeSpaceThrough(document.activeElement)) {
+        return;
+      }
       e.preventDefault();
+      spaceHoldActiveRef.current = true;
       handleTriggerPress();
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code !== 'Space') return;
+      if (e.code !== 'Space' || e.repeat) return;
+      if (!spaceHoldActiveRef.current) return;
+      spaceHoldActiveRef.current = false;
       e.preventDefault();
       handleTriggerRelease();
     };
@@ -171,11 +348,7 @@ export const TimerTab: React.FC = () => {
   const handlePenalty = (id: string, penalty: 'none' | '+2' | 'DNF') => {
     setSolves(prev => {
       const updated = prev.map(s => (s.id === id ? { ...s, penalty } : s));
-      try {
-        localStorage.setItem('cfop_solves', JSON.stringify(updated));
-      } catch {
-        // Fallback
-      }
+      persistSolves(updated);
       return updated;
     });
   };
@@ -183,11 +356,7 @@ export const TimerTab: React.FC = () => {
   const handleDeleteSolve = (id: string) => {
     setSolves(prev => {
       const updated = prev.filter(s => s.id !== id);
-      try {
-        localStorage.setItem('cfop_solves', JSON.stringify(updated));
-      } catch {
-        // Fallback
-      }
+      persistSolves(updated);
       return updated;
     });
   };
@@ -203,6 +372,17 @@ export const TimerTab: React.FC = () => {
     }
   };
 
+  const displayTime =
+    timerState === 'inspection' ? formatInspectionTime(inspectionElapsed) : formatTime(elapsedTime);
+
+  const inspectionPenalty = inspectionPenaltyForElapsed(inspectionElapsed);
+  const inspectionStatus =
+    inspectionPenalty === 'DNF'
+      ? 'Inspection over 17s — DNF'
+      : inspectionPenalty === '+2'
+      ? '+2 penalty if you start now'
+      : 'Inspecting... Press Spacebar or Touch to Start Solve!';
+
   // Stats calculation
   const timesArray = solves.map(s => (s.penalty === 'DNF' ? -1 : s.time + (s.penalty === '+2' ? 2000 : 0)));
   const validTimes = timesArray.filter(t => t > 0);
@@ -217,32 +397,21 @@ export const TimerTab: React.FC = () => {
         <Badge variant="amber" className="flex items-center gap-1.5">
           <Shuffle className="w-3.5 h-3.5" /> WCA Official 3x3 Scramble
         </Badge>
-        <div className="text-lg md:text-2xl font-mono font-bold text-white tracking-wide leading-relaxed max-w-3xl">
-          {scrambleLoading && !scramble
-            ? 'Generating scramble…'
-            : scramble || (scrambleError ? 'Scramble unavailable' : 'Generating scramble…')}
+        <div
+          className="text-lg md:text-2xl font-mono font-bold text-white tracking-wide leading-relaxed max-w-3xl"
+          aria-live="polite"
+        >
+          {scrambleError ?? (scrambleLoading ? 'Generating scramble…' : scramble)}
         </div>
-        {scrambleError && (
-          <p className="text-xs text-rose-400 flex items-center gap-2">
-            {scrambleError}
-            <button
-              type="button"
-              onClick={() => void handleNewScramble()}
-              disabled={scrambleLoading || timerActive}
-              className="underline hover:text-rose-300 disabled:opacity-50 disabled:no-underline"
-            >
-              Retry
-            </button>
-          </p>
-        )}
         <button
           type="button"
           aria-label="Generate new WCA scramble"
           onClick={() => void handleNewScramble()}
-          disabled={scrambleLoading || timerActive}
+          disabled={scrambleLoading || timerState !== 'idle'}
           className="px-4 py-2 rounded-lg bg-[#2d2d2d] hover:bg-[#383838] border border-[#383838] text-[#d4d4d4] text-xs font-semibold flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <RotateCcw className="w-3.5 h-3.5" /> New Scramble
+          <RotateCcw className="w-3.5 h-3.5" />
+          {scrambleLoading ? 'Generating…' : 'New Scramble'}
         </button>
       </Card>
 
@@ -251,7 +420,13 @@ export const TimerTab: React.FC = () => {
         {/* Left: 3D Scramble Visualizer */}
         <div className="lg:col-span-5 flex flex-col gap-3">
           <h3 className="text-xs font-bold text-[#888888] uppercase tracking-wider px-1">Scramble Preview</h3>
-          <RubiksCube3D initialAlgorithm={scramble} autoPlay={false} size="h-[320px]" />
+          <RubiksCube3D
+            initialAlgorithm={scramble}
+            mode="scramble"
+            autoPlay={false}
+            showControls={false}
+            size="h-[320px]"
+          />
         </div>
 
         {/* Center: Digital Timer with Touch & Mouse support */}
@@ -259,32 +434,15 @@ export const TimerTab: React.FC = () => {
           role="button"
           tabIndex={0}
           aria-label="Timer press area"
-          onMouseDown={handleTriggerPress}
-          onMouseUp={handleTriggerRelease}
-          onTouchStart={handleTriggerPress}
-          onTouchEnd={handleTriggerRelease}
-          onKeyDown={e => {
-            if (e.key === ' ' || e.key === 'Enter') {
-              e.preventDefault();
-              handleTriggerPress();
-            }
-          }}
-          onKeyUp={e => {
-            if (e.key === ' ' || e.key === 'Enter') {
-              e.preventDefault();
-              handleTriggerRelease();
-            }
-          }}
-          aria-disabled={!scrambleReady && timerState === 'idle'}
-          className={`lg:col-span-7 flex flex-col items-center justify-center p-10 min-h-[340px] relative select-none outline-none ${
-            scrambleReady || timerActive ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
-          }`}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          className="lg:col-span-7 flex flex-col items-center justify-center p-10 min-h-[340px] relative select-none cursor-pointer outline-none touch-none"
         >
           {/* Inspection Mode Toggle */}
           <div
             onClick={e => e.stopPropagation()}
-            onMouseDown={e => e.stopPropagation()}
-            onTouchStart={e => e.stopPropagation()}
+            onPointerDown={e => e.stopPropagation()}
             className="absolute top-4 right-4 flex items-center gap-2 text-xs text-[#888888] z-10"
           >
             <input
@@ -310,16 +468,15 @@ export const TimerTab: React.FC = () => {
                 : 'text-[#d4d4d4]'
             }`}
           >
-            {formatTime(elapsedTime)}
+            {displayTime}
           </div>
 
           {/* Status Instruction */}
           <p className="text-xs font-medium text-[#888888] mt-6 tracking-wider uppercase">
-            {timerState === 'idle' && !scrambleReady && (scrambleLoading ? 'Generating scramble…' : 'Waiting for scramble…')}
-            {timerState === 'idle' && scrambleReady && 'Press and Hold Spacebar (or Touch Screen) to Ready'}
+            {timerState === 'idle' && 'Press and Hold Spacebar (or Touch Screen) to Ready'}
             {timerState === 'holding' && 'Hold...'}
             {timerState === 'ready' && 'Release Spacebar to Start!'}
-            {timerState === 'inspection' && 'Inspecting... Press Spacebar or Touch to Start Solve!'}
+            {timerState === 'inspection' && inspectionStatus}
             {timerState === 'running' && 'Press Spacebar / Touch to Stop'}
           </p>
         </Card>
