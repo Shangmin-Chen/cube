@@ -102,7 +102,8 @@ export function transform2LookOLL(rawAlgs, kpuzzle) {
       id: `oll-2look-${rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
       name: rawName,
       group: item.group?.includes('Edges') ? 'Edges (Look 1)' : 'Corners (Look 2)',
-      probability: '1/4',
+      // No fabricated probability: an unrecognised upstream case must fail
+      // verify:algs rather than ship a made-up figure (see issue #19).
       description: `2-Look OLL ${rawName}`,
       why: `Orient ${item.group?.includes('Edges') ? 'edges' : 'corners'} into solved orientation.`,
     };
@@ -158,7 +159,7 @@ const PLL_2LOOK_META = {
     id: 'pll-2look-tperm',
     name: 'Headlights (T Permutation)',
     group: 'Corners (Look 1)',
-    probability: '4/5',
+    probability: '2/3',
     description: 'Swaps 2 right corners & 2 edges. Headlights on left.',
     why: "Pops out two F2L pairs (R U R' U'), swaps right 2 corners and 2 edges, then restores both F2L pairs.",
   },
@@ -166,7 +167,7 @@ const PLL_2LOOK_META = {
     id: 'pll-2look-yperm',
     name: 'Diagonal (Y Permutation)',
     group: 'Corners (Look 1)',
-    probability: '1/5',
+    probability: '1/6',
     description: 'Swaps diagonal corners when no headlights exist.',
     why: "Combines an edge setup trigger F (R U R' U') F' with a corner swap insert to resolve diagonal corner misalignment.",
   },
@@ -220,7 +221,8 @@ export function transform2LookPLL(rawAlgs, kpuzzle) {
       id: `pll-2look-${rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
       name: rawName,
       group: item.group?.includes('Corners') ? 'Corners (Look 1)' : 'Edges (Look 2)',
-      probability: '1/4',
+      // No fabricated probability: an unrecognised upstream case must fail
+      // verify:algs rather than ship a made-up figure (see issue #19).
       description: `2-Look PLL ${rawName}`,
       why: `Permute ${item.group?.includes('Corners') ? 'corners' : 'edges'} into solved position.`,
     };
