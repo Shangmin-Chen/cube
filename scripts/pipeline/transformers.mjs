@@ -102,7 +102,8 @@ export function transform2LookOLL(rawAlgs, kpuzzle) {
       id: `oll-2look-${rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
       name: rawName,
       group: item.group?.includes('Edges') ? 'Edges (Look 1)' : 'Corners (Look 2)',
-      probability: '1/4',
+      // No fabricated probability: an unrecognised upstream case must fail
+      // verify:algs rather than ship a made-up figure (see issue #19).
       description: `2-Look OLL ${rawName}`,
       why: `Orient ${item.group?.includes('Edges') ? 'edges' : 'corners'} into solved orientation.`,
     };
@@ -220,7 +221,8 @@ export function transform2LookPLL(rawAlgs, kpuzzle) {
       id: `pll-2look-${rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
       name: rawName,
       group: item.group?.includes('Corners') ? 'Corners (Look 1)' : 'Edges (Look 2)',
-      probability: '1/4',
+      // No fabricated probability: an unrecognised upstream case must fail
+      // verify:algs rather than ship a made-up figure (see issue #19).
       description: `2-Look PLL ${rawName}`,
       why: `Permute ${item.group?.includes('Corners') ? 'corners' : 'edges'} into solved position.`,
     };
