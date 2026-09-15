@@ -14,7 +14,7 @@ This is **not**:
 
 1. Isolated git worktree `docs/code-quality-review` at `850768c`. Other agents own other worktrees (`fix/issue-3-unify-trigger-table`, `fix/issue-21-trainer-session`, `fix/issue-24-timer-tab`, `fix/issue-43-pin-upstream-fetch`, etc.). This aggregator stayed in this worktree.
 2. Five Cursor 4.6 reviewers ran **in parallel**, one area each: trainer, UI/timer/shell, data/math/types, pipeline, cross-cutting.
-3. Raw output was concatenated into [`_handoff/pass3-raw-findings.md`](../../../_handoff/pass3-raw-findings.md) (T/U/D/P/X IDs plus the existing-issue table).
+3. Raw output was concatenated into [`raw-findings.md`](./raw-findings.md) (T/U/D/P/X IDs plus the existing-issue table).
 4. Aggregator (this pass):
    - Confirmed live GitHub issues with `gh issue list --state all --limit 80`.
    - Deduplicated across T/U/D/P/X.

@@ -21,7 +21,7 @@ Prior LLM spec-memory work exists on local branch `docs/llm-spec-timeline` (spec
 3. **[findings-by-group.md](./findings-by-group.md)** — digestible groups (the 12 new issues + existing-issue comments), with finding IDs, severity, and files.
 4. **[issue-map.md](./issue-map.md)** — every new issue URL, every comment on an existing issue, finding ID → issue.
 5. **[collision-map.md](./collision-map.md)** — shared seams from X-13 (not filed as a bug).
-6. **Raw appendix** — [`_handoff/pass3-raw-findings.md`](../../../_handoff/pass3-raw-findings.md). Invent nothing beyond that file plus live GitHub issue numbers.
+6. **Raw appendix** — [`raw-findings.md`](./raw-findings.md). Invent nothing beyond that file plus live GitHub issue numbers.
 
 ## Five sub-reviews
 
