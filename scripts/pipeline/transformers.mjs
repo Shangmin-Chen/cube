@@ -33,7 +33,7 @@ const OLL_2LOOK_META = {
     name: 'Sune',
     group: 'Corners (Look 2)',
     probability: '4/27',
-    description: '1 yellow corner facing UP at front-left (index 6).',
+    description: '1 corner oriented, at UFL (front-left). The other three twist outward.',
     why: "R U lifts the FR F2L pair and orbits it 360° around top layer before reinserting with R U2 R', twisting 3 corners by 120°.",
   },
   'Antisune': {
@@ -41,7 +41,7 @@ const OLL_2LOOK_META = {
     name: 'Anti-Sune',
     group: 'Corners (Look 2)',
     probability: '4/27',
-    description: '1 yellow corner facing UP at back-right (index 1).',
+    description: '1 corner oriented, at UBR (back-right). The other three twist outward.',
     why: 'Orbits the F2L pair in reverse direction (360° clockwise), twisting 3 corners opposite to Sune.',
   },
   'H': {
@@ -65,7 +65,7 @@ const OLL_2LOOK_META = {
     name: 'U Case (Headlights)',
     group: 'Corners (Look 2)',
     probability: '4/27',
-    description: '2 corners facing UP at UBR and UBL (back pair, slots 1 and 2). Headlights on front face.',
+    description: '2 corners oriented, at UBR and UBL (the back pair). The two misoriented corners sit at the front.',
     why: 'D slice moves isolate bottom layers while pivoting front headlights into top orientation.',
   },
   'T': {
