@@ -625,7 +625,7 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
         setScrambleLoading(false);
       }
     }
-  }, [scrambleLoading, isPlaying, jumpToStateIndex]);
+  }, [scrambleLoading, isPlaying, computeAllStatesForPhase, jumpToStateIndex]);
 
   // Auto-play interval
   useEffect(() => {
