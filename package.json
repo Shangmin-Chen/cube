@@ -9,7 +9,9 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "sync:algs": "node scripts/sync-algorithms.mjs",
-    "verify:algs": "node scripts/verify-cfop.mjs"
+    "test:overrides": "node scripts/test-algorithm-overrides.mjs",
+    "verify:algs": "node scripts/verify-cfop.mjs && npm run test:overrides",
+    "verify:upstream-pin": "node scripts/verify-upstream-pin.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",

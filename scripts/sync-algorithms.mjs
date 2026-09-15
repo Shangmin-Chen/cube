@@ -2,12 +2,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { puzzles } from 'cubing/puzzles';
 import { fetchAlgset } from './ingest/fetcher.mjs';
-import {
-  transform2LookOLL,
-  transform2LookPLL,
-  transformFullOLL,
-  transformFullPLL,
-} from './pipeline/transformers.mjs';
+import { loadLock, writeLock } from './ingest/upstream-lock.mjs';
+import { transformAllCfopDatasets } from './pipeline/transform-pipeline.mjs';
 import { exportDatasets } from './pipeline/exporter.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -22,25 +18,38 @@ const ENDPOINTS = {
   pllFull: 'https://jperm.net/lib/pll.js',
 };
 
+const updatePin = process.argv.includes('--update-pin');
+
 async function main() {
+  if (updatePin) {
+    console.log('--- Updating upstream content pins (--update-pin) ---');
+  }
+
   console.log('--- Starting CFOP Algorithm Ingestion Pipeline ---');
 
   console.log('Initializing cubing/puzzles 3x3x3 simulation...');
   const kpuzzle = await puzzles['3x3x3'].kpuzzle();
 
-  console.log('Fetching raw datasets...');
+  console.log('Fetching raw datasets (pinned upstream)...');
+  const lock = loadLock(undefined, { bootstrap: updatePin });
+  const fetchOptions = { lock, updatePin };
   const [oll2LookRaw, pll2LookRaw, ollFullRaw, pllFullRaw] = await Promise.all([
-    fetchAlgset(ENDPOINTS.oll2Look),
-    fetchAlgset(ENDPOINTS.pll2Look),
-    fetchAlgset(ENDPOINTS.ollFull),
-    fetchAlgset(ENDPOINTS.pllFull),
+    fetchAlgset('oll2Look', ENDPOINTS.oll2Look, fetchOptions),
+    fetchAlgset('pll2Look', ENDPOINTS.pll2Look, fetchOptions),
+    fetchAlgset('ollFull', ENDPOINTS.ollFull, fetchOptions),
+    fetchAlgset('pllFull', ENDPOINTS.pllFull, fetchOptions),
   ]);
 
   console.log('Transforming and validating algorithms with rule-based pipeline...');
-  const oll2LookCases = transform2LookOLL(oll2LookRaw, kpuzzle);
-  const pll2LookCases = transform2LookPLL(pll2LookRaw, kpuzzle);
-  const ollFullCases = transformFullOLL(ollFullRaw, kpuzzle);
-  const pllFullCases = transformFullPLL(pllFullRaw, kpuzzle);
+  const { oll2LookCases, pll2LookCases, ollFullCases, pllFullCases } = transformAllCfopDatasets(
+    {
+      oll2Look: oll2LookRaw,
+      pll2Look: pll2LookRaw,
+      ollFull: ollFullRaw,
+      pllFull: pllFullRaw,
+    },
+    kpuzzle,
+  );
 
   if (oll2LookCases.length !== 10) throw new Error(`Expected 10 cases for 2-Look OLL, got ${oll2LookCases.length}`);
   if (pll2LookCases.length !== 6) throw new Error(`Expected 6 cases for 2-Look PLL, got ${pll2LookCases.length}`);
@@ -53,6 +62,11 @@ async function main() {
     { file: 'oll-full.json', count: ollFullCases.length, data: ollFullCases },
     { file: 'pll-full.json', count: pllFullCases.length, data: pllFullCases },
   ], OUTPUT_DIR);
+
+  if (updatePin) {
+    writeLock(lock);
+    console.log('✓ Upstream lockfile updated at scripts/ingest/upstream.lock.json');
+  }
 
   console.log('--- Algorithm sync complete! All cases validated successfully. ---');
 }
