@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { generateScramble, formatTime, calculateAO, invertMoveString } from '../utils/cubeLogic';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { generateScramble, formatTime, calculateAO } from '../utils/cubeLogic';
 import type { SolveRecord } from '../types/cube';
 import { RubiksCube3D } from './RubiksCube3D';
 import { Card } from './ui/card';
@@ -10,7 +10,14 @@ const INSPECTION_LIMIT_MS = 15000;
 const INSPECTION_DNF_MS = 17000;
 
 function createSolveId(): string {
-  return `${Date.now()}-${crypto.randomUUID()}`;
+  // crypto.randomUUID is only defined in a secure context, so it is absent when the
+  // app is opened over plain http on a LAN. Fall back to a random suffix rather than
+  // throwing mid-solve; uniqueness only has to hold within one solve list.
+  const suffix =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2, 10);
+  return `${Date.now()}-${suffix}`;
 }
 
 function formatInspectionTime(elapsedMs: number): string {
@@ -71,11 +78,6 @@ export const TimerTab: React.FC = () => {
   useEffect(() => {
     scrambleRef.current = scramble;
   }, [scramble]);
-
-  const scramblePreviewAlgorithm = useMemo(
-    () => (scramble ? invertMoveString(scramble).join(' ') : ''),
-    [scramble]
-  );
 
   const persistSolves = useCallback((updated: SolveRecord[]) => {
     try {
@@ -381,7 +383,7 @@ export const TimerTab: React.FC = () => {
         <div className="lg:col-span-5 flex flex-col gap-3">
           <h3 className="text-xs font-bold text-[#888888] uppercase tracking-wider px-1">Scramble Preview</h3>
           <RubiksCube3D
-            initialAlgorithm={scramblePreviewAlgorithm}
+            initialAlgorithm={scramble}
             mode="scramble"
             autoPlay={false}
             showControls={false}
