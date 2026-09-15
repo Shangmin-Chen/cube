@@ -11,6 +11,7 @@ interface RoundSummaryProps {
   learningCount: number;
   activeQueue: AlgCase[];
   masteredIds: Set<string>;
+  learningIds: Set<string>;
   totalBaseCount: number;
   onReviewMissed: () => void;
   onRestart: () => void;
@@ -23,6 +24,7 @@ export const RoundSummary: React.FC<RoundSummaryProps> = ({
   learningCount,
   activeQueue,
   masteredIds,
+  learningIds,
   totalBaseCount,
   onReviewMissed,
   onRestart,
@@ -96,6 +98,7 @@ export const RoundSummary: React.FC<RoundSummaryProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
           {activeQueue.map(c => {
             const isMastered = masteredIds.has(c.id);
+            const isLearning = learningIds.has(c.id);
             return (
               <div
                 key={c.id}
@@ -112,7 +115,7 @@ export const RoundSummary: React.FC<RoundSummaryProps> = ({
                 </div>
 
                 <Badge variant={isMastered ? 'emerald' : 'default'} className="shrink-0 text-[10px]">
-                  {isMastered ? 'Mastered' : 'Learning'}
+                  {isMastered ? 'Mastered' : isLearning ? 'Still Learning' : 'Unmarked'}
                 </Badge>
               </div>
             );

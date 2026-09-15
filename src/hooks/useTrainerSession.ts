@@ -3,16 +3,16 @@ import confetti from 'canvas-confetti';
 import type { AlgCase } from '../types/cube';
 import { getAllCases, getDeckById } from '../services/algService';
 import { invertMoveString } from '../utils/cubeLogic';
-
-// Fisher-Yates shuffle
-function shuffleArray<T>(array: T[]): T[] {
-  const arr = [...array];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
+import {
+  applyCardOutcome,
+  goToPreviousCard,
+  initRoundState,
+  progressPercent as computeProgressPercent,
+  reviewMissedCases,
+  shuffleArray,
+  type CardOutcome,
+  type TrainerRoundState,
+} from './trainerSessionLogic';
 
 export function useTrainerSession(deckId: string, bookmarkedIds: string[], methodId = 'cfop-4look') {
   const [isShuffled, setIsShuffled] = useState<boolean>(true);
@@ -37,22 +37,36 @@ export function useTrainerSession(deckId: string, bookmarkedIds: string[], metho
     return isShuffled ? shuffleArray(baseCases) : [...baseCases];
   });
 
-  // Reset or start a new round
+  const fireConfetti = useCallback(() => {
+    try {
+      confetti({
+        particleCount: 90,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#eab308', '#818cf8', '#22c55e', '#ec4899', '#38bdf8'],
+      });
+    } catch {
+      // Ignore
+    }
+  }, []);
+
+  const applyRoundState = useCallback((next: ReturnType<typeof initRoundState>) => {
+    setActiveQueue(next.activeQueue);
+    setCurrentIndex(next.currentIndex);
+    setRoundNumber(next.roundNumber);
+    setIsRoundFinished(next.isRoundFinished);
+    setMasteredIds(next.masteredIds);
+    setLearningIds(next.learningIds);
+    setIsFlipped(false);
+    setShowHint(false);
+  }, []);
+
+  // Reset or start a new round — mastery sets are scoped to the current round only
   const initRound = useCallback(
     (cases: AlgCase[], shuffle: boolean, round = 1) => {
-      const list = shuffle ? shuffleArray(cases) : [...cases];
-      setActiveQueue(list);
-      setCurrentIndex(0);
-      setIsFlipped(false);
-      setShowHint(false);
-      setIsRoundFinished(false);
-      setRoundNumber(round);
-      if (round === 1) {
-        setMasteredIds(new Set());
-        setLearningIds(new Set());
-      }
+      applyRoundState(initRoundState(cases, shuffle, round));
     },
-    []
+    [applyRoundState],
   );
 
   const isBookmarksDeck = deckId === 'bookmarks';
@@ -80,27 +94,46 @@ export function useTrainerSession(deckId: string, bookmarkedIds: string[], metho
     setShowHint(prev => !prev);
   }, []);
 
-  const advance = useCallback(() => {
-    if (currentIndex + 1 < activeQueue.length) {
-      setCurrentIndex(prev => prev + 1);
-      setIsFlipped(false);
-      setShowHint(false);
-    } else {
-      setIsRoundFinished(true);
-      if (masteredIds.size + 1 >= activeQueue.length) {
-        try {
-          confetti({
-            particleCount: 90,
-            spread: 80,
-            origin: { y: 0.6 },
-            colors: ['#eab308', '#818cf8', '#22c55e', '#ec4899', '#38bdf8'],
-          });
-        } catch {
-          // Ignore
-        }
+  const advanceWithOutcome = useCallback(
+    (outcome: CardOutcome) => {
+      if (!currentCase) return;
+
+      const { nextState, shouldFireConfetti } = applyCardOutcome(
+        {
+          activeQueue,
+          currentIndex,
+          roundNumber,
+          isRoundFinished,
+          masteredIds,
+          learningIds,
+        },
+        outcome,
+        currentCase.id,
+      );
+
+      setMasteredIds(nextState.masteredIds);
+      setLearningIds(nextState.learningIds);
+      setCurrentIndex(nextState.currentIndex);
+      setIsRoundFinished(nextState.isRoundFinished);
+
+      if (!nextState.isRoundFinished) {
+        setIsFlipped(false);
+        setShowHint(false);
+      } else if (shouldFireConfetti) {
+        fireConfetti();
       }
-    }
-  }, [currentIndex, activeQueue.length, masteredIds.size]);
+    },
+    [
+      activeQueue,
+      currentCase,
+      currentIndex,
+      fireConfetti,
+      isRoundFinished,
+      learningIds,
+      masteredIds,
+      roundNumber,
+    ],
+  );
 
   const next = useCallback(() => {
     if (currentIndex + 1 < activeQueue.length) {
@@ -111,38 +144,59 @@ export function useTrainerSession(deckId: string, bookmarkedIds: string[], metho
   }, [currentIndex, activeQueue.length]);
 
   const prev = useCallback(() => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-      setIsFlipped(false);
-      setShowHint(false);
-    }
-  }, [currentIndex]);
+    const prior: TrainerRoundState = {
+      activeQueue,
+      currentIndex,
+      roundNumber,
+      isRoundFinished,
+      masteredIds,
+      learningIds,
+    };
+    const previous = goToPreviousCard(prior);
+    if (!previous) return;
+    setCurrentIndex(previous.currentIndex);
+    setIsRoundFinished(previous.isRoundFinished);
+    setIsFlipped(false);
+    setShowHint(false);
+  }, [activeQueue, currentIndex, isRoundFinished, learningIds, masteredIds, roundNumber]);
 
   // Mastery handlers
   const markMastered = useCallback(() => {
-    if (!currentCase) return;
-    setMasteredIds(prev => new Set(prev).add(currentCase.id));
-    setLearningIds(prev => {
-      const nextSet = new Set(prev);
-      nextSet.delete(currentCase.id);
-      return nextSet;
-    });
-    advance();
-  }, [currentCase, advance]);
+    advanceWithOutcome('mastered');
+  }, [advanceWithOutcome]);
 
   const markLearning = useCallback(() => {
-    if (!currentCase) return;
-    setLearningIds(prev => new Set(prev).add(currentCase.id));
-    advance();
-  }, [currentCase, advance]);
+    advanceWithOutcome('learning');
+  }, [advanceWithOutcome]);
 
   // Spaced repetition: Drill only the missed cases
   const reviewMissed = useCallback(() => {
-    const missed = baseCases.filter(c => learningIds.has(c.id));
-    if (missed.length > 0) {
-      initRound(missed, isShuffled, roundNumber + 1);
+    const nextRound = reviewMissedCases(
+      {
+        activeQueue,
+        currentIndex,
+        roundNumber,
+        isRoundFinished,
+        masteredIds,
+        learningIds,
+      },
+      baseCases,
+      isShuffled,
+    );
+    if (nextRound) {
+      applyRoundState(nextRound);
     }
-  }, [baseCases, learningIds, isShuffled, roundNumber, initRound]);
+  }, [
+    activeQueue,
+    applyRoundState,
+    baseCases,
+    currentIndex,
+    isRoundFinished,
+    isShuffled,
+    learningIds,
+    masteredIds,
+    roundNumber,
+  ]);
 
   // Restart full deck
   const restart = useCallback(() => {
@@ -164,9 +218,7 @@ export function useTrainerSession(deckId: string, bookmarkedIds: string[], metho
     setTimeout(() => setCopiedType(null), 1800);
   }, []);
 
-  const progressPercent = activeQueue.length > 0
-    ? Math.round(((currentIndex + (isRoundFinished ? 1 : 0)) / activeQueue.length) * 100)
-    : 0;
+  const progressPercent = computeProgressPercent(currentIndex, activeQueue.length);
 
   return {
     allCases,

@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "sync:algs": "node scripts/sync-algorithms.mjs",
-    "verify:algs": "node scripts/verify-cfop.mjs"
+    "verify:algs": "node scripts/verify-cfop.mjs",
+    "verify:trainer": "node --experimental-strip-types scripts/verify-trainer-session.ts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",
