@@ -7,7 +7,7 @@
     "group": "Corners (Look 1)",
     "primaryAlg": "R U R' U' R' F R2 U' R' U' R U R' F'",
     "alternativeAlgs": [],
-    "probability": "4/5",
+    "probability": "2/3",
     "description": "Swaps 2 right corners & 2 edges. Headlights on left.",
     "why": "Pops out two F2L pairs (R U R' U'), swaps right 2 corners and 2 edges, then restores both F2L pairs.",
     "is2Look": true
@@ -20,7 +20,7 @@
     "group": "Corners (Look 1)",
     "primaryAlg": "F R U' R' U' R U R' F' R U R' U' R' F R F'",
     "alternativeAlgs": [],
-    "probability": "1/5",
+    "probability": "1/6",
     "description": "Swaps diagonal corners when no headlights exist.",
     "why": "Combines an edge setup trigger F (R U R' U') F' with a corner swap insert to resolve diagonal corner misalignment.",
     "is2Look": true
