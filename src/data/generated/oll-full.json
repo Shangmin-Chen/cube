@@ -64,7 +64,7 @@
     "group": "Square Shape",
     "primaryAlg": "l' U2 L U L' U l",
     "alternativeAlgs": [
-      "y2 r' U2 R U R' U r"
+      "y2 r' U2 R U R' U r y2"
     ],
     "probability": "1/54",
     "description": "OLL Case 5 (Square Shape group).",
@@ -103,7 +103,7 @@
     "primaryAlg": "l' U' L U' L' U2 l",
     "alternativeAlgs": [
       "R U2 R' U2 R' F R F'",
-      "y2 r' U' R U' R' U2 r"
+      "y2 r' U' R U' R' U2 r y2"
     ],
     "probability": "1/54",
     "description": "OLL Case 8 (Small Lightning Bolt group).",
@@ -129,7 +129,7 @@
     "group": "Fish Shape",
     "primaryAlg": "R U R' U R' F R F' R U2 R'",
     "alternativeAlgs": [
-      "y2 r U R' U R U' R' U' r' R (U R U' R')"
+      "y2 r U R' U R U' R' U' r' R (U R U' R') y2"
     ],
     "probability": "1/54",
     "description": "OLL Case 10 (Fish Shape group).",
@@ -143,7 +143,7 @@
     "group": "Small Lightning Bolt",
     "primaryAlg": "r U R' U R' F R F' R U2 r'",
     "alternativeAlgs": [
-      "y2 r' R2 U R' U R U2 R' U M'"
+      "y2 r' R2 U R' U R U2 R' U M' y2"
     ],
     "probability": "1/54",
     "description": "OLL Case 11 (Small Lightning Bolt group).",
@@ -195,7 +195,7 @@
     "group": "Knight Move Shape",
     "primaryAlg": "l' U' l L' U' L U l' U l",
     "alternativeAlgs": [
-      "y2 r' U' r R' U' R U r' U r"
+      "y2 r' U' r R' U' R U r' U r y2"
     ],
     "probability": "1/54",
     "description": "OLL Case 15 (Knight Move Shape group).",
@@ -221,7 +221,7 @@
     "group": "Dot",
     "primaryAlg": "F R' F' R2 r' U R U' R' U' M'",
     "alternativeAlgs": [
-      "y2 R U R' U R' F R F' U2 R' F R F'"
+      "y2 R U R' U R' F R F' U2 R' F R F' y2"
     ],
     "probability": "1/54",
     "description": "OLL Case 17 (Dot group).",
@@ -301,7 +301,7 @@
     "group": "Cross",
     "primaryAlg": "R2 D' R U2 R' D R U2 R",
     "alternativeAlgs": [
-      "y2 R2 D R' U2 R D' R' U2 R'"
+      "y2 R2 D R' U2 R D' R' U2 R' y2"
     ],
     "probability": "1/54",
     "description": "OLL Case 23 (Cross group).",
@@ -421,7 +421,7 @@
     "group": "P Shape",
     "primaryAlg": "L U F' U' L' U L F L'",
     "alternativeAlgs": [
-      "y2 S R U R' U' R' F R f'"
+      "y2 S R U R' U' R' F R f' y2"
     ],
     "probability": "1/54",
     "description": "OLL Case 32 (P Shape group).",
@@ -473,7 +473,7 @@
     "group": "W Shape",
     "primaryAlg": "L' U' L U' L' U L U L F' L' F",
     "alternativeAlgs": [
-      "y2 R' U' R U' R' U R U R B' R' B"
+      "y2 R' U' R U' R' U R U R B' R' B y2"
     ],
     "probability": "1/54",
     "description": "OLL Case 36 (W Shape group).",
@@ -513,7 +513,7 @@
     "group": "Big Lightning Bolt",
     "primaryAlg": "L F' L' U' L U F U' L'",
     "alternativeAlgs": [
-      "y2 R B' R' U' R U B U' R'"
+      "y2 R B' R' U' R U B U' R' y2"
     ],
     "probability": "1/54",
     "description": "OLL Case 39 (Big Lightning Bolt group).",
@@ -577,7 +577,7 @@
     "group": "P Shape",
     "primaryAlg": "F U R U' R' F'",
     "alternativeAlgs": [
-      "y2 f R U R' U' f'"
+      "y2 f R U R' U' f' y2"
     ],
     "probability": "1/54",
     "description": "OLL Case 44 (P Shape group).",
@@ -666,7 +666,7 @@
     "group": "I Shape",
     "primaryAlg": "F U R U' R' U R U' R' F'",
     "alternativeAlgs": [
-      "y2 f R U R' U' R U R' U' f'"
+      "y2 f R U R' U' R U R' U' f' y2"
     ],
     "probability": "1/54",
     "description": "OLL Case 51 (I Shape group).",
@@ -680,7 +680,7 @@
     "group": "I Shape",
     "primaryAlg": "R U R' U R U' B U' B' R'",
     "alternativeAlgs": [
-      "y2 R' F' U' F U' (R U R' U) R",
+      "y2 R' F' U' F U' (R U R' U) R y2",
       "R U R' U R U' y R U' R' F' y'"
     ],
     "probability": "1/54",
@@ -695,7 +695,7 @@
     "group": "Small L Shape",
     "primaryAlg": "l' U2 L U L' U' L U L' U l",
     "alternativeAlgs": [
-      "y2 r' U2 (R U R' U') R U R' U r",
+      "y2 r' U2 (R U R' U') R U R' U r y2",
       "y r' U' R U' R' U R U' R' U2 r y'"
     ],
     "probability": "1/54",

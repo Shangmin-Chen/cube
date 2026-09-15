@@ -35,8 +35,8 @@
     "group": "Edges (Look 1)",
     "primaryAlg": "f R U R' U' f'",
     "alternativeAlgs": [
-      "y2 F U R U' R' F'",
-      "y2 r U R' U' r' R (U R U' R')"
+      "y2 F U R U' R' F' y2",
+      "y2 r U R' U' r' R (U R U' R') y2"
     ],
     "probability": "4/8",
     "description": "Hold L at top-left corner (9 and 12 o-clock).",
