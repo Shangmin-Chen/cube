@@ -306,6 +306,85 @@ async function runVerification() {
       `(U-layer slot order re-derived: ${U_EDGE_SLOTS.join(', ')})`,
   );
 
+  // 5. Probability convention: each 2-look sub-step's case probabilities plus its
+  //    implicit skip must sum to 1 (issue #19). The older "each deck sums to 1" rule
+  //    did not discriminate — 2-look PLL sums to 23/12 for the unrelated structural
+  //    reason that corners and edges are separate stages, and 4/5 + 1/5 = 1 passed
+  //    while the corner values used a different convention from the edges.
+  function parseFraction(value, id) {
+    const match = /^(\d+)\/(\d+)$/.exec(String(value).trim());
+    if (!match) {
+      throw new Error(`Probability invariant failure: ${id} has unparseable probability "${value}"`);
+    }
+    return [Number(match[1]), Number(match[2])];
+  }
+
+  /** Exact rational sum, so 1/3 + 1/3 + 1/6 + 1/12 is not a floating-point near-miss. */
+  function sumFractions(pairs) {
+    let num = 0;
+    let den = 1;
+    for (const [n, d] of pairs) {
+      num = num * d + n * den;
+      den *= d;
+    }
+    return [num, den];
+  }
+
+  const SUB_STEPS = [
+    { label: 'OLL edges (Look 1)', cases: oll2Look, group: 'Edges (Look 1)' },
+    { label: 'OLL corners (Look 2)', cases: oll2Look, group: 'Corners (Look 2)' },
+    { label: 'PLL corners (Look 1)', cases: pll2Look, group: 'Corners (Look 1)' },
+    { label: 'PLL edges (Look 2)', cases: pll2Look, group: 'Edges (Look 2)' },
+  ];
+
+  for (const { label, cases, group } of SUB_STEPS) {
+    const members = cases.filter(c => c.group === group);
+    if (members.length === 0) {
+      throw new Error(`Probability invariant failure: no cases found for sub-step "${label}"`);
+    }
+
+    const [num, den] = sumFractions(members.map(c => parseFraction(c.probability, c.id)));
+    if (num > den) {
+      throw new Error(
+        `Probability invariant failure: ${label} case probabilities sum to ${num}/${den}, which exceeds 1`,
+      );
+    }
+
+    // The remainder is the skip probability. It must be strictly positive: every
+    // 2-look sub-step can be skipped, so a sub-step summing to exactly 1 means the
+    // values are conditioned on no skip — the mismatch #19 was filed for.
+    if (num === den) {
+      throw new Error(
+        `Probability invariant failure: ${label} case probabilities sum to exactly 1, ` +
+          'leaving no skip probability. 2-look values must be unconditional, not conditioned on no skip.',
+      );
+    }
+  }
+
+  const SUB_STEP_SUMMARY = SUB_STEPS.map(({ label, cases, group }) => {
+    const members = cases.filter(c => c.group === group);
+    const [num, den] = sumFractions(members.map(c => parseFraction(c.probability, c.id)));
+    const skipNum = den - num;
+    const divisor = (a, b) => (b === 0 ? a : divisor(b, a % b));
+    const g = divisor(skipNum, den) || 1;
+    return `${label} + ${skipNum / g}/${den / g} skip`;
+  }).join('; ');
+  console.log(`✓ Invariant 5: every 2-look sub-step plus its skip sums to 1 — ${SUB_STEP_SUMMARY}`);
+
+  // Guard retained from the original AC: no case may display a probability whose
+  // denominator belongs to another deck, which is how full-PLL values leaked before.
+  const TWO_LOOK_DENOMINATORS = new Set([4, 8, 12, 27, 3, 6, 2]);
+  for (const c of [...oll2Look, ...pll2Look]) {
+    const [, den] = parseFraction(c.probability, c.id);
+    if (!TWO_LOOK_DENOMINATORS.has(den)) {
+      throw new Error(
+        `Probability invariant failure: ${c.id} shows "${c.probability}", whose denominator ${den} ` +
+          'does not belong to a 2-look sub-step',
+      );
+    }
+  }
+  console.log('✓ Invariant 6: no 2-look case displays a probability from another deck\'s denominator');
+
   console.log(`✓ Total algorithm variations parse-simulated: ${totalSimulated}`);
   console.log(
     `✓ Semantic invariants checked on ${invariant1Count + invariant2Count + look1Primaries + look1Alternatives} algorithm variations plus ${look1OllCases.length} hold descriptions (primaries + alternatives, group-scoped)`,
