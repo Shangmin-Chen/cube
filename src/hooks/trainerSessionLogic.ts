@@ -73,7 +73,8 @@ export function applyCardOutcome(
     };
   }
 
-  const allMastered = masteredIds.size === state.activeQueue.length;
+  const allMastered =
+    state.activeQueue.length > 0 && masteredIds.size === state.activeQueue.length;
   return {
     nextState: {
       ...state,

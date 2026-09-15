@@ -135,6 +135,15 @@ function runVerification(): void {
   assert(progressPercent(0, tenCards.length) === 10, 'Repro 4: first card should read 10%');
   console.log('Repro 4: progressPercent is 100% on last card');
 
+  // Repro 5: an empty round must not celebrate. Both `isLastCard` and the
+  // mastered-count comparison are trivially true at length 0, so a deck that
+  // resolves to no cases used to fire confetti for mastering nothing.
+  const emptyState = initRoundState([], false, 1);
+  assert(emptyState.activeQueue.length === 0, 'Repro 5: empty round should have an empty queue');
+  const emptyOutcome = applyCardOutcome(emptyState, 'mastered', 'ghost-card');
+  assert(!emptyOutcome.shouldFireConfetti, 'Repro 5: an empty round must not fire confetti');
+  console.log('Repro 5: no confetti for an empty round');
+
   console.log('\nAll trainer session verification checks passed.');
 }
 
