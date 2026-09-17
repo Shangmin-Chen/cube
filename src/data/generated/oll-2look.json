@@ -112,7 +112,7 @@
     "alternativeAlgs": [],
     "probability": "4/27",
     "description": "2 corners oriented, at UBR and UBL (the back pair). The two misoriented corners sit at the front.",
-    "why": "D slice moves isolate bottom layers while pivoting front headlights into top orientation.",
+    "why": "R2 D stages a misoriented corner into the D layer. U2/R-trigger cycles route both misoriented corners through D-layer slots; the final R' orients the last two U-layer corners yellow-up without flipping cross edges.",
     "is2Look": true
   },
   {
@@ -125,7 +125,7 @@
     "alternativeAlgs": [],
     "probability": "4/27",
     "description": "2 corners facing UP on right. Front-left & back-left stickers point out.",
-    "why": "Wide r lift paired with F R F' slot insert rotates corner stickers into top face.",
+    "why": "Wide Sexy (r U R' U') moves one oriented U-layer corner off U, then Wide Sledgehammer (r' F R F') twists the two misoriented corner cubies yellow-up.",
     "is2Look": true
   },
   {
