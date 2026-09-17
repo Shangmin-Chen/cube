@@ -15,13 +15,6 @@ export const CROSS_CASES: AlgCase[] = [
     description: 'Align bottom cross edge with center and insert into bottom white face.',
     tips: 'Always solve the cross on bottom during inspection.',
     why: 'D2 aligns bottom centers while R F L B places all four edge stickers directly into white bottom face.',
-    topGrid: ['G', 'G', 'G', 'G', 'W', 'G', 'G', 'G', 'G'],
-    borderColors: {
-      top: ['G', 'G_GREEN', 'G'],
-      right: ['G', 'R', 'G'],
-      bottom: ['G', 'B', 'G'],
-      left: ['G', 'O', 'G'],
-    },
   },
 ];
 
@@ -36,13 +29,6 @@ export const F2L_HIGHLIGHTS: AlgCase[] = [
     description: 'Corner and edge are connected in top layer.',
     tips: 'Align pair above slot, then insert.',
     why: "Direct slot insertion (U R U' R') taking advantage of pre-aligned corner and edge.",
-    topGrid: ['G', 'G', 'G', 'G', 'Y', 'R', 'G', 'G', 'R'],
-    borderColors: {
-      top: ['G', 'G', 'G'],
-      right: ['G', 'G_GREEN', 'W'],
-      bottom: ['G', 'G', 'G_GREEN'],
-      left: ['G', 'G', 'G'],
-    },
   },
   {
     id: 'f2l-basic-2',
@@ -54,13 +40,6 @@ export const F2L_HIGHLIGHTS: AlgCase[] = [
     description: 'White sticker points UP on top layer.',
     tips: 'Align edge with side center, push corner away, pair & insert.',
     why: "R U2 R' separates corner and edge, matches side colors, then inserts pair.",
-    topGrid: ['G', 'G', 'G', 'G', 'Y', 'G_GREEN', 'G', 'G', 'W'],
-    borderColors: {
-      top: ['G', 'G', 'G'],
-      right: ['G', 'R', 'G_GREEN'],
-      bottom: ['G', 'G', 'R'],
-      left: ['G', 'G', 'G'],
-    },
   },
   {
     id: 'f2l-basic-3',
@@ -72,13 +51,6 @@ export const F2L_HIGHLIGHTS: AlgCase[] = [
     description: 'White sticker faces side, different top colors.',
     tips: 'Hide corner, match edge, bring back.',
     why: "R U R' hides corner in back slot to match edge orientation before inserting.",
-    topGrid: ['G', 'G', 'G', 'R', 'Y', 'G', 'G', 'G', 'G_GREEN'],
-    borderColors: {
-      top: ['G', 'G', 'G'],
-      right: ['G', 'G', 'R'],
-      bottom: ['G', 'G', 'W'],
-      left: ['G', 'G_GREEN', 'G'],
-    },
   },
   {
     id: 'f2l-basic-4',
@@ -90,13 +62,6 @@ export const F2L_HIGHLIGHTS: AlgCase[] = [
     description: 'Both top stickers have SAME color.',
     tips: 'Form connected pair then insert.',
     why: "U' R U2 R' sets up connected pair in top layer, then inserts cleanly.",
-    topGrid: ['G', 'R', 'G', 'G', 'Y', 'G', 'G', 'G', 'R'],
-    borderColors: {
-      top: ['G', 'G_GREEN', 'G'],
-      right: ['G', 'G', 'W'],
-      bottom: ['G', 'G', 'G_GREEN'],
-      left: ['G', 'G', 'G'],
-    },
   },
 ];
 

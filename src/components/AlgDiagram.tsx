@@ -4,13 +4,6 @@ import type { AlgCategory } from '../types/cube';
 interface AlgDiagramProps {
   primaryAlg?: string;
   category?: AlgCategory;
-  topGrid?: string[];
-  borderColors?: {
-    top: string[];
-    right: string[];
-    bottom: string[];
-    left: string[];
-  };
   size?: number;
   title?: string;
 }
