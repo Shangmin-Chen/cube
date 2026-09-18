@@ -110,6 +110,7 @@ export const TrainerTab: React.FC = () => {
           learningCount={session.learningIds.size}
           activeQueue={session.activeQueue}
           masteredIds={session.masteredIds}
+          learningIds={session.learningIds}
           totalBaseCount={session.baseCases.length}
           onReviewMissed={session.reviewMissed}
           onRestart={session.restart}
