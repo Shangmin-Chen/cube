@@ -6,15 +6,48 @@ import pllFullJson from './generated/pll-full.json';
 
 export const CROSS_CASES: AlgCase[] = [
   {
-    id: 'cross-sample-1',
-    name: 'Bottom Cross Edge Insertion',
+    id: 'cross-top-white-up',
+    name: 'Top Layer, White Facing Up',
     category: 'cross',
     subcategory: 'Cross (C)',
-    group: 'Cross Step',
-    primaryAlg: 'D2 R F L B',
-    description: 'Align bottom cross edge with center and insert into bottom white face.',
-    tips: 'Always solve the cross on bottom during inspection.',
-    why: 'D2 aligns bottom centers while R F L B places all four edge stickers directly into white bottom face.',
+    group: 'Top Layer Insertion',
+    primaryAlg: 'F2',
+    description: 'The front cross edge sits at UF with its white sticker facing up. The other three cross edges are already solved.',
+    tips: 'Turn U until the edge sits directly above its empty slot, then drop it in with a half turn of that face.',
+    why: 'A half turn swaps UF straight into DF, and because it is a 180 degree turn the white sticker stays on the up-down axis and arrives facing down.',
+  },
+  {
+    id: 'cross-top-white-side',
+    name: 'Top Layer, White Facing Out',
+    category: 'cross',
+    subcategory: 'Cross (C)',
+    group: 'Top Layer Insertion',
+    primaryAlg: "R' F R",
+    description: 'The front cross edge sits at UR with its white sticker facing out to the right instead of up.',
+    tips: 'A misoriented top edge needs three moves. Dropping it straight down would leave white facing sideways.',
+    why: "R' lowers the edge from UR into the FR middle slot, F rotates it down into DF with white now facing the floor, and R restores the right layer.",
+  },
+  {
+    id: 'cross-middle-fr',
+    name: 'Trapped in the Front-Right Slot',
+    category: 'cross',
+    subcategory: 'Cross (C)',
+    group: 'Middle Layer Extraction',
+    primaryAlg: "D R' D'",
+    description: 'The front cross edge is trapped in the FR middle-layer slot. The other three cross edges are already solved.',
+    tips: 'Move the finished cross out of the way before extracting, then bring it straight back. Never drop an edge onto a solved cross slot.',
+    why: "D turns the solved cross so its empty slot arrives at DR, R' drops the trapped edge straight down into that slot, and D' rotates the cross back to its original alignment carrying the edge into DF.",
+  },
+  {
+    id: 'cross-bottom-flipped',
+    name: 'In Its Slot but Flipped',
+    category: 'cross',
+    subcategory: 'Cross (C)',
+    group: 'Reorientation',
+    primaryAlg: "D R D' F",
+    description: 'The front cross edge is already in the DF slot but flipped, so its white sticker faces front instead of down.',
+    tips: 'A flipped edge cannot be fixed in place. It has to leave the bottom layer and come back the other way round.',
+    why: "D and R lift the flipped edge out of the bottom layer into the FR middle slot, D' restores the cross alignment, and F rotates the edge into DF the opposite way so white finishes facing down.",
   },
 ];
 
@@ -78,7 +111,7 @@ export const CFOP_STEPS: MethodStep[] = [
 ];
 
 /**
- * 4-Look LL (Beginner CFOP): Cross (1), F2L (4), 2-Look OLL (10), 2-Look PLL (6) = 21 cases
+ * 4-Look LL (Beginner CFOP): Cross (4), F2L (4), 2-Look OLL (10), 2-Look PLL (6) = 24 cases
  */
 export const CFOP_4LOOK_METHOD: AlgMethod = {
   id: 'cfop-4look',
@@ -95,7 +128,7 @@ export const CFOP_4LOOK_METHOD: AlgMethod = {
 };
 
 /**
- * 3-Look LL (Intermediate CFOP): Cross (1), F2L (4), 2-Look OLL (10), Full PLL (21) = 36 cases
+ * 3-Look LL (Intermediate CFOP): Cross (4), F2L (4), 2-Look OLL (10), Full PLL (21) = 39 cases
  */
 export const CFOP_3LOOK_METHOD: AlgMethod = {
   id: 'cfop-3look',
@@ -112,7 +145,7 @@ export const CFOP_3LOOK_METHOD: AlgMethod = {
 };
 
 /**
- * 2-Look LL (Full CFOP): Cross (1), F2L (4), Full OLL (57), Full PLL (21) = 83 cases
+ * 2-Look LL (Full CFOP): Cross (4), F2L (4), Full OLL (57), Full PLL (21) = 86 cases
  */
 export const CFOP_2LOOK_METHOD: AlgMethod = {
   id: 'cfop-2look',
