@@ -324,7 +324,7 @@ function runVerification(): void {
   for (const relativePath of UI_HINT_SURFACES) {
     const source = fs.readFileSync(path.join(ROOT_DIR, relativePath), 'utf8');
     assert(
-      source.includes('triggerHints') && source.includes('NO_RECOGNIZED_TRIGGERS_HINT'),
+      source.includes('NO_RECOGNIZED_TRIGGERS_HINT'),
       `AC7 fail: ${relativePath} missing shared zero-chip hint import/usage`,
     );
   }

@@ -6,10 +6,7 @@ import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { parseTriggers, detectAlgBadges } from '../utils/cubeLogic';
-import {
-  NO_RECOGNIZED_TRIGGERS_HINT,
-  NO_RECOGNIZED_TRIGGERS_HINT_CLASS,
-} from '../utils/triggerHints';
+import { NO_RECOGNIZED_TRIGGERS_HINT } from '../utils/triggerPatterns';
 import {
   getAllCases,
   getSteps,
@@ -93,7 +90,7 @@ export const AlgReferenceTab: React.FC = () => {
     return (
       <div className="flex flex-wrap items-center gap-1.5 my-1">
         {!recognized && chunks.length > 0 && (
-          <span className={NO_RECOGNIZED_TRIGGERS_HINT_CLASS}>
+          <span className="text-[10px] italic text-[#737373] px-1">
             {NO_RECOGNIZED_TRIGGERS_HINT}
           </span>
         )}
