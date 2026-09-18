@@ -1,165 +1,103 @@
-# Current state (HEAD `850768c`)
+# Current State (HEAD `5157ef2`)
 
-**Shipped product** = git object `850768c` (2026-09-10 16:46 EDT), merge of PR #40.  
-This branch may show `9dce376`; that commit is research-only and does **not** change the app. Product files in this worktree match `850768c`.
+**Shipped product** = git commit `5157ef2` on `main` (merge of PR #50).
 
-## One-screen snapshot
+---
 
-Cube is a Notion-dark SPA with three routes: Timer (default home), Flashcards, Algorithms. Default solving method is **4-Look LL beginner CFOP** (`cfop-4look`): 1 sample Cross + 4 F2L highlights + 10 2-Look OLL + 6 2-Look PLL. Intermediate/full tiers swap in Full PLL and Full OLL from committed J Perm JSON. There is no CI and no automated UI tests. Last-layer algs are pipeline-generated; Cross/F2L are hand-written. The Cross sample algorithm is known-incorrect. README and footer still describe a 2-Look-centric tutorial+mastery product that is not what ships.
+## Architecture & Surface Summary
 
-Prefer: “At main `850768c` the app ships three CFOP LL tiers over a J Perm pipeline, with sample Cross/F2L, session-only trainer, and an untested timer.”  
-Avoid: crediting Sep 13 fix branches or calling `9dce376` a release.
+Cube is a dark-mode Single Page Application (SPA) designed for Rubik's cube speedsolving and CFOP algorithmic training. It has three core surfaces:
+
+1. **Speedsolving Timer** (`/timer`, default home route)
+2. **Flashcards Trainer** (`/train`)
+3. **Algorithm Reference** (`/algs`)
+
+The default solving method is **4-Look LL beginner CFOP** (`cfop-4look`): 4 verified beginner Cross cases, 4 F2L fundamentals, 9 2-Look OLL cases, and 7 2-Look PLL cases (24 cases total). Intermediate and advanced tiers provide 3-Look LL and Full CFOP (2-Look LL, 86 cases total).
+
+All code passes automated verification scripts for algorithm simulation, cross correctness, trigger deduplication, trainer session state, and upstream lockfile integrity, integrated via GitHub Actions CI.
 
 ---
 
 ## Routes
 
-| Path | Component | Notes |
-|------|-----------|-------|
-| `/` | `<Navigate to="/timer" replace>` | |
-| `/timer` | `TimerTab` | Default home; logo target |
-| `/train` | `TrainerTab` | Query: `method`, `deck` |
-| `/algs` | `AlgReferenceTab` | Default step = method’s first step (`cross`) if URL step invalid; code fallback `'oll'` if steps empty |
-| `/algs/:step` | same | `cross` \| `f2l` \| `oll` \| `pll` \| `bookmarked` |
-| `/algs/:step/:caseId` | same | Bookmark step preserved (`1b77024`) |
-| `*` | → `/timer` | |
-
-Nav labels: **Speedsolving Timer** · **Flashcards** · **Algorithms**.
-
-### Shareable vs not
-
-| In URL | Not in URL |
-|--------|------------|
-| `/timer` | Alg Reference `selectedMethod` (always starts `cfop-4look`) |
-| `/train?method=&deck=` | Alg search query |
-| `/algs/:step/:caseId` | Trainer shuffle, round, mastery; Alg Reference method |
-| | Alg Reference search; 3D playback position / practice phase |
-
-Changing Alg Reference method navigates `/algs/:step` and drops `:caseId`.
-
-SPA refresh: `vercel.json` rewrite → `index.html`.
+| Path | Component | Description |
+|------|-----------|-------------|
+| `/` | `<Navigate to="/timer" replace>` | Redirects to timer |
+| `/timer` | `TimerTab` | Default home; speedsolving timer and session stats |
+| `/train` | `TrainerTab` | Flashcard trainer (query params: `method`, `deck`) |
+| `/algs` | `AlgReferenceTab` | Algorithm reference browser (default step: `cross`) |
+| `/algs/:step` | `AlgReferenceTab` | Step filter (`cross`, `f2l`, `oll`, `pll`, `bookmarked`) |
+| `/algs/:step/:caseId` | `AlgReferenceTab` | Step and specific case selected |
+| `*` | → `/timer` | Wildcard fallback |
 
 ---
 
-## Methods
+## Method Tiers
 
-Default: **`cfop-4look`**. Selector lists only available methods with cases.
+Default method: **`cfop-4look`**.
 
-| ID | Label | Cases |
-|----|-------|------:|
-| `cfop-4look` | 4-Look LL (Beginner CFOP) | 21 |
-| `cfop-3look` | 3-Look LL (Intermediate CFOP) | 36 |
-| `cfop-2look` | 2-Look LL (Full CFOP) | 83 |
+| ID | Label | Cases | Structure |
+|----|-------|------:|-----------|
+| `cfop-4look` | 4-Look LL (Beginner CFOP) | 24 | 4 Cross + 4 F2L + 9 2-Look OLL + 7 2-Look PLL |
+| `cfop-3look` | 3-Look LL (Intermediate CFOP) | 39 | 4 Cross + 4 F2L + 10 2-Look OLL + 21 Full PLL |
+| `cfop-2look` | 2-Look LL (Full CFOP) | 86 | 4 Cross + 4 F2L + 57 Full OLL + 21 Full PLL |
 
-Generated LL cases: **94** (10+6+57+21). Alternative algs: **87** (JSON + `verify:algs` only — **not listed in UI**). Hand Cross+F2L: **5**. Other methods: none (UI stubs removed `aef759e`, CFOP restored in `methodsData` by `850768c`).
-
-**HEAD UI trains/plays primary alg only.** `tips` and `probability` exist in JSON/types but are never rendered. `why` appears on flashcard back only.
-
-Trainer default query: `?method=cfop-4look&deck=bookmarks`. Empty bookmarks → CTA to first category deck or `/algs`.
+- **Hand-authored cases (8):** 4 Cross insertions + 4 F2L fundamental slot insertions in `src/data/cfopData.ts`.
+- **Pipeline-generated LL cases (94):** 10 2-Look OLL + 6 2-Look PLL + 57 Full OLL + 21 Full PLL in `src/data/generated/`.
+- **Alternative algorithms (87 variations):** Maintained in generated datasets and verified by `verify:algs`.
 
 ---
 
-## Persistence
+## Persistence Keys
 
-| Key | Surface | Lifetime |
-|-----|---------|----------|
-| `cfop_solves` | Timer history | Until user clears |
-| `cfop_bookmarks` | Shared Alg Reference + Trainer | Until toggled off |
-| Trainer mastery / round | React state | Session only |
-
-Event `cube:bookmarks_updated` plus `storage` keeps bookmarks in sync across tabs.
-
-Orphan: `cfop_trainer_mastered` from Trainer v1 — unused.
+| Key | Surface | Storage | Invalidation / Lifetime |
+|-----|---------|---------|-------------------------|
+| `cfop_solves` | Timer solve history | `localStorage` | Persisted until cleared by user |
+| `cfop_bookmarks` | Starred algorithms | `localStorage` | Synchronized across tabs via `cube:bookmarks_updated` |
+| Trainer round / mastery | Flashcards session | React state (`trainerSessionLogic`) | In-memory session lifetime |
 
 ---
 
-## Timer surface
+## Timer Surface
 
-- Badge: “WCA Official 3x3 Scramble” — generator is `generateScramble(21)` (blocks consecutive same face and U-D-U-style pairs; **allows** consecutive opposites like `U D`). Open **#27**.
-- Hold 300ms to ready; space / mouse / touch / Enter when timer card focused.
-- **Display:** `elapsedTime` is never reset between solves — idle / holding / ready / inspection still show the **previous solve time** (hundredths), not `0.00` and not a 15s countdown.
-- Inspection: checkbox “15s Inspection”; state `inspection`; **no countdown UI or +2-on-timeout**. Open **#24**.
-- Space input: window listener **and** card `onKeyDown` both call `handleTriggerPress` — focused card can double-fire Space (#24).
-- Stats: total, best, Ao5, Ao12 (`calculateAO` newest-first, drop best+worst, 2× DNF → DNF). Fixed **#20**.
-- Penalties: none / +2 / DNF. +2 adds 2000 ms.
-- 3D scramble preview via `RubiksCube3D` (`initialAlgorithm={scramble}`, default `mode='algorithm'`). Solve-phase playback starts at **inverse(scramble)** — open **#24**. Shows setup/solve toggle, 90° snap arrows, play/pause, step tokens (same widget as Reference inspector). `mode='scramble'` is dead API (no caller).
+- **WCA Random-State Scramble:** Generated via `cubing/scramble` (`randomScrambleForEvent('333')`), producing authentic WCA competition-standard scrambles.
+- **Hold-to-Ready:** 300ms hold threshold; spacebar, mouse, or touch triggers state transitions. Spacebar input has double-fire protection.
+- **Inspection Countdown:** Optional 15-second inspection mode. Counts down from 15s to 0s with visual alerts. Automatically applies +2 penalty between 15s and 17s, and DNF after 17s.
+- **Clock Display:** Resets to `0.00` on ready/start. Tracks hundredths of a second during solve.
+- **Statistics & Averages:** Computes total solves, best time, Average of 5 (Ao5), and Average of 12 (Ao12). Trims highest and lowest solves per WCA rules.
+- **3D Scramble Preview:** Interactive `RubiksCube3D` widget renders the cube in `mode="scramble"` matching the generated scramble sequence.
 
 ---
 
-## Alg Reference surface
+## Flashcards Trainer Surface
 
-- Hero: method select, title “Algorithm Reference & Mechanics”, search, collapsible 4-core-triggers hub (copy: “All **78** algorithms…” — stale Full OLL+PLL count, not 4-look default).
-- Step bar from `getSteps` + Saved Bookmarks.
-- Search: when non-empty, filters **all method cases** (global within method), not current step only.
-- Master-detail: case list + sticky 3D inspector (primary alg playback + trigger chips + badges; **no** `why`/`tips`/`description`/`probability`/`alternativeAlgs` in UI).
-- Case card: VisualCube mini, trigger-colored chunks, badges, bookmark, fullscreen Dialog (`description` in Dialog only).
-- Cross-link: Train in Flashcards → `/train?deck={getDeckForStep}&method={selectedMethod}`.
-
-Deep link caveat: `/algs/oll/oll-1` on a cold load uses **4-look** method, so **Full OLL ids are not in that method’s case list** until the user switches to `cfop-2look`.
-
----
-
-## Trainer surface
-
-- Monkeytype-like HUD; **CSS 3D flip card** (`FlashCard.tsx`: `perspective-1000` / `rotate-x-180`) with **VisualCube** front (`AlgDiagram`) — **not** `RubiksCube3D`. Hint = case name. Copy Setup / Copy Solve on card back are **mouse-only** (no keyboard shortcut).
-- Setup scramble = inverse of primary (normalized doubles).
-- Keyboard (enabled when a card is active and round not finished):
-
-| Key | Action |
-|-----|--------|
-| Space / Enter | Flip |
-| ← / → | Prev / next (no auto-advance on next-at-end; end via mastered/learning) |
-| 1 / X | Learning |
-| 2 / C | Mastered |
-| S | Bookmark |
-| R | Restart round 1 |
-| H | Hint |
-
-Ctrl/Meta/Alt ignored (**#25**); Shift is **not** ignored (Shift+S/R/H still fire). Inputs/selects ignored. **No `e.repeat` guard** — holding `2`/`1`/`S`/`R` auto-repeats mastery/learning/bookmark/restart (Timer Space has a repeat guard; Trainer does not).
-
-Round summary: accuracy, review missed (round N+1 on learning ids), confetti if all mastered. Open **#21** for round-2+ state bugs:
-
-- `next` at end of queue does **not** finish the round (only mastered/learning via `advance`).
-- `markLearning` adds to `learningIds` but does **not** remove from `masteredIds` (arrows + relabel can leave both sets).
-- **Bookmarks deck:** `bookmarkKey = bookmarkedIds.join(',')` retriggers `initRound(..., 1)` — starring/unstarring **during** a bookmarks drill wipes the round.
-- **Shuffle on round 2+:** `toggleShuffle` calls `initRound(baseCases, …, roundNumber)` — full deck, not `learningIds`, while keeping `roundNumber`.
-
-Shuffle default **on**. Toggle re-inits current round (same dual-state as #21 on round 2+).
+- **Active Recall HUD:** Uses 3D CSS flip cards (`FlashCard.tsx`) with VisualCube diagram on the front and algorithm mechanics on the back.
+- **Keyboard Shortcuts:**
+  - `Space` / `Enter`: Flip card
+  - `←` / `→`: Navigate previous / next card
+  - `1` / `X`: Mark Still Learning
+  - `2` / `C`: Mark Mastered
+  - `S`: Bookmark / unbookmark
+  - `R`: Restart round
+  - `H`: Reveal hint
+- **Isolated Round State:** Mastered and learning sets are strictly disjoint (`trainerSessionLogic.ts`). Progress percentage accurately reflects current card index over total round deck.
+- **Mastery Celebration:** Confetti fires exclusively upon completing a round with 100% mastery.
 
 ---
 
-## Pipeline
+## Algorithm Reference Surface
 
-`npm run sync:algs` fetches live J Perm JS, applies rotation/AUF rules, writes JSON. **No lockfile.** `npm run verify:algs` checks counts, parseability, PLL-primary invariants. Cross/F2L and OLL semantics out of scope.
-
-## Build commands a maintainer actually runs
-
-```
-npm install
-npm run dev
-npm run build
-npm run lint
-npm run sync:algs    # network; overwrites generated JSON
-npm run verify:algs  # local JSON + cubing
-```
-
-`verify:algs` / `sync:algs` fail without `node_modules` (`cubing`).
+- **Hierarchy & Search:** Browse by step (`cross`, `f2l`, `oll`, `pll`, `bookmarked`) or search across all algorithms in the selected method.
+- **Trigger Badges & Syntax:** Algorithms display token-aligned badges for common triggers (e.g., Sexy Move, Inverse Sexy, Sledgehammer, Hedgeslammer, Sune, Anti-Sune).
+- **Master-Detail 3D Inspector:** Interactive 3D Rubik's cube simulator allows step-by-step playback, 90° snap rotations, and move-by-move execution.
 
 ---
 
-## Known HEAD mismatches (user-visible)
+## Pipeline & Verification Architecture
 
-1. README / footer / default method disagree on CFOP depth.
-2. “WCA Official” scramble is random-move.
-3. Inspection labelled 15s but not timed; clock shows **last solve time**, not 0 or a countdown.
-4. Cross sample `why` vs alg (**#18**).
-5. Trainer default deck Bookmarks is often empty (by design).
-6. VisualCube requires network; no local `topGrid` fallback despite data on Cross/F2L.
-
-## Open product debt (in-window)
-
-Triggers (#3), diagrams leftover (#9), why/hold copy (#11/#16/#17), Cross sample (#18), PLL corner probs (#19), trainer rounds (#21), timer inspection/input (#24), “WCA” scramble label (#27), verify gaps (#15). Tracker: #2.
-
-## Explicitly later (not in this snapshot)
-
-Unmerged `fix/*` branches and post-HEAD GitHub issues/PRs (not snapshotted). Any claim that Cross has 4 verified cases, or that `topGrid` was removed from types, or that upstream is pinned, is **WIP after HEAD**.
+- **Ingestion & Lockfile:** `scripts/ingest/upstream.lock.json` pins upstream J Perm content with a SHA-256 hash. `scripts/verify-upstream-pin.mjs` enforces lockfile integrity offline.
+- **Trigger Pattern Table:** Unified table in `src/utils/triggerPatterns.ts` verified by regex boundary oracle (`scripts/verify-triggers.ts`).
+- **Semantic Simulation:** `scripts/verify-cfop.mjs` verifies algorithm correctness, U-layer orientations, hold descriptions, and probability consistency.
+- **Cross Case Verification:** `scripts/verify-cross-cases.mjs` validates all 4 cross cases against physical cube simulations and rejects invalid legacy patterns.
+- **Trainer State Verification:** `scripts/verify-trainer-session.ts` verifies session isolation, disjoint mastery sets, and confetti triggering.
+- **Automated CI:** GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push and pull request.
