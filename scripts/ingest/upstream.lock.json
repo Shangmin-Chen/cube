@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "sources": {
+    "oll2Look": {
+      "url": "https://jperm.net/lib/2lookoll.js",
+      "sha256": "4e0d917abfe67217852aa1c98c65f448d6f5e2510b57c377b7fce0dd7cd9bcad"
+    },
+    "ollFull": {
+      "url": "https://jperm.net/lib/oll.js",
+      "sha256": "d893a359ccbbf66d808469414302933317393bf18b9cfb848f6f126a3c09b3f0"
+    },
+    "pll2Look": {
+      "url": "https://jperm.net/lib/2lookpll.js",
+      "sha256": "bdb788070cb59da62dad4a531303c2194c1d849981a1b041a459bf2e54ca0a53"
+    },
+    "pllFull": {
+      "url": "https://jperm.net/lib/pll.js",
+      "sha256": "c455bd663c80a96ad8d1604aceac8c421000203191c2518060c1ba21e6a10689"
+    }
+  }
+}
