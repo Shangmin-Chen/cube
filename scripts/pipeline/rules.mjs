@@ -49,13 +49,29 @@ export function balanceRotationsRule(algStr, kpuzzle) {
     return formatted;
   }
 
-  const rotationCandidates = ["y'", "x'", "x", "y", "z'", "z"];
-  for (const rot of rotationCandidates) {
+  const quarterTurns = ["y'", "x'", "x", "y", "z'", "z"];
+  const halfTurns = ["y2", "x2", "z2"];
+  const singleRotations = [...quarterTurns, ...halfTurns];
+
+  const centersAreIdentity = (alg) => {
+    const transf = kpuzzle.algToTransformation(new Alg(alg));
+    const cCenters = transf.transformationData.CENTERS.permutation;
+    return cCenters.every((val, idx) => val === idx);
+  };
+
+  for (const rot of singleRotations) {
     const candidate = formatWCARule(`${formatted} ${rot}`);
-    const candidateTransf = kpuzzle.algToTransformation(new Alg(candidate));
-    const cCenters = candidateTransf.transformationData.CENTERS.permutation;
-    if (cCenters.every((val, idx) => val === idx)) {
+    if (centersAreIdentity(candidate)) {
       return candidate;
+    }
+  }
+
+  for (const r1 of singleRotations) {
+    for (const r2 of singleRotations) {
+      const candidate = formatWCARule(`${formatted} ${r1} ${r2}`);
+      if (centersAreIdentity(candidate)) {
+        return candidate;
+      }
     }
   }
 
