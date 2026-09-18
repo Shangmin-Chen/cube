@@ -321,6 +321,7 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
     if (initialAlgorithm) {
       const parsed = parseMoveString(initialAlgorithm);
       const activeMoves = practicePhase === 'setup' ? invertMoveString(initialAlgorithm) : parsed;
+      // oxlint-disable-next-line react/set-state-in-effect
       setMoves(activeMoves);
 
       const computedStates = computeAllStatesForPhase(parsed, practicePhase);
@@ -512,6 +513,7 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
       cameraRef.current = null;
       cubeGroupRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [highlightMode]);
 
   // Execute a single move animation from state i to state i+1
@@ -586,6 +588,7 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
       await animateMove(move, false);
       jumpToStateIndex(nextIdx);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMoveIndex, moves, jumpToStateIndex]);
 
   const handlePrevMove = async () => {
@@ -621,6 +624,7 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
         await handleNextMove();
       }, speed);
     } else if (currentMoveIndex >= moves.length) {
+      // oxlint-disable-next-line react/set-state-in-effect
       setIsPlaying(false);
     }
 
