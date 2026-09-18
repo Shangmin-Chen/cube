@@ -52,6 +52,7 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
   const [currentMoveIndex, setCurrentMoveIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [speed, setSpeed] = useState<number>(400); // ms per move
+  const [scrambleLoading, setScrambleLoading] = useState<boolean>(false);
 
   // Precomputed State Array
   const statesRef = useRef<CubieState[][]>([]);
@@ -622,15 +623,24 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
     jumpToStateIndex(0);
   };
 
-  const handleScrambleNew = () => {
-    const newScramble = generateScramble(21);
-    const parsed = parseMoveString(newScramble);
-    setMoves(parsed);
-    const computedStates = computeAllStatesForPhase(parsed, 'solve');
-    statesRef.current = computedStates;
-    setIsPlaying(false);
-    jumpToStateIndex(0);
-  };
+  const handleScrambleNew = useCallback(async () => {
+    if (scrambleLoading || isPlaying || isAnimatingRef.current) return;
+
+    setScrambleLoading(true);
+    try {
+      const newScramble = await generateScramble();
+      const parsed = parseMoveString(newScramble);
+      setMoves(parsed);
+      const computedStates = computeAllStatesForPhase(parsed, 'solve');
+      statesRef.current = computedStates;
+      setIsPlaying(false);
+      jumpToStateIndex(0);
+    } catch {
+      // Keep the current scramble/moves on failure.
+    } finally {
+      setScrambleLoading(false);
+    }
+  }, [scrambleLoading, isPlaying, computeAllStatesForPhase, jumpToStateIndex]);
 
   // Auto-play interval
   useEffect(() => {
@@ -824,11 +834,12 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
               <button
                 type="button"
                 aria-label="Generate Random Scramble"
-                onClick={handleScrambleNew}
-                className="px-3 py-1.5 rounded-lg bg-[#2d2d2d] hover:bg-[#383838] border border-[#383838] text-[#d4d4d4] text-xs font-medium flex items-center gap-1 transition-colors"
-                title="Generate Random Scramble"
+                onClick={() => void handleScrambleNew()}
+                disabled={scrambleLoading || isPlaying}
+                className="px-3 py-1.5 rounded-lg bg-[#2d2d2d] hover:bg-[#383838] border border-[#383838] text-[#d4d4d4] text-xs font-medium flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={scrambleLoading ? 'Generating scramble…' : 'Generate Random Scramble'}
               >
-                <Shuffle className="w-3.5 h-3.5" /> Scramble
+                <Shuffle className="w-3.5 h-3.5" /> {scrambleLoading ? 'Generating…' : 'Scramble'}
               </button>
             )}
           </div>

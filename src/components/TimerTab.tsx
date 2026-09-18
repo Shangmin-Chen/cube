@@ -41,7 +41,9 @@ function shouldLetNativeSpaceThrough(target: EventTarget | null): boolean {
 }
 
 export const TimerTab: React.FC = () => {
-  const [scramble, setScramble] = useState<string>(() => generateScramble(21));
+  const [scramble, setScramble] = useState<string>('');
+  const [scrambleLoading, setScrambleLoading] = useState<boolean>(true);
+  const [scrambleError, setScrambleError] = useState<string | null>(null);
   const [solves, setSolves] = useState<SolveRecord[]>(() => {
     try {
       const saved = localStorage.getItem('cfop_solves');
@@ -69,6 +71,7 @@ export const TimerTab: React.FC = () => {
   const activePointerIdRef = useRef<number | null>(null);
   const spaceHoldActiveRef = useRef(false);
   const scrambleRef = useRef(scramble);
+  const isGeneratingRef = useRef(false);
   const attemptScrambleRef = useRef('');
 
   useEffect(() => {
@@ -112,9 +115,27 @@ export const TimerTab: React.FC = () => {
   }, []);
 
 
-  const handleNewScramble = useCallback(() => {
-    setScramble(generateScramble(21));
+  const handleNewScramble = useCallback(async () => {
+    if (isGeneratingRef.current) return;
+    isGeneratingRef.current = true;
+    setScrambleLoading(true);
+    setScrambleError(null);
+    try {
+      const next = await generateScramble();
+      setScramble(next);
+    } catch {
+      setScrambleError('Could not generate a scramble. Try again.');
+    } finally {
+      isGeneratingRef.current = false;
+      setScrambleLoading(false);
+    }
   }, []);
+
+  // Generate the first scramble on mount.
+  useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect
+    void handleNewScramble();
+  }, [handleNewScramble]);
 
   const clearInspectionTimer = useCallback(() => {
     if (inspectionIntervalRef.current) {
@@ -141,7 +162,7 @@ export const TimerTab: React.FC = () => {
       date: Date.now(),
       penalty: 'DNF',
     });
-    handleNewScramble();
+    void handleNewScramble();
   }, [appendSolve, clearInspectionTimer, handleNewScramble]);
 
   const beginInspection = useCallback(() => {
@@ -208,7 +229,7 @@ export const TimerTab: React.FC = () => {
       penalty: inspectionPenalty,
     });
 
-    handleNewScramble();
+    void handleNewScramble();
   }, [appendSolve, handleNewScramble]);
 
   const handleTriggerPress = useCallback(() => {
@@ -217,6 +238,7 @@ export const TimerTab: React.FC = () => {
     if (state === 'running') {
       stopTimer();
     } else if (state === 'idle') {
+      if (!scrambleRef.current || isGeneratingRef.current) return;
       if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
       timerStateRef.current = 'holding';
       setTimerState('holding');
@@ -364,16 +386,21 @@ export const TimerTab: React.FC = () => {
         <Badge variant="amber" className="flex items-center gap-1.5">
           <Shuffle className="w-3.5 h-3.5" /> WCA Official 3x3 Scramble
         </Badge>
-        <div className="text-lg md:text-2xl font-mono font-bold text-white tracking-wide leading-relaxed max-w-3xl">
-          {scramble}
+        <div
+          className="text-lg md:text-2xl font-mono font-bold text-white tracking-wide leading-relaxed max-w-3xl"
+          aria-live="polite"
+        >
+          {scrambleError ?? (scrambleLoading ? 'Generating scramble…' : scramble)}
         </div>
         <button
           type="button"
           aria-label="Generate new WCA scramble"
-          onClick={handleNewScramble}
-          className="px-4 py-2 rounded-lg bg-[#2d2d2d] hover:bg-[#383838] border border-[#383838] text-[#d4d4d4] text-xs font-semibold flex items-center gap-2 transition-colors"
+          onClick={() => void handleNewScramble()}
+          disabled={scrambleLoading || timerState !== 'idle'}
+          className="px-4 py-2 rounded-lg bg-[#2d2d2d] hover:bg-[#383838] border border-[#383838] text-[#d4d4d4] text-xs font-semibold flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <RotateCcw className="w-3.5 h-3.5" /> New Scramble
+          <RotateCcw className="w-3.5 h-3.5" />
+          {scrambleLoading ? 'Generating…' : 'New Scramble'}
         </button>
       </Card>
 
