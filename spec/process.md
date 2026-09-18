@@ -139,3 +139,12 @@ Does not exist: CI, unit tests, E2E, pre-commit verify, regression tests tied to
 3. Re-run extended invariants on **alternatives** before trusting PLL rotation claims.
 4. Treat issue-body harnesses as uncommitted tests.
 5. Do not merge-credit parallel Sep 13 branches that mention multiple issue numbers in one history.
+
+## Agent workflow: the spec-first loop
+
+When AI agents work on this codebase:
+
+1. **Context gathering:** Check `spec/` before running exploratory `git log` commands. `spec/` provides the curated architectural intent and historical milestones without squash noise.
+2. **Pre-work planning:** Before starting implementation, the planner or orchestrator agent writes its intent and planned updates into `spec/` (e.g. updating architecture, current state, or open questions).
+3. **Subagent alignment:** Subagents read the plan in `spec/` to ensure shared context and prevent drift.
+4. **Post-implementation update:** When code merges or stabilizes, update `spec/` to reflect new invariants, verification scripts, or surfaced behaviors.

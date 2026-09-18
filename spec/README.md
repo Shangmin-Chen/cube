@@ -13,6 +13,21 @@ This folder is a commit-grounded snapshot of what shipped at `850768c`. It is LL
 
 ---
 
+## AI Agent Guidelines (Planner & Subagent Protocol)
+
+For any AI assistant, orchestrator, planner, or subagent working in this repository:
+
+1. **Reference `spec/` First for Historical & Architectural Context:**
+   - Whenever gathering historical context, architectural rationale, method tier naming, or issue background, **consult `spec/` first** before diving into raw `git log` or commit history.
+   - Because the repository strictly uses squash merges and parallel issue branches, raw git history is noisy and prone to duplicate SHAs. `spec/` is the curated, commit-grounded source of truth.
+
+2. **Plan in `spec/` Before Working:**
+   - Before modifying code or implementing a task, the **planner / orchestrator agent must record what it intends to do into `spec/`** (updating relevant docs like `current-state.md`, `architecture.md`, or task notes).
+   - This prevents divergence across subagents, maintains durable context across session boundaries, and keeps the specification actively aligned with the evolving codebase.
+   - Subagents must read this recorded plan before executing code edits.
+
+---
+
 ## How to use as context
 
 Load in this order:
