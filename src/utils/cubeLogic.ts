@@ -58,7 +58,7 @@ export function parseMoveString(movesStr: string): string[] {
     cleanStr = cleanStr.replace(/\(([^)]+)\)(\d+)/g, (_, group, count) => {
       return (group.trim() + ' ').repeat(parseInt(count, 10)).trim();
     });
-    cleanStr = cleanStr.replace(/[\(\)\{\}]/g, ' ').trim();
+    cleanStr = cleanStr.replace(/[(){}]/g, ' ').trim();
     return cleanStr.split(/\s+/).filter(m => Boolean(m) && !/^\d+$/.test(m));
   }
 }

@@ -17,7 +17,7 @@ export const AlgDiagram: React.FC<AlgDiagramProps> = ({
   const [imageError, setImageError] = useState(false);
 
   // Encode move string for VisualCube API endpoint
-  const encodedAlg = encodeURIComponent(primaryAlg.replace(/[\(\)\{\}]/g, '').trim());
+  const encodedAlg = encodeURIComponent(primaryAlg.replace(/[(){}]/g, '').trim());
   const visualCubeStage = category === 'cross' ? 'fl' : category;
 
   // VisualCube API: Official WCA / SpeedCubeDB 2D vector diagram REST API

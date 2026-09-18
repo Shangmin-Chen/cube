@@ -58,7 +58,7 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
 
   // Helper to determine axis and layer selection condition for normal and wide moves
   const getMoveParameters = (move: string) => {
-    const cleanMove = (move || '').replace(/[\(\)\{\}]/g, '').trim();
+    const cleanMove = (move || '').replace(/[(){}]/g, '').trim();
     if (!cleanMove) {
       return { axis: new THREE.Vector3(0, 1, 0), condition: (_p: THREE.Vector3) => false, angle: 0 };
     }

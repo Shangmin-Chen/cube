@@ -74,6 +74,7 @@ export function useTrainerSession(deckId: string, bookmarkedIds: string[], metho
 
   // Sync active queue when deck selection changes, method changes, or bookmarks change on bookmarks deck
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect
     initRound(baseCases, isShuffled, 1);
   }, [deckId, methodId, bookmarkKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
