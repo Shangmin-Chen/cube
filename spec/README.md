@@ -15,7 +15,7 @@ This folder is a commit-grounded snapshot of what shipped at `850768c`. It is LL
 
 ## AI Agent Guidelines (Planner & Subagent Protocol)
 
-For any AI assistant, orchestrator, planner, or subagent working in this repository:
+This repository follows a **Spec-First** agent workflow codified in [`AGENTS.md`](../AGENTS.md) and the workspace skill [`.agents/skills/spec-workflow/SKILL.md`](../.agents/skills/spec-workflow/SKILL.md):
 
 1. **Reference `spec/` First for Historical & Architectural Context:**
    - Whenever gathering historical context, architectural rationale, method tier naming, or issue background, **consult `spec/` first** before diving into raw `git log` or commit history.

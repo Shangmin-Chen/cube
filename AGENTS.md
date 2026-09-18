@@ -1,25 +1,30 @@
 # AI Agent Operating Guidelines
 
-This repository (`Shangmin-Chen/cube`) follows a **spec-first** agent workflow. All AI coding assistants, orchestrators, planners, and subagents must adhere to the following directives:
+This repository (`Shangmin-Chen/cube`) strictly follows a **Spec-First** agent workflow. All AI coding assistants, planners, orchestrators, and subagents must adhere to the core directives below and follow the workspace skill:
 
-## 1. Reference `spec/` First for Context
+👉 **[Spec-First Workflow Skill](.agents/skills/spec-workflow/SKILL.md)** (`spec-workflow`)
+
+---
+
+## Core Directives
+
+### 1. Reference `spec/` First (No Blind Git Archaeology)
 - **Do not start by running exploratory `git log` commands.**
-- Whenever you need to gather historical context, understand architectural decisions, check method tier naming (e.g. `cfop-4look` beginner vs `cfop-2look` Full CFOP), or review open issues, **consult the `spec/` directory first**.
-- Git history in this repository relies heavily on squash merges, parallel branch commits, and orphaned tips. `spec/` provides the curated, commit-grounded single source of truth.
+- Whenever gathering historical context, architectural rationale, method tier naming (e.g. `cfop-4look` beginner vs `cfop-2look` Full CFOP), or issue background, **consult the `spec/` directory first**.
+- Because this repository relies heavily on squash merges, parallel branch commits, and orphaned tips, `spec/` provides the curated, commit-grounded source of truth.
   - Start with `spec/README.md` and `spec/glossary.md`.
 
-## 2. Plan in `spec/` Before Working (Planner & Orchestrator Duty)
-- Before implementing a task or delegating work to subagents, the **planner or orchestrator agent must record what it intends to do in `spec/`**.
-- Specifically:
-  - Document the proposed architectural changes, new invariants, or modified components in the appropriate `spec/` document (e.g. `current-state.md`, `architecture.md`, or `open-questions.md`).
-  - This ensures that intent is durably captured before code edits begin, preventing context loss across token limits, subagents, or multi-turn sessions.
+### 2. Plan in `spec/` Before Working (Planner & Orchestrator Duty)
+- Before modifying code or delegating tasks to subagents, the **planner or orchestrator agent must record what it intends to do in `spec/`**.
+- Document proposed architectural changes, domain invariants, and verification criteria in the relevant `spec/` file (e.g. `current-state.md`, `architecture.md`, `quality-and-issues.md`, or a targeted task spec).
+- Intent must be captured durably on disk before code edits begin to prevent context loss across token limits, subagents, or multi-turn sessions.
 
-## 3. Subagent Coordination
-- When orchestrators spawn subagents, subagents must use the recorded plan in `spec/` as their primary reference to guarantee alignment.
-- When a task is complete, the orchestrator updates `spec/` to ensure the documentation reflects the new reality.
+### 3. Subagent Coordination
+- Orchestrators must direct subagents to the recorded spec before implementation begins.
+- Subagents must treat the recorded spec as their authoritative contract and definition of done.
 
-## 4. Invariant & Verification Integrity
-- Never bypass repository verification scripts. Before submitting or marking work complete, all verifications must pass:
+### 4. Mandatory Invariant & Verification Checks
+- Never bypass repository verification scripts. Before completing any task, ensure all checks pass cleanly with 0 errors and 0 warnings:
   - `npm run lint` (`oxlint`)
   - `npm run verify:algs`
   - `npm run verify:cross`
@@ -27,3 +32,5 @@ This repository (`Shangmin-Chen/cube`) follows a **spec-first** agent workflow. 
   - `npm run verify:trainer`
   - `npm run verify:upstream-pin`
   - `npm run build`
+
+For the step-by-step workflow and best practices, see [.agents/skills/spec-workflow/SKILL.md](.agents/skills/spec-workflow/SKILL.md).
