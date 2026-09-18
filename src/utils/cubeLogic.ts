@@ -1,4 +1,5 @@
 import { Alg } from 'cubing/alg';
+import { randomScrambleForEvent } from 'cubing/scramble';
 import {
   detectTokenAlignedBadges,
   findLongestPalindromeFrom,
@@ -7,18 +8,6 @@ import {
   type TriggerType,
 } from './triggerPatterns.ts';
 
-const FACES = ['U', 'D', 'F', 'B', 'R', 'L'];
-const MODIFIERS = ['', "'", '2'];
-
-const OPPOSITES: Record<string, string> = {
-  U: 'D',
-  D: 'U',
-  F: 'B',
-  B: 'F',
-  R: 'L',
-  L: 'R',
-};
-
 export interface TriggerChunk {
   text: string;
   name?: string;
@@ -26,26 +15,10 @@ export interface TriggerChunk {
   type: TriggerType;
 }
 
-export function generateScramble(length = 20): string {
-  const scramble: string[] = [];
-  let lastFace = '';
-  let secondLastFace = '';
-
-  for (let i = 0; i < length; i++) {
-    let availableFaces = FACES.filter(f => f !== lastFace);
-    if (lastFace && OPPOSITES[lastFace] === secondLastFace) {
-      availableFaces = availableFaces.filter(f => f !== secondLastFace);
-    }
-
-    const face = availableFaces[Math.floor(Math.random() * availableFaces.length)];
-    const modifier = MODIFIERS[Math.floor(Math.random() * MODIFIERS.length)];
-
-    scramble.push(face + modifier);
-    secondLastFace = lastFace;
-    lastFace = face;
-  }
-
-  return scramble.join(' ');
+/** WCA random-state 3x3 scramble via cubing/scramble. */
+export async function generateScramble(): Promise<string> {
+  const scramble = await randomScrambleForEvent('333');
+  return scramble.toString();
 }
 
 export function parseMoveString(movesStr: string): string[] {
