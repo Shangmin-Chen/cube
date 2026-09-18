@@ -7,7 +7,7 @@ import { Badge } from './ui/badge';
 import { Shuffle, Trash2, Award, History, RotateCcw } from 'lucide-react';
 
 export const TimerTab: React.FC = () => {
-  const [scramble, setScramble] = useState<string>('');
+  const [scramble, setScramble] = useState<string>(() => generateScramble(21));
   const [solves, setSolves] = useState<SolveRecord[]>(() => {
     try {
       const saved = localStorage.getItem('cfop_solves');
@@ -35,10 +35,6 @@ export const TimerTab: React.FC = () => {
     };
   }, []);
 
-  // Generate initial scramble
-  useEffect(() => {
-    setScramble(generateScramble(21));
-  }, []);
 
   const handleNewScramble = () => {
     setScramble(generateScramble(21));

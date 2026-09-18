@@ -7,6 +7,8 @@ interface TriggerChipsProps {
 
 export const TriggerChips: React.FC<TriggerChipsProps> = ({ algorithm }) => {
   const chunks = parseTriggers(algorithm);
+  const recognized = chunks.some(chunk => chunk.type !== 'normal');
+  if (!recognized) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 my-1">

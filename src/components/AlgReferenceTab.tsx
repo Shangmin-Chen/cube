@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AlgDiagram } from './AlgDiagram';
 import { RubiksCube3D } from './RubiksCube3D';
@@ -47,13 +47,14 @@ export const AlgReferenceTab: React.FC = () => {
     return steps[0]?.id || 'oll';
   }, [routeStep, selectedMethod, bookmarkedIds, steps]);
 
+  const [prevRouteCaseId, setPrevRouteCaseId] = useState(routeCaseId);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(routeCaseId || null);
+  if (routeCaseId !== prevRouteCaseId) {
+    setPrevRouteCaseId(routeCaseId);
+    setSelectedCaseId(routeCaseId || null);
+  }
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showTriggersHub, setShowTriggersHub] = useState(false);
-
-  useEffect(() => {
-    setSelectedCaseId(routeCaseId || null);
-  }, [routeCaseId]);
 
   // Get active cases list based on selected step & filters
   const currentStepCases = useMemo(() => {
@@ -84,6 +85,8 @@ export const AlgReferenceTab: React.FC = () => {
   // Render trigger chunks with color badges
   const renderTriggerChunks = (algStr: string) => {
     const chunks = parseTriggers(algStr);
+    const recognized = chunks.some(chunk => chunk.type !== 'normal');
+    if (!recognized) return null;
     return (
       <div className="flex flex-wrap items-center gap-1.5 my-1">
         {chunks.map((chunk, idx) => {

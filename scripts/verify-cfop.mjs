@@ -8,13 +8,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 
-const QUARTER_TURN_ROTATIONS = ["y'", "x'", "x", "y", "z'", "z"];
-const HALF_TURN_ROTATIONS = ['y2', 'x2', 'z2'];
-const SINGLE_ROTATIONS = [...QUARTER_TURN_ROTATIONS, ...HALF_TURN_ROTATIONS];
 /** Look-1 keeps U on top — only y-axis whole-cube turns are valid frame changes. */
 const LOOK1_Y_ROTATIONS = ["y'", 'y', 'y2'];
 const TOP_EDGE_INDICES = [0, 1, 2, 3];
-const AUF_CANDIDATES = ["U'", 'U', 'U2'];
 
 /** @returns {string[]} */
 function getAllAlgs(c) {
