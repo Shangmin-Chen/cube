@@ -7,12 +7,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 
-const UI_HINT_SURFACES = [
-  'src/components/trainer/TriggerChips.tsx',
-  'src/components/AlgReferenceTab.tsx',
-  'src/components/trainer/RoundSummary.tsx',
-] as const;
-
 /** Ground-truth palindrome threshold — not imported from production modules. */
 const ORACLE_MIN_PALINDROME_MOVES = 5;
 
@@ -319,20 +313,6 @@ function runVerification(): void {
   }
   assert(regressionFailures === 0, `AC5: ${regressionFailures} regression failures (${totalRemovals} removals)`);
   console.log(`AC5: ${totalRemovals} intentional badge removals, 0 unexpected changes`);
-
-  // AC7: UI surfaces must import and render the shared hint string
-  for (const relativePath of UI_HINT_SURFACES) {
-    const source = fs.readFileSync(path.join(ROOT_DIR, relativePath), 'utf8');
-    assert(
-      source.includes('NO_RECOGNIZED_TRIGGERS_HINT'),
-      `AC7 fail: ${relativePath} missing shared zero-chip hint import/usage`,
-    );
-  }
-  const zeroChipCases = primaries.filter(row => {
-    const chunks = parseTriggers(row.primaryAlg);
-    return chunks.length > 0 && chunks.every(c => c.type === 'normal');
-  });
-  console.log(`AC7: hint wired in ${UI_HINT_SURFACES.length} UI surfaces; ${zeroChipCases.length} zero-chip primaries`);
 
   // False-positive sweep: fail if a badge is emitted for a substring-only (non-token-aligned) hit
   let substringBadgeViolations = 0;

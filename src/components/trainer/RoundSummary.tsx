@@ -3,8 +3,6 @@ import { Award, Zap, Flame, RotateCcw } from 'lucide-react';
 import type { AlgCase } from '../../types/cube';
 import { AlgDiagram } from '../AlgDiagram';
 import { Badge } from '../ui/badge';
-import { parseTriggers } from '../../utils/cubeLogic';
-import { NO_RECOGNIZED_TRIGGERS_HINT } from '../../utils/triggerPatterns';
 
 interface RoundSummaryProps {
   roundNumber: number;
@@ -101,8 +99,6 @@ export const RoundSummary: React.FC<RoundSummaryProps> = ({
           {activeQueue.map(c => {
             const isMastered = masteredIds.has(c.id);
             const isLearning = learningIds.has(c.id);
-            const chunks = parseTriggers(c.primaryAlg);
-            const recognized = chunks.some(chunk => chunk.type !== 'normal');
             return (
               <div
                 key={c.id}
@@ -114,11 +110,6 @@ export const RoundSummary: React.FC<RoundSummaryProps> = ({
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-white">{c.name}</span>
-                    {!recognized && chunks.length > 0 && (
-                      <span className="text-[10px] italic text-[#737373] px-1">
-                        {NO_RECOGNIZED_TRIGGERS_HINT}
-                      </span>
-                    )}
                     <code className="text-[11px] font-mono text-[#888888]">{c.primaryAlg}</code>
                   </div>
                 </div>

@@ -10,9 +10,6 @@ export type TriggerType =
   | 'palindrome'
   | 'normal';
 
-/** Shared copy for zero-chip algorithm UI surfaces (FlashCard, AlgReference, RoundSummary). */
-export const NO_RECOGNIZED_TRIGGERS_HINT = 'No recognized triggers';
-
 export interface TriggerPattern {
   pattern: string;
   tokens: readonly string[];
