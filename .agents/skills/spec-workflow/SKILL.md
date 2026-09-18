@@ -25,13 +25,13 @@ When tasked with fixing a bug, extending a feature, or exploring codebase behavi
 - **Do NOT begin by running raw `git log` or commit archaeology.**
   - Git history in this repo features squash merges, parallel branch commits, and orphaned tips. Raw git history is noisy and frequently misleading.
 - **Consult `spec/` first** based on your area of inquiry:
-  - [README.md](file:///Users/shangminchen/cube/spec/README.md) — Reading order, product baseline, and repository facts.
-  - [glossary.md](file:///Users/shangminchen/cube/spec/glossary.md) — Critical naming conventions (e.g. `cfop-4look` for beginner 4-look vs `cfop-2look` for Full CFOP; method IDs; storage keys).
-  - [current-state.md](file:///Users/shangminchen/cube/spec/current-state.md) — Shipped user surfaces, routes, persistence keys, and UX facts.
-  - [architecture.md](file:///Users/shangminchen/cube/spec/architecture.md) — Component layout, data flow, state management, and algorithm ingestion pipeline.
-  - [algorithms-and-methods.md](file:///Users/shangminchen/cube/spec/algorithms-and-methods.md) — Case definitions, method tiers, trigger patterns, and data contracts.
-  - [quality-and-issues.md](file:///Users/shangminchen/cube/spec/quality-and-issues.md) — Known caveats, verification bounds, and issue tracking.
-  - [process.md](file:///Users/shangminchen/cube/spec/process.md) — Squash merge history, PR mapping, and testing realities.
+  - [`spec/README.md`](../../../spec/README.md) — Reading order, product baseline, and repository facts.
+  - [`spec/glossary.md`](../../../spec/glossary.md) — Critical naming conventions (e.g. `cfop-4look` for beginner 4-look vs `cfop-2look` for Full CFOP; method IDs; storage keys).
+  - [`spec/current-state.md`](../../../spec/current-state.md) — Shipped user surfaces, routes, persistence keys, and UX facts.
+  - [`spec/architecture.md`](../../../spec/architecture.md) — Component layout, data flow, state management, and algorithm ingestion pipeline.
+  - [`spec/algorithms-and-methods.md`](../../../spec/algorithms-and-methods.md) — Case definitions, method tiers, trigger patterns, and data contracts.
+  - [`spec/quality-and-issues.md`](../../../spec/quality-and-issues.md) — Known caveats, verification bounds, and issue tracking.
+  - [`spec/process.md`](../../../spec/process.md) — Squash merge history, PR mapping, and testing realities.
 
 Only if `spec/` does not answer the question should the agent inspect source code or query git history.
 

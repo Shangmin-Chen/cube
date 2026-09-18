@@ -18,6 +18,7 @@ This repository (`Shangmin-Chen/cube`) strictly follows a **Spec-First** agent w
 - Before modifying code or delegating tasks to subagents, the **planner or orchestrator agent must record what it intends to do in `spec/`**.
 - Document proposed architectural changes, domain invariants, and verification criteria in the relevant `spec/` file (e.g. `current-state.md`, `architecture.md`, `quality-and-issues.md`, or a targeted task spec).
 - Intent must be captured durably on disk before code edits begin to prevent context loss across token limits, subagents, or multi-turn sessions.
+- *(Scope: Applies to architectural work, feature additions, invariant changes, and schema updates. Read-only queries, micro-benchmarks, and trivial typo fixes do not require prior spec edits.)*
 
 ### 3. Subagent Coordination
 - Orchestrators must direct subagents to the recorded spec before implementation begins.
