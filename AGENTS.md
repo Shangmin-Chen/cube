@@ -41,7 +41,7 @@ This document provides orientation, product context, and core operating guidelin
 ## Operating Principles
 
 ### 1. Consult `spec/` Before Git Archaeology
-- **Do not start with exploratory `git log` commands.**
+- **Begin context gathering in `spec/` rather than raw git history.**
 - The repository relies heavily on squash merges, parallel branch commits, and orphaned tips, making raw git history noisy.
 - Consult `spec/` first for historical context, architecture rationale, method naming (`cfop-4look` beginner vs `cfop-2look` Full CFOP), and domain contracts. Start with [`spec/README.md`](spec/README.md) and [`spec/glossary.md`](spec/glossary.md).
 
@@ -49,10 +49,10 @@ This document provides orientation, product context, and core operating guidelin
 - Before modifying code or delegating implementation tasks, record what you intend to do in a task specification inside `spec/`.
 - If `spec/` does not exist, recognize that the agent is being used for the first time in this codebase and initialize the `spec/` directory.
 - Keep canonical living specs (`current-state.md`, `architecture.md`) accurate to verified, shipped reality; update them upon completion rather than pre-populating them with unverified intent.
-- *(Scope: Applies to architectural changes, features, invariant modifications, and schema updates. Read-only queries, micro-benchmarks, and trivial typo fixes do not require prior spec edits.)*
+- *(Scope: Applies to architectural changes, features, invariant modifications, and schema updates. Read-only queries, micro-benchmarks, and trivial typo fixes are exempt from prior spec edits.)*
 
 ### 3. Mandatory Verification & Invariant Checks
-Never bypass repository verification scripts. Before completing any task, ensure all checks pass cleanly with 0 errors and 0 warnings:
+Always execute repository verification scripts before completing any task, ensuring 0 errors and 0 warnings:
 ```bash
 npm run lint                # oxlint
 npm run verify:algs         # algorithm dataset simulation & cross-case checks

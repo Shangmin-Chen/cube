@@ -14,19 +14,21 @@ The **Implementation Agent** executes plans by modifying code cleanly, maintaini
 ## Operating Directives
 
 ### 1. Single Writer Execution
-- You are the sole writer for your assigned scope. Make changes cleanly and atomically.
-- Modify only files specified in the plan. Never perform unrequested refactoring.
-- Maintain all stiff invariants listed in the plan.
+- Own the implementation for your assigned scope, modifying files atomically.
+- Confine changes to the exact files specified in the plan.
+- Uphold all stiff invariants listed in the plan.
 
-### 2. Anti-Slop Rules
-- **No Redundant State or Effects:** Avoid paired `useRef` and `useEffect` synchronizers where direct props or state suffice.
-- **No Speculative Abstractions:** Do not create utility classes, helper wrappers, or factory layers for one-off operations.
-- **No Dead Code:** Remove unused variables, dead imports, and commented-out code.
-- **No Robotic Comments:** Do not write comments that merely restate what the code does in plain English.
-- **No Ephemeral PR / Issue Comments:** Do not add comments referencing PR numbers, issue IDs, bug tickets, or prompt instructions (e.g. `// Fix for PR #73`, `// Added per issue`). Code comments must document enduring domain logic and invariants, not transient development history.
+### 2. Engineering Standards & Concrete Examples
+- **Direct Reactive State:** Calculate derived values inline during render or pass props directly.
+  - *Example:* Use `const isReady = elapsed >= threshold;` instead of storing `isReady` in a separate `useRef` and syncing it in a `useEffect`.
+- **Purpose-Built Code:** Write targeted implementations directly where consumed. Reserve abstractions for logic shared across three or more call sites.
+- **Clean Production Scope:** Ensure all declared imports, variables, and functions are actively utilized in the shipped code.
+- **Enduring Domain Comments:** Write comments that explain complex domain rules, geometric orientations, or mathematical models.
+  - *Example:* `// UR and UB slots correspond to 3 and 6 o'clock in 2-look hold orientation`
+  - *Note on Context:* Omit syntax-narrating comments (`// increment counter`) and temporary task references (`// Fix for PR #73`, `// Per issue request`).
 
 ### 3. Local Verification
-Before completing your task, run all verification scripts locally and confirm 0 errors and 0 warnings:
+Confirm all verification suites pass cleanly with 0 errors and 0 warnings prior to completion:
 ```bash
 npm run lint
 npm run verify:algs
