@@ -8,101 +8,38 @@ description: >-
 
 # Planner Subagent Skill
 
-The **Planner Subagent** is the architectural engine of the review loop. Its duty is to eliminate ambiguity before implementation begins and turn audit feedback into concrete remediation plans.
-
-The planner operates in two distinct modes:
-1. **Initial Planning Mode:** Formulates a complete execution plan from a user prompt and repository specifications.
-2. **Remediation Planning Mode:** Synthesizes an audit report from a reviewer agent into prioritized, actionable code adjustments.
+The **Planner Subagent** establishes execution plans before coding begins and converts reviewer findings into actionable remediation steps.
 
 ---
 
-## Mode 1: Initial Planning
+## Operating Modes
 
-When invoked at the start of a task:
+### Mode 1: Initial Planning
+When planning from a user objective:
+1. **Consult `spec/` First:** Check relevant specs before exploring git history:
+   - [`spec/architecture.md`](../../../spec/architecture.md) — Source layout, data flow, tech stack.
+   - [`spec/current-state.md`](../../../spec/current-state.md) — Routes, UI surfaces, state keys.
+   - [`spec/algorithms-and-methods.md`](../../../spec/algorithms-and-methods.md) — Tiers, datasets, invariants.
+   - [`spec/quality-and-issues.md`](../../../spec/quality-and-issues.md) — Test suites and closed issues.
+2. **Emit Initial Plan:** Must include:
+   - **Scope:** Exact files to edit and files out of scope.
+   - **Invariants:** Stiff domain and architectural rules to preserve (e.g., orientation definitions, trigger boundaries, scramble randomness, lockfile digests).
+   - **Implementation Steps:** Specific functions, signatures, and logic edits.
+   - **Verification Commands:** Required test scripts to run.
+   - **Anti-Slop Directives:** Explicitly forbid speculative wrappers, unused state, and robotic comments.
 
-### Step 1: Consult `spec/` First
-Per [`spec-workflow`](../spec-workflow/SKILL.md), examine existing canonical specifications before inspecting git history or source files:
-- [Architecture](../../../spec/architecture.md) — Tech stack, data pipeline, source layout.
-- [Current State](../../../spec/current-state.md) — Shipped user surfaces, routes, state management.
-- [Algorithms & Methods](../../../spec/algorithms-and-methods.md) — Method tiers, datasets, invariants.
-- [Quality & Issues](../../../spec/quality-and-issues.md) — Automated verification checks and closed issue history.
-
-### Step 2: Formulate the Task Specification
-Produce an unambiguous, step-by-step implementation contract formatted as follows:
-
-```markdown
-# Task Plan: [Concise Feature / Bugfix Title]
-
-## 1. Objective & Scope
-- Summary of what is being built or fixed.
-- Files strictly in scope; files strictly out of scope.
-
-## 2. Invariants to Preserve
-- List domain and architectural invariants (e.g., orientation consistency, trigger token deduplication, WCA scramble randomness, SHA-256 lockfile integrity).
-
-## 3. Detailed Implementation Steps
-- File 1 (`path/to/file.ts`):
-  - Function / Component: `targetSymbol`
-  - Exact signature changes or logic modifications.
-  - Edge cases to handle (nulls, boundary values, async states).
-- File 2 (`path/to/another.ts`):
-  - ...
-
-## 4. Anti-Slop Guidelines
-- Forbid speculative wrappers, redundant helper layers, and unused state hooks.
-- Forbid generic placeholder comments or robotic docstrings.
-
-## 5. Verification Commands
-- `npm run lint`
-- `npm run verify:algs`
-- [List specific test scripts required for this task]
-- `npm run build`
-```
+### Mode 2: Remediation Planning
+When planning from the Orchestrator's deduplicated findings report:
+1. **Triage Deduplicated Findings:** Group by severity (`Critical`, `Medium`, `Low/Nit`).
+2. **Root-Cause Analysis:** Identify why the defect or smell was introduced.
+3. **Emit Remediation Plan:**
+   - Map each unique finding to a target file and line range.
+   - Provide the exact replacement, removal, or logic fix.
+   - Specify local verification commands for the implementer to confirm the fix.
 
 ---
 
-## Mode 2: Remediation Planning
-
-When invoked with the Orchestrator's **deduplicated findings report** (aggregated from concurrent reviewer agents):
-
-### Step 1: Ingest & Triage Deduplicated Findings
-Parse the unified findings list by severity:
-1. **Critical:** Functional defects, broken stiff invariants, test failures, security/data loss risks.
-2. **Medium:** Code smells, edge-case oversights, missing negative tests, unnecessary state.
-3. **Low / Nits:** AI slop, robotic comments, unused imports, redundant type declarations.
-
-### Step 2: Root-Cause & Resolution Strategy
-For each finding, identify why the issue occurred and specify the minimal, surgical correction needed. Do not recommend architectural rewrites for localized defects.
-
-### Step 3: Emit the Remediation Plan
-Output a structured remediation plan formatted for immediate execution by the Implementation Agent:
-
-```markdown
-# Remediation Plan (Iteration [N])
-
-## Summary of Audit Findings
-- [N] Critical, [N] Medium, [N] Low/Nits reported by Reviewer.
-
-## Actionable Fix Instructions
-
-### 1. Fix [Finding Title] (Severity: Critical/Medium)
-- **Target File:** `path/to/file.ts` (Lines L10–L25)
-- **Problem:** [Briefly describe the reviewer finding]
-- **Exact Action:** [Precise instruction on what to replace, add, or remove]
-- **Verification:** [How the implementer must verify this fix]
-
-### 2. Purge AI Slop / Technical Debt (Severity: Low/Nit)
-- **Target File:** `path/to/file.ts`
-- **Action:** Remove redundant boilerplate, strip dead imports, or clean comments.
-
-## Mandatory Verification Run
-- Commands the implementer must run and report clean before returning to the orchestrator.
-```
-
----
-
-## Quality Rules for Planners
-
-- **Zero Hand-Waving:** Never write "update the relevant component" or "handle errors properly". Specify exact file names, symbols, and error behaviors.
-- **Minimalism:** Design the leanest solution that completely satisfies the requirements without introducing architectural bloat.
-- **Living Spec Accountability:** If the planned change alters public APIs, datasets, or user-visible behaviors, note in the plan that canonical specs must be synced in Phase 5.
+## Rules
+- **No Hand-Waving:** Name exact file paths, functions, and variables. Never write "handle appropriately" or "update relevant components".
+- **Minimalism:** Choose the simplest solution that satisfies requirements without adding layers of indirection.
+- **Spec Accountability:** Note in the plan if `spec/current-state.md` or `spec/architecture.md` must be updated in Step 6 after verification.

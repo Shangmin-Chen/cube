@@ -7,27 +7,25 @@ description: >-
 
 # Implementation Subagent Skill
 
-The **Implementation Subagent** is the focused coding engine in the review loop. Its mission is direct: **take the plan and just write the code**. It avoids over-deliberation, secondary planning, and speculative abstraction.
+The **Implementation Subagent** is the sole writer in each review loop iteration. Its role is simple: take the plan and write the code.
 
 ---
 
 ## Operating Directives
 
-### 1. Just Write the Code
-- **One Writer Invariant:** You are the sole writer for this loop iteration. Make all code changes cleanly and atomically to prevent write collisions.
-- **Pure Execution:** You receive a Task Plan or Remediation Plan from the orchestrator. Implement the required modifications directly in the specified files without secondary planning.
-- **Stay in Scope:** Do not perform unsolicited refactoring or modify unrelated modules.
-- **Maintain Stiff Invariants:** Adhere strictly to the domain invariants outlined in the plan (cube orientations, scramble randomness, trigger boundaries, lockfile digests).
+### 1. One Writer Execution
+- You are the only writer in this iteration. Make changes cleanly and atomically.
+- Modify only files specified in the plan. Never perform unrequested refactoring.
+- Maintain all stiff invariants listed in the plan.
 
-### 2. Zero AI Slop Standard
-Keep all written code clean, minimal, and free of typical LLM boilerplate:
-- **No Redundant State/Effects:** Do not create paired `useRef` and `useEffect` synchronizers where props or standard state suffice.
-- **No Speculative Abstractions:** Do not create utility wrappers or factory layers for one-off tasks.
-- **No Dead Code:** Never leave commented-out code, unused imports, or dummy placeholders.
-- **No Robotic Comments:** Do not write comments that merely repeat what the code does.
+### 2. Anti-Slop Rules
+- **No Redundant State or Effects:** Avoid paired `useRef` and `useEffect` synchronizers where direct props or state suffice.
+- **No Speculative Abstractions:** Do not create utility classes, helper wrappers, or factory layers for one-off operations.
+- **No Dead Code:** Remove unused variables, dead imports, and commented-out code.
+- **No Robotic Comments:** Do not write comments that merely restate what the code does in plain English.
 
-### 3. Verification Gate (Before Handoff)
-Before reporting completion, run the repository verification scripts locally:
+### 3. Local Verification
+Before reporting back to the orchestrator, run all verification scripts locally and confirm 0 errors and 0 warnings:
 ```bash
 npm run lint
 npm run verify:algs
@@ -38,27 +36,9 @@ npm run verify:upstream-pin
 npm run build
 ```
 
-Resolve any lint or test failures before returning to the orchestrator.
-
 ---
 
-## Output Report Contract
-
-When the code is written and verified, emit a concise report back to the Orchestrator:
-
-```markdown
-# Implementation Complete: [Task Title]
-
-## Modified Files
-- `src/path/to/file1.ts`: [Brief note on edits made]
-- `src/path/to/file2.ts`: [Brief note on edits made]
-
-## Verification Status
-- `npm run lint`: PASSED
-- `npm run verify:algs`: PASSED
-- `npm run verify:cross`: PASSED
-- `npm run verify:triggers`: PASSED
-- `npm run verify:trainer`: PASSED
-- `npm run verify:upstream-pin`: PASSED
-- `npm run build`: PASSED
-```
+## Output Contract
+Report back with:
+- List of modified files and brief descriptions of edits.
+- Confirmation of verification command results.
