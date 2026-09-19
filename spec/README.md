@@ -13,18 +13,19 @@ This folder is the commit-grounded single source of truth for the codebase archi
 
 ---
 
-## AI Agent Guidelines (Planner & Subagent Protocol)
+## AI Agent Guidelines
 
-This repository follows a **Spec-First** agent workflow codified in [`AGENTS.md`](../AGENTS.md) and the workspace skill [`.agents/skills/spec-workflow/SKILL.md`](../.agents/skills/spec-workflow/SKILL.md):
+This repository follows a **Spec-First** discipline codified in [`AGENTS.md`](../AGENTS.md) and workspace skills:
 
-1. **Reference `spec/` First for Historical & Architectural Context:**
-   - Whenever gathering historical context, architectural rationale, method tier naming, or issue background, **consult `spec/` first** before diving into raw `git log` or commit history.
-   - Because the repository strictly uses squash merges and parallel issue branches, raw git history is noisy and prone to duplicate SHAs. `spec/` provides the curated, commit-grounded source of truth.
+1. **Reference `spec/` First for Context:**
+   - Whenever gathering historical context, architectural rationale, method tier naming, or issue background, **consult `spec/` first** before diving into raw `git log`.
+   - Because the repository strictly uses squash merges and parallel issue branches, raw git history is noisy. `spec/` provides the curated, commit-grounded source of truth.
 
 2. **Plan Before Code:**
-   - Before modifying code or implementing a task, the **planner / orchestrator agent must record what it intends to do** in a task plan or specification.
-   - Canonical living specs (`current-state.md`, `architecture.md`) must always represent verified shipped reality, updated during Phase 4 upon completion.
-   - Subagents must read the recorded plan and referenced specs before executing code edits.
+   - Before modifying code or implementing non-trivial tasks, record what you intend to do in a task specification inside `spec/`.
+   - If `spec/` does not exist, initialize the `spec/` directory.
+   - Canonical living specs (`current-state.md`, `architecture.md`) must always represent verified shipped reality, updated upon completion.
+   - For multi-agent orchestration and specialized runbooks, refer to [`.agents/skills/`](../.agents/skills/).
 
 ---
 
