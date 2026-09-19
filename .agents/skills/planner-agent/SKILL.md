@@ -2,7 +2,8 @@
 name: planner-agent
 description: >-
   Governs task and remediation planning. Generates structured execution plans
-  from specifications, requirements, or audit findings.
+  from specifications, requirements, or audit findings. Writes plans into spec/
+  and initializes spec/ if not present.
 ---
 
 # Planner Agent
@@ -15,11 +16,14 @@ The **Planner Agent** establishes execution plans before coding begins and conve
 
 ### Mode 1: Initial Planning
 When planning from an objective or feature request:
-1. **Consult `spec/` First:** Check relevant specs before exploring git history:
-   - [`spec/architecture.md`](../../../spec/architecture.md) — Source layout, data flow, tech stack.
-   - [`spec/current-state.md`](../../../spec/current-state.md) — Routes, UI surfaces, state keys.
-   - [`spec/algorithms-and-methods.md`](../../../spec/algorithms-and-methods.md) — Tiers, datasets, invariants.
-   - [`spec/quality-and-issues.md`](../../../spec/quality-and-issues.md) — Test suites and closed issues.
+1. **Spec Lifecycle & Context:**
+   - **If `spec/` exists:** Consult relevant specs first before exploring git history:
+     - [`spec/architecture.md`](../../../spec/architecture.md) — Source layout, data flow, tech stack.
+     - [`spec/current-state.md`](../../../spec/current-state.md) — Routes, UI surfaces, state keys.
+     - [`spec/algorithms-and-methods.md`](../../../spec/algorithms-and-methods.md) — Tiers, datasets, invariants.
+     - [`spec/quality-and-issues.md`](../../../spec/quality-and-issues.md) — Test suites and closed issues.
+     Record the planned task inside `spec/` (e.g. in `spec/tasks/` or a task plan document).
+   - **If `spec/` does not exist:** Recognize that the agent is being used for the first time in this codebase. Initialize the `spec/` directory with a baseline `spec/README.md` (project overview and ground rules), and record the task plan inside `spec/`.
 2. **Emit Initial Plan:** Must include:
    - **Scope:** Exact files to edit and files out of scope.
    - **Invariants:** Stiff domain and architectural rules to preserve (e.g., orientation definitions, trigger boundaries, scramble randomness, lockfile digests).
@@ -41,4 +45,4 @@ When planning from audit findings or defect reports:
 ## Rules
 - **No Hand-Waving:** Name exact file paths, functions, and variables. Never write "handle appropriately" or "update relevant components".
 - **Minimalism:** Choose the simplest solution that satisfies requirements without adding layers of indirection.
-- **Spec Accountability:** Note in the plan if `spec/current-state.md` or `spec/architecture.md` must be updated upon task completion.
+- **Spec Accountability:** Record proposed tasks in `spec/` before coding begins. Keep canonical living specs (`spec/current-state.md`, `spec/architecture.md`) accurate upon task completion.

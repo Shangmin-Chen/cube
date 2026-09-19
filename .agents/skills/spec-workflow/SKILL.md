@@ -47,7 +47,8 @@ Before modifying any source code or delegating implementation tasks to subagents
 1. **Identify Architectural Impact**:
    - Determine which components, data structures, or invariants will be changed or introduced.
 2. **Record Intent Before Code Edits**:
-   - Record the plan in a task specification (e.g. in `spec/tasks/` or a plan document).
+   - **If `spec/` exists**: Record the plan in a task specification (e.g. in `spec/tasks/` or a task plan document inside `spec/`).
+   - **If `spec/` does not exist**: Recognize that the agent is being used for the first time in this codebase. Initialize the `spec/` directory with a baseline `spec/README.md` before recording the plan.
    - Document:
      - **Objective & Scope**: What is changing and why.
      - **Invariants**: Domain and architectural invariants that must be preserved (e.g., 2-look hold orientation, trigger deduplication, WCA scramble randomness, upstream pin hash).

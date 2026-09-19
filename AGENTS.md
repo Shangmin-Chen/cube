@@ -22,7 +22,8 @@ Layer 0 Agent Runbooks:
 
 ### 2. Plan First, Then Execute (Planner & Orchestrator Duty)
 - Before modifying code or delegating tasks to subagents, the **planner or orchestrator agent must record what it intends to do**.
-- Record proposed architectural changes, domain invariants, and verification criteria in a plan artifact or task specification before coding begins.
+- Record proposed architectural changes, domain invariants, and verification criteria in a task specification inside `spec/` before coding begins.
+- If `spec/` does not exist, recognize that the agent is being used for the first time in this codebase and initialize the `spec/` directory.
 - Keep canonical living specs (`current-state.md`, `architecture.md`) accurate to verified, shipped reality; update them upon completion during Phase 4/5 rather than pre-populating them with unverified intent.
 - *(Scope: Applies to architectural work, feature additions, invariant changes, and schema updates. Read-only queries, micro-benchmarks, and trivial typo fixes do not require prior spec edits.)*
 
