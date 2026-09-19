@@ -19,3 +19,5 @@ jobs:
       - run: npm run build
       - run: npm run verify:triggers
       - run: npm run verify:algs
+      - run: npm run verify:trainer
+      - run: npm run verify:upstream-pin
