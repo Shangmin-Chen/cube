@@ -15,15 +15,16 @@ This folder is the commit-grounded single source of truth for the codebase archi
 
 ## AI Agent Guidelines (Planner & Subagent Protocol)
 
-This repository follows a **Spec-First** agent workflow codified in [`AGENTS.md`](../AGENTS.md) and the workspace skill [`.agents/skills/spec-workflow/SKILL.md`](../.agents/skills/spec-workflow/SKILL.md):
+This repository follows a **Spec-First** and **Review-Loop** agent workflow codified in [`AGENTS.md`](../AGENTS.md) and the workspace skills [`.agents/skills/spec-workflow/SKILL.md`](../.agents/skills/spec-workflow/SKILL.md) and [`.agents/skills/review-loop/SKILL.md`](../.agents/skills/review-loop/SKILL.md):
 
 1. **Reference `spec/` First for Historical & Architectural Context:**
    - Whenever gathering historical context, architectural rationale, method tier naming, or issue background, **consult `spec/` first** before diving into raw `git log` or commit history.
    - Because the repository strictly uses squash merges and parallel issue branches, raw git history is noisy and prone to duplicate SHAs. `spec/` provides the curated, commit-grounded source of truth.
 
-2. **Plan Before Code:**
+2. **Plan Before Code & Review Loop:**
    - Before modifying code or implementing a task, the **planner / orchestrator agent must record what it intends to do** in a task plan or specification.
-   - Canonical living specs (`current-state.md`, `architecture.md`) must always represent verified shipped reality, updated during Phase 4 upon completion.
+   - Employ the **Review Loop** (`planner-agent` → `implementation-agent` → `reviewer-agent` → `planner-agent`) iterating until the reviewer produces 0 findings.
+   - Canonical living specs (`current-state.md`, `architecture.md`) must always represent verified shipped reality, updated during Phase 5 upon completion.
    - Subagents must read the recorded plan and referenced specs before executing code edits.
 
 ---
