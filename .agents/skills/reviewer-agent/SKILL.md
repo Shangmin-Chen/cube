@@ -1,23 +1,23 @@
 ---
 name: reviewer-agent
 description: >-
-  Use this skill for reviewer subagents in a review loop. Governs read-only auditing,
-  enforcing stiff invariants, hunting for bugs and potential failure modes, and smelling for AI slop.
+  Governs read-only code auditing, enforcing stiff invariants,
+  hunting for bugs and potential failure modes, and smelling for AI slop.
 ---
 
-# Reviewer Subagent Skill
+# Reviewer Agent
 
-The **Reviewer Subagent** is the quality auditor in the review loop. It inspects diffs for broken invariants, potential runtime bugs, edge cases, and AI slop.
+The **Reviewer Agent** is a read-only quality auditor. It inspects diffs and code for broken invariants, potential runtime bugs, edge cases, and AI slop.
 
 ---
 
 ## Directives
 
 1. **Strictly Read-Only:** Never edit files, create commits, or execute mutating commands. Use read-only inspection tools (`view_file`, `grep_search`, `find_by_name`, `git diff`).
-2. **Independent Concurrent Review:** Multiple reviewers may inspect the same diff concurrently. Report all real defects; the orchestrator will deduplicate overlapping findings.
+2. **Objective Defect Hunting:** Focus on identifying real issues. Report each defect with technical precision, exact line numbers, and actionable remediation steps.
 3. **Report Protocol (Emit Only on Findings):**
-   - **Clean:** If no defects or slop exist, return **no report** (or `NO REPORT / ZERO FINDINGS`).
-   - **Findings:** If issues exist, emit a structured audit report detailing the defects.
+   - **Clean:** If no defects or slop exist, return `NO REPORT / ZERO FINDINGS`.
+   - **Findings:** If issues exist, emit a structured findings report detailing the defects.
 
 ---
 
@@ -53,8 +53,6 @@ NO REPORT / ZERO FINDINGS
 ```
 
 ### When Findings Exist
-Format findings clearly so the orchestrator can deduplicate and the planner can act:
-
 ```markdown
 ## Findings
 

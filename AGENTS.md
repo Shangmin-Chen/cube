@@ -5,10 +5,10 @@ This repository (`Shangmin-Chen/cube`) strictly follows a **Spec-First** and **R
 👉 **[Spec-First Workflow Skill](.agents/skills/spec-workflow/SKILL.md)** (`spec-workflow`)  
 👉 **[Review Loop Orchestration Skill](.agents/skills/review-loop/SKILL.md)** (`review-loop`)
 
-Subagent skill runbooks:
-- [Planner Subagent](.agents/skills/planner-agent/SKILL.md) (`planner-agent`)
-- [Implementation Subagent](.agents/skills/implementation-agent/SKILL.md) (`implementation-agent`)
-- [Reviewer Subagent](.agents/skills/reviewer-agent/SKILL.md) (`reviewer-agent`)
+Layer 0 Agent Runbooks:
+- [Planner Agent](.agents/skills/planner-agent/SKILL.md) (`planner-agent`)
+- [Implementation Agent](.agents/skills/implementation-agent/SKILL.md) (`implementation-agent`)
+- [Reviewer Agent](.agents/skills/reviewer-agent/SKILL.md) (`reviewer-agent`)
 
 ---
 
