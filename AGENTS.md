@@ -1,12 +1,34 @@
 # AI Agent Workspace Guidelines
 
-This document provides orientation and core operating guidelines for AI agents working in `Shangmin-Chen/cube`.
+This document provides orientation, product context, and core operating guidelines for AI agents working in `Shangmin-Chen/cube`.
+
+---
+
+## What We Are Building
+
+**Cube** is a modern, responsive speedcubing application for learning, practicing, and mastering the CFOP (Fridrich) method. It unites three primary surfaces:
+
+1. **Competition-Grade Timer (`/timer`):**
+   - Authentic random-state 3x3x3 scrambles via `cubing/scramble` (`randomScrambleForEvent('333')`).
+   - Official WCA 15-second inspection countdown with +2 penalty (15s–17s) and DNF enforcement (>17s).
+   - Real-time solve metrics, session history, and trimmed rolling averages (Ao5, Ao12).
+   - Interactive 3D scramble preview with custom playback.
+
+2. **Active Recall Flashcard Trainer (`/train`):**
+   - Active recall practice against virtual 3D cube setups with instant flip-to-solution.
+   - Session tracking with strictly isolated round mastery ("Mastered" vs. "Still Learning").
+   - Full keyboard accessibility and celebratory confetti on round completion.
+
+3. **Algorithmic Reference Library (`/algs`):**
+   - Multi-tier CFOP catalog: Beginner 4-Look LL (24 cases), Intermediate 3-Look LL (39 cases), and Full CFOP (86 cases).
+   - 4 verified beginner Cross cases, 4 fundamental F2L pairs, and comprehensive OLL / PLL datasets.
+   - Algorithmic trigger breakdown chips (Sexy Move, Inverse Sexy, Sledgehammer, Hedgeslammer, Sune, Anti-Sune).
+   - Interactive 3D cube playback with token-by-token navigation and VisualCube diagrams.
 
 ---
 
 ## Workspace Overview
 
-- **Project:** Speedcubing Trainer and Reference application.
 - **Stack:** React 18, TypeScript, Vite, Tailwind CSS, Lucide icons, `cubing.js` (`cubing/scramble`, `cubing/twisty`).
 - **Key Directories:**
   - `src/`: Application source code (components, data models, hooks, utilities).
