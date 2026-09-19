@@ -75,4 +75,5 @@ npm run build               # tsc -b && vite build
 For multi-agent workflows and specialized tasks, consult the skills in `.agents/skills/`:
 - **[`spec-workflow`](.agents/skills/spec-workflow/SKILL.md):** Spec-first context gathering and planning protocol.
 - **[`review-loop`](.agents/skills/review-loop/SKILL.md):** Orchestrator loop governing planning, single-writer implementation, and concurrent read-only reviews.
+- **[`code-quality-audit`](.agents/skills/code-quality-audit/SKILL.md):** Multi-domain architecture and code-quality review protocol producing structured audit dossiers, issue maps, and collision matrices.
 - **Individual Agent Runbooks:** [`planner-agent`](.agents/skills/planner-agent/SKILL.md), [`implementation-agent`](.agents/skills/implementation-agent/SKILL.md), and [`reviewer-agent`](.agents/skills/reviewer-agent/SKILL.md).
