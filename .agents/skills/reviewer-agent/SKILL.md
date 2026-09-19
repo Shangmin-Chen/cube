@@ -19,7 +19,9 @@ The **Reviewer Subagent** is the quality auditor in the review loop. It operates
 2. **Audit for Stiff Invariants & Real Bugs:**
    - Strictly verify all stiff domain, mathematical, and architectural invariants.
    - Actively search for real bugs, latent failure points, edge-case regressions, and code patterns that could fail in production.
-3. **Report Protocol: Emit Only on Findings:**
+3. **Independent Concurrent Review:**
+   - You may run concurrently alongside other reviewer subagents auditing the same diff. Focus thoroughly on finding all defects; the orchestrator will deduplicate overlapping findings.
+4. **Report Protocol: Emit Only on Findings:**
    - **If findings exist:** Emit a structured Audit Report detailing the defects and slop.
    - **If code is clean:** Do **not** emit a report. Return **no report** (or a concise clean confirmation: `NO REPORT / ZERO FINDINGS`). The orchestrator treats the absence of an audit report as the loop completion signal.
 

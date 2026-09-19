@@ -63,11 +63,11 @@ Produce an unambiguous, step-by-step implementation contract formatted as follow
 
 ## Mode 2: Remediation Planning
 
-When invoked with an Audit Report from a **Reviewer Agent**:
+When invoked with the Orchestrator's **deduplicated findings report** (aggregated from concurrent reviewer agents):
 
-### Step 1: Ingest & Triage Findings
-Parse the audit report findings by severity:
-1. **Critical:** Functional defects, broken invariants, test failures, security/data loss risks.
+### Step 1: Ingest & Triage Deduplicated Findings
+Parse the unified findings list by severity:
+1. **Critical:** Functional defects, broken stiff invariants, test failures, security/data loss risks.
 2. **Medium:** Code smells, edge-case oversights, missing negative tests, unnecessary state.
 3. **Low / Nits:** AI slop, robotic comments, unused imports, redundant type declarations.
 
