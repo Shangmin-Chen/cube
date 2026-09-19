@@ -1,47 +1,56 @@
-# AI Agent Operating Guidelines
+# AI Agent Workspace Guidelines
 
-This repository (`Shangmin-Chen/cube`) strictly follows a **Spec-First** and **Review-Loop** multi-agent development workflow. All AI coding assistants, planners, orchestrators, and subagents must adhere to the core directives below and leverage the workspace skills:
-
-👉 **[Spec-First Workflow Skill](.agents/skills/spec-workflow/SKILL.md)** (`spec-workflow`)  
-👉 **[Review Loop Orchestration Skill](.agents/skills/review-loop/SKILL.md)** (`review-loop`)
-
-Layer 0 Agent Runbooks:
-- [Planner Agent](.agents/skills/planner-agent/SKILL.md) (`planner-agent`)
-- [Implementation Agent](.agents/skills/implementation-agent/SKILL.md) (`implementation-agent`)
-- [Reviewer Agent](.agents/skills/reviewer-agent/SKILL.md) (`reviewer-agent`)
+This document provides orientation and core operating guidelines for AI agents working in `Shangmin-Chen/cube`.
 
 ---
 
-## Core Directives
+## Workspace Overview
 
-### 1. Reference `spec/` First (No Blind Git Archaeology)
-- **Do not start by running exploratory `git log` commands.**
-- Whenever gathering historical context, architectural rationale, method tier naming (e.g. `cfop-4look` beginner vs `cfop-2look` Full CFOP), or issue background, **consult the `spec/` directory first**.
-- Because this repository relies heavily on squash merges, parallel branch commits, and orphaned tips, `spec/` provides the curated, commit-grounded source of truth.
-  - Start with `spec/README.md` and `spec/glossary.md`.
+- **Project:** Speedcubing Trainer and Reference application.
+- **Stack:** React 18, TypeScript, Vite, Tailwind CSS, Lucide icons, `cubing.js` (`cubing/scramble`, `cubing/twisty`).
+- **Key Directories:**
+  - `src/`: Application source code (components, data models, hooks, utilities).
+  - `spec/`: Commit-grounded specifications and source of truth for features, architecture, and invariants.
+  - `scripts/`: Verification suites (`verify-triggers.ts`, `verify-cross-cases.mjs`, `verify-trainer-session.ts`, `verify-upstream-pin.mjs`) and ingestion tooling.
+  - `.agents/skills/`: Specialized agent workflow skills and runbooks.
 
-### 2. Plan First, Then Execute (Planner & Orchestrator Duty)
-- Before modifying code or delegating tasks to subagents, the **planner or orchestrator agent must record what it intends to do**.
-- Record proposed architectural changes, domain invariants, and verification criteria in a task specification inside `spec/` before coding begins.
+---
+
+## Operating Principles
+
+### 1. Consult `spec/` Before Git Archaeology
+- **Do not start with exploratory `git log` commands.**
+- The repository relies heavily on squash merges, parallel branch commits, and orphaned tips, making raw git history noisy.
+- Consult `spec/` first for historical context, architecture rationale, method naming (`cfop-4look` beginner vs `cfop-2look` Full CFOP), and domain contracts. Start with [`spec/README.md`](spec/README.md) and [`spec/glossary.md`](spec/glossary.md).
+
+### 2. Plan Intent in `spec/` Before Modifying Code
+- Before modifying code or delegating implementation tasks, record what you intend to do in a task specification inside `spec/`.
 - If `spec/` does not exist, recognize that the agent is being used for the first time in this codebase and initialize the `spec/` directory.
-- Keep canonical living specs (`current-state.md`, `architecture.md`) accurate to verified, shipped reality; update them upon completion during Phase 4/5 rather than pre-populating them with unverified intent.
-- *(Scope: Applies to architectural work, feature additions, invariant changes, and schema updates. Read-only queries, micro-benchmarks, and trivial typo fixes do not require prior spec edits.)*
+- Keep canonical living specs (`current-state.md`, `architecture.md`) accurate to verified, shipped reality; update them upon completion rather than pre-populating them with unverified intent.
+- *(Scope: Applies to architectural changes, features, invariant modifications, and schema updates. Read-only queries, micro-benchmarks, and trivial typo fixes do not require prior spec edits.)*
 
-### 3. Review Loop & Subagent Coordination
-- When orchestrating non-trivial coding tasks, use the **Review Loop** pattern:
-  1. **Orchestrator Agent:** Coordinates handoffs, routes information, and deduplicates findings across concurrent reviewers.
-  2. **Planner Agent (`planner-agent`):** Drafts initial task specifications and converts deduplicated reviewer findings into remediation plans.
-  3. **Implementation Agent (`implementation-agent`):** One writer only per loop—pure execution that just writes the code directly based on the plan and runs local tests.
-  4. **Reviewer Agents (`reviewer-agent`):** Concurrent read-only auditors (e.g. 3 reviewers). Enforce all stiff invariants, hunt for bugs, potential failure modes, and AI slop. Each emits an audit report only when findings exist, or returns no report when clean.
-- **Deduplication & Termination:** The Orchestrator unifies and dedupes overlapping findings from all reviewers before passing to the Planner. The loop terminates when **all review agents return no report** (or all reviewers report 0 findings).
+### 3. Mandatory Verification & Invariant Checks
+Never bypass repository verification scripts. Before completing any task, ensure all checks pass cleanly with 0 errors and 0 warnings:
+```bash
+npm run lint                # oxlint
+npm run verify:algs         # algorithm dataset simulation & cross-case checks
+npm run verify:triggers     # trigger pattern oracle & boundary validation
+npm run verify:trainer      # trainer session state machine invariants
+npm run verify:upstream-pin # upstream dataset lockfile SHA-256 integrity
+npm run build               # tsc -b && vite build
+```
 
-### 4. Mandatory Invariant & Verification Checks
-- Never bypass repository verification scripts. Before completing any task, ensure all checks pass cleanly with 0 errors and 0 warnings:
-  - `npm run lint` (`oxlint`)
-  - `npm run verify:algs` (includes `verify:cross`)
-  - `npm run verify:triggers`
-  - `npm run verify:trainer`
-  - `npm run verify:upstream-pin`
-  - `npm run build`
+### 4. Preserve Stiff Invariants
+- **WCA Scrambles:** Uses `cubing/scramble` (`randomScrambleForEvent('333')`), authentic random-state.
+- **Timer Inspection:** 15s countdown with +2 penalty (15s–17s) and DNF after 17s.
+- **OLL/PLL Integrity:** 2-Look L-Shape hold orientation at 3 and 6 o'clock (UR and UB slots); corner probability sum equals 1.
+- **Upstream Pin:** Ingestion pipeline locked to `scripts/ingest/upstream.lock.json` via SHA-256.
 
-For detailed procedures and runbooks, see [.agents/skills/review-loop/SKILL.md](.agents/skills/review-loop/SKILL.md) and [.agents/skills/spec-workflow/SKILL.md](.agents/skills/spec-workflow/SKILL.md).
+---
+
+## Agent Skills
+
+For multi-agent workflows and specialized tasks, consult the skills in `.agents/skills/`:
+- **[`spec-workflow`](.agents/skills/spec-workflow/SKILL.md):** Spec-first context gathering and planning protocol.
+- **[`review-loop`](.agents/skills/review-loop/SKILL.md):** Orchestrator loop governing planning, single-writer implementation, and concurrent read-only reviews.
+- **Individual Agent Runbooks:** [`planner-agent`](.agents/skills/planner-agent/SKILL.md), [`implementation-agent`](.agents/skills/implementation-agent/SKILL.md), and [`reviewer-agent`](.agents/skills/reviewer-agent/SKILL.md).
