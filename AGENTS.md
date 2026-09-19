@@ -30,9 +30,9 @@ Subagent skill runbooks:
 - When orchestrating non-trivial coding tasks, use the **Review Loop** pattern:
   1. **Orchestrator Agent:** Coordinates handoffs and routes information only.
   2. **Planner Agent (`planner-agent`):** Drafts initial task specifications and converts reviewer findings into remediation plans.
-  3. **Implementation Agent (`implementation-agent`):** Writes code, runs local verifications, and adheres strictly to plan boundaries.
-  4. **Reviewer Agent (`reviewer-agent`):** Strictly read-only auditor. Inspects diffs for bugs, invariant regressions, and AI slop.
-- **The Zero-Finding Bar:** The loop iterates between Implementer and Reviewer (via Planner) until the Reviewer confirms a **Clean Pass (0 findings)**.
+  3. **Implementation Agent (`implementation-agent`):** Pure execution—just writes the code directly based on the plan, runs local verifications, and stays strictly within scope.
+  4. **Reviewer Agent (`reviewer-agent`):** Strictly read-only auditor. Enforces all stiff invariants, hunts for bugs, potential failure modes, and AI slop. Emits an audit report only when findings exist, or returns no report when clean.
+- **Termination Condition:** The orchestration loop terminates when the reviewer agent returns **no report** (or all reviewers report 0 findings).
 
 ### 4. Mandatory Invariant & Verification Checks
 - Never bypass repository verification scripts. Before completing any task, ensure all checks pass cleanly with 0 errors and 0 warnings:

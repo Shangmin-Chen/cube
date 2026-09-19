@@ -10,7 +10,7 @@ description: >-
 
 The **Review Loop** is an agentic coordination pattern for building features, refactoring code, and resolving defects with guaranteed quality and zero AI slop.
 
-In this workflow, the **Orchestrator Agent (main session)** functions strictly as a **router and coordinator**. The Orchestrator does not write code or draft plans directly; instead, it delegates tasks to specialized subagents and iterates until all reviewers confirm a **Clean Pass (0 findings)**.
+In this workflow, the **Orchestrator Agent (main session)** functions strictly as a **router and coordinator**. The Orchestrator does not write code or draft plans directly; instead, it delegates tasks to specialized subagents and iterates until the code is clean.
 
 ---
 
@@ -27,80 +27,77 @@ In this workflow, the **Orchestrator Agent (main session)** functions strictly a
                         │   (Router & Coordinator)  │                    │
                         └───────┬───────────▲───────┘                    │
                                 │           │                            │
-             1. Initial /       │           │ 4. Audit                   │
-                Remediation     │           │    Report                  │
-                Plan            │           │                            │
+             1. Initial /       │           │ 4. Audit Report            │
+                Remediation     │           │    (Only if                │
+                Plan            │           │     findings exist)        │
                                 ▼           │                            │
 ┌───────────────────────────┐ ┌─────────────┴─────────────┐ ┌────────────┴──────────────┐
 │       Planner Agent       │ │   Implementation Agent    │ │       Reviewer Agent       │
 │      (planner-agent)      │ │  (implementation-agent)   │ │      (reviewer-agent)      │
 │                           │ │                           │ │                            │
-│  - Synthesizes user goal  │ │  - Executes code edits    │ │  - Strictly READ-ONLY      │
-│  - Consults spec/ first   │ │  - Runs local tests       │ │  - Audits diff & invariants│
-│  - Turns reviewer audits  │ │  - Supports X parallel    │ │  - Smells for AI slop      │
-│    into remediation plans │ │    implementers           │ │  - Returns 0-finding report│
+│  - Synthesizes user goal  │ │  - "Just writes" code     │ │  - Strictly READ-ONLY      │
+│  - Consults spec/ first   │ │  - Executes plan directly │ │  - Checks stiff invariants │
+│  - Turns reviewer audits  │ │  - Runs local tests       │ │  - Hunts bugs & bad patterns│
+│    into remediation plans │ │  - Supports X parallel    │ │  - Returns NO report when  │
+│                           │ │    implementers           │ │    clean (or 0 findings)   │
 └───────────────────────────┘ └───────────────────────────┘ └────────────────────────────┘
 ```
 
 1. **Orchestrator Agent (Main Session):**
    - Coordinates the loop, tracks iteration counts, and manages agent handoffs.
-   - Enforces the termination condition: **0 findings from all reviewers**.
+   - **Termination Condition:** The orchestration loop ends when the reviewer agent comes back with **no report** (or all reviewer agents report 0 findings).
    - Does not perform edits or write plans directly.
 2. **Planner Agent (`planner-agent`):**
    - References `spec/` via `spec-workflow` and drafts actionable execution plans.
-   - In subsequent iterations, converts the reviewer's audit findings into concrete remediation plans.
+   - When an audit report with findings arrives, converts reviewer findings into concrete remediation plans.
 3. **Implementation Agent (`implementation-agent`):**
-   - Has write tools (`replace_file_content`, `write_to_file`, `run_command`).
-   - Executes the plan, verifies invariants, runs local tests, and reports touched files.
+   - **Pure execution:** "Just writes" the code directly based on the plan without secondary planning or over-engineering.
+   - Edits code, runs local tests, and reports modified files.
    - Supports horizontal scaling ($X$ implementation agents partitioned across independent modules).
 4. **Reviewer Agent (`reviewer-agent`):**
-   - Strictly **read-only** (uses search, grep, and file inspection tools; no write tools).
-   - Audits code against specifications, tests edge cases, detects technical debt, and rigorously smells for AI slop (boilerplate, dead code, defensive hallucinations, robotic comments).
-   - Supports horizontal scaling ($X$ review agents specialized by concern: e.g., correctness reviewer and code cleanliness reviewer).
+   - Strictly **read-only** (search, grep, inspect; no write tools).
+   - Enforces all **stiff invariants**, hunts for actual bugs, edge cases, potential failure modes, and AI slop.
+   - **Report Protocol:** Emits an Audit Report *only* when findings exist. If the code is pristine, it returns **no report** (or a 0-finding confirmation), signalling loop completion.
+   - Supports horizontal scaling ($X$ specialized review agents).
 
 ---
 
 ## The Loop Protocol
 
 ### Phase 0: Initial Planning Handoff
-1. Orchestrator receives the user request or objective.
-2. Orchestrator invokes the **Planner Agent** (`invoke_subagent` with `planner-agent` instructions):
-   - Provide the user request and direct the planner to consult `spec/` (e.g. `current-state.md`, `architecture.md`, `algorithms-and-methods.md`).
-3. Planner returns an initial **Task Specification & Implementation Plan**.
+1. Orchestrator receives user request or objective.
+2. Orchestrator invokes the **Planner Agent** (`planner-agent`):
+   - Directs planner to consult `spec/` (e.g. `current-state.md`, `architecture.md`, `algorithms-and-methods.md`).
+3. Planner returns an initial **Task Plan**.
 
-### Phase 1: Implementation Handoff
+### Phase 1: Implementation Handoff ("Just Writes")
 1. Orchestrator routes the plan to the **Implementation Agent** (`implementation-agent`):
    - For single-module tasks: Spawn 1 implementation agent.
-   - For decoupled tasks: Spawn $X$ implementation agents with explicit file and responsibility boundaries.
-2. Implementation agents edit files, run verification scripts (`npm run lint`, `verify:*`, `build`), and return:
-   - Summary of code changes.
-   - Verification command results.
-   - List of modified files.
+   - For decoupled tasks: Spawn $X$ implementation agents with partitioned file boundaries.
+2. Implementation agents execute the code modifications directly, run local verification scripts (`npm run lint`, `verify:*`, `build`), and report back the modified files and test status.
 
-### Phase 2: Read-Only Review & Slop Audit
-1. Orchestrator invokes the **Reviewer Agent** (`reviewer-agent`):
-   - Provide git diff (`git diff main...HEAD` or list of modified files), original plan, and relevant specs.
-   - For high-complexity tasks, spawn $X$ review agents with distinct lenses (e.g., Domain Correctness vs Code Quality / Slop Audit).
-2. Reviewer agents thoroughly inspect the changes and return a **Structured Audit Report**:
-   - **Verdict:** `PASS` (0 findings) or `REVISE` (>0 findings).
-   - Findings categorized by severity: `Critical`, `Medium`, `Low`, `Nit`.
-   - Explicit file paths and line numbers.
+### Phase 2: Read-Only Review & Invariant Audit
+1. Orchestrator invokes the **Reviewer Agent(s)** (`reviewer-agent`):
+   - Pass git diff, touched files, original plan, and relevant specs.
+   - For complex tasks, spawn $X$ review agents with specialized scopes (e.g., Domain & Stiff Invariants vs Code Quality & Slop).
+2. Reviewer agents audit the code strictly:
+   - Check all stiff invariants, search for functional bugs, edge-case regressions, and AI slop.
+   - **If findings exist:** Reviewer returns a **Structured Audit Report** detailing the issues.
+   - **If clean (no findings):** Reviewer returns **no report** (or confirms 0 findings).
 
 ### Phase 3: Convergence Evaluation
-1. Orchestrator evaluates the reviewer audit report(s):
-   - **If Verdict is PASS (0 findings across all reviewers):**
-     - Loop terminates successfully.
+1. Orchestrator inspects the reviewer response(s):
+   - **If Reviewer returns NO REPORT (or all reviewers report 0 findings):**
+     - Loop terminates successfully! The code is verified and pristine.
      - Proceed to **Phase 5 (Finalization)**.
-   - **If Verdict is REVISE (>0 findings):**
+   - **If Reviewer returns an Audit Report with findings:**
      - Increment loop iteration counter (default safeguard: maximum 5 iterations).
      - Proceed to **Phase 4 (Remediation Planning)**.
 
 ### Phase 4: Remediation Planning Handoff
-1. Orchestrator sends the Reviewer Audit Report back to the **Planner Agent**.
-2. Planner synthesizes the audit findings into a **Targeted Remediation Plan**:
-   - Prioritizes critical and medium issues.
-   - Defines concrete code edits and edge-case tests to resolve every finding.
-3. Orchestrator receives the remediation plan and loops back to **Phase 1**.
+1. Orchestrator passes the Audit Report back to the **Planner Agent**.
+2. Planner synthesizes the findings into a **Targeted Remediation Plan** with surgical fix instructions.
+3. Orchestrator routes the remediation plan back to the **Implementation Agent** (loops to **Phase 1**).
 
 ### Phase 5: Finalization & Living Spec Synchronization
 1. Orchestrator executes repository-wide verification suites:
@@ -113,13 +110,13 @@ In this workflow, the **Orchestrator Agent (main session)** functions strictly a
    npm run build
    ```
 2. If the completed task altered user-facing behavior, data schemas, or pipeline rules, update canonical specs (`spec/current-state.md`, `spec/architecture.md`) per [`spec-workflow`](../spec-workflow/SKILL.md).
-3. Present the final result, iteration count, and verification proof to the user.
+3. Present final summary and verification proof to user.
 
 ---
 
 ## Safety Rails & Convergence Rules
 
-1. **Strict Read-Only Reviewers:** Reviewer agents must never have write access. This prevents a reviewer from silently patching bugs without documenting findings or introducing untested fixes.
-2. **Zero-Finding Requirement:** The loop cannot exit on "acceptable" or "minor" findings. Every nit, unused import, or AI slop artifact must be resolved or explicitly dismissed by the user.
-3. **Iteration Cap:** If the loop reaches 5 iterations without convergence, the Orchestrator pauses, reports the blocker, and prompts the user for direction rather than looping indefinitely.
-4. **Handoff Minimalism:** The orchestrator message between agents must be concise, passing only the plan, diff references, and audit reports without redundant commentary.
+1. **Strict Read-Only Reviewers:** Reviewer agents must never edit code. Their only output is an audit report if findings exist, or no report when clean.
+2. **Termination via No Report / Zero Findings:** The loop ends as soon as no reviewer produces an audit report of findings.
+3. **Implementation Simplicity:** Implementation agents do not debate architecture—they "just write" according to the plan and verify locally.
+4. **Iteration Cap:** If the loop reaches 5 iterations without convergence, the Orchestrator pauses, reports the blocker, and prompts the user for direction rather than looping indefinitely.
