@@ -29,7 +29,7 @@ When planning from an objective or feature request:
    - **Invariants:** Stiff domain and architectural rules to preserve (e.g., orientation definitions, trigger boundaries, scramble randomness, lockfile digests).
    - **Implementation Steps:** Specific functions, signatures, and logic edits.
    - **Verification Commands:** Required test scripts to run.
-   - **Anti-Slop Directives:** Explicitly forbid speculative wrappers, unused state, and robotic comments.
+   - **Anti-Slop Directives:** Explicitly forbid speculative wrappers, unused state, robotic comments, and ephemeral PR/issue annotations.
 
 ### Mode 2: Remediation Planning
 When planning from audit findings or defect reports:

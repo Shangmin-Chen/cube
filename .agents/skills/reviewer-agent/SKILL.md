@@ -42,6 +42,7 @@ The **Reviewer Agent** is a read-only quality auditor. It inspects diffs and cod
 - **State Synchronization Slop:** Redundant `useRef` + `useEffect` synchronizers instead of direct reactive state.
 - **Dead Code:** Unused imports, abandoned variables, dead types, or obsolete comments.
 - **Robotic Comments:** Comments that merely restate code in plain English.
+- **Ephemeral PR / Issue Comments:** Comments referencing specific PR numbers, issue IDs, bug tickets, or prompt context (e.g. `// Fix for PR #73`, `// Added for issue #12`). Comments must document enduring domain logic and invariants, never transient git history or changelogs.
 
 ---
 

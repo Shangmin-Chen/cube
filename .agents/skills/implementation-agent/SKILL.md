@@ -23,6 +23,7 @@ The **Implementation Agent** executes plans by modifying code cleanly, maintaini
 - **No Speculative Abstractions:** Do not create utility classes, helper wrappers, or factory layers for one-off operations.
 - **No Dead Code:** Remove unused variables, dead imports, and commented-out code.
 - **No Robotic Comments:** Do not write comments that merely restate what the code does in plain English.
+- **No Ephemeral PR / Issue Comments:** Do not add comments referencing PR numbers, issue IDs, bug tickets, or prompt instructions (e.g. `// Fix for PR #73`, `// Added per issue`). Code comments must document enduring domain logic and invariants, not transient development history.
 
 ### 3. Local Verification
 Before completing your task, run all verification scripts locally and confirm 0 errors and 0 warnings:
