@@ -32,6 +32,10 @@ export function useTrainerKeyboard({
         return;
       }
 
+      if (e.repeat) {
+        return;
+      }
+
       if (e.ctrlKey || e.metaKey || e.altKey) {
         return;
       }
