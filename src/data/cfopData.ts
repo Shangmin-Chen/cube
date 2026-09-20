@@ -3,6 +3,7 @@ import oll2LookJson from './generated/oll-2look.json';
 import pll2LookJson from './generated/pll-2look.json';
 import ollFullJson from './generated/oll-full.json';
 import pllFullJson from './generated/pll-full.json';
+import { validateAlgCases } from './validateAlgCase';
 
 export const CROSS_CASES: AlgCase[] = [
   {
@@ -98,10 +99,10 @@ export const F2L_HIGHLIGHTS: AlgCase[] = [
   },
 ];
 
-export const OLL_2LOOK_CASES: AlgCase[] = oll2LookJson as AlgCase[];
-export const PLL_2LOOK_CASES: AlgCase[] = pll2LookJson as AlgCase[];
-export const OLL_FULL_CASES: AlgCase[] = ollFullJson as AlgCase[];
-export const FULL_PLL_CASES: AlgCase[] = pllFullJson as AlgCase[];
+export const OLL_2LOOK_CASES: AlgCase[] = validateAlgCases(oll2LookJson, 'oll-2look.json');
+export const PLL_2LOOK_CASES: AlgCase[] = validateAlgCases(pll2LookJson, 'pll-2look.json');
+export const OLL_FULL_CASES: AlgCase[] = validateAlgCases(ollFullJson, 'oll-full.json');
+export const FULL_PLL_CASES: AlgCase[] = validateAlgCases(pllFullJson, 'pll-full.json');
 
 export const CFOP_STEPS: MethodStep[] = [
   { id: 'cross', label: 'Step 1: CROSS', description: 'Solve bottom 4 cross edges aligned with side centers' },
