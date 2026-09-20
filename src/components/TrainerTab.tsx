@@ -17,7 +17,7 @@ export const TrainerTab: React.FC = () => {
 
   // Read URL query params safely
   const methodParam = searchParams.get('method') || 'cfop-4look';
-  const deckParam = searchParams.get('deck') || 'bookmarks';
+  const deckParam = searchParams.get('deck') || '2-look-oll';
 
   const availableMethods = useMemo(() => getAvailableMethods(), []);
   const session = useTrainerSession(deckParam, bookmarkedIds, methodParam);
