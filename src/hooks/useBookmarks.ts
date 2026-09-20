@@ -3,48 +3,57 @@ import { useState, useEffect, useCallback } from 'react';
 const STORAGE_KEY = 'cfop_bookmarks';
 const UPDATE_EVENT = 'cube:bookmarks_updated';
 
-export function useBookmarks() {
-  const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      const parsed = saved ? JSON.parse(saved) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
+/**
+ * Parse and validate stored bookmarks as a string array.
+ * Rejects non-string elements that may have been persisted by older code.
+ */
+function loadBookmarks(): string[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    const parsed = saved ? JSON.parse(saved) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((x): x is string => typeof x === 'string');
+  } catch {
+    return [];
+  }
+}
 
-  const syncBookmarks = useCallback(() => {
+export function useBookmarks() {
+  const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(loadBookmarks);
+
+  // Persist bookmarks to localStorage after each state commit (not inside the updater).
+  // This avoids side effects during React StrictMode double-invocation of updaters.
+  useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      const parsed = saved ? JSON.parse(saved) : [];
-      setBookmarkedIds(Array.isArray(parsed) ? parsed : []);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(bookmarkedIds));
+      window.dispatchEvent(new Event(UPDATE_EVENT));
     } catch {
-      // Fallback
+      // Storage full or unavailable — state is still correct in memory
     }
+  }, [bookmarkedIds]);
+
+  // Sync from other tabs or windows
+  const syncBookmarks = useCallback(() => {
+    setBookmarkedIds(loadBookmarks());
   }, []);
 
   useEffect(() => {
-    window.addEventListener('storage', syncBookmarks);
-    window.addEventListener(UPDATE_EVENT, syncBookmarks);
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY || e.key === null) {
+        syncBookmarks();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
     return () => {
-      window.removeEventListener('storage', syncBookmarks);
-      window.removeEventListener(UPDATE_EVENT, syncBookmarks);
+      window.removeEventListener('storage', handleStorage);
     };
   }, [syncBookmarks]);
 
   const toggleBookmark = useCallback((id: string, e?: React.MouseEvent | React.KeyboardEvent) => {
     if (e) e.stopPropagation();
-    setBookmarkedIds(prev => {
-      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        window.dispatchEvent(new Event(UPDATE_EVENT));
-      } catch {
-        // Fallback
-      }
-      return next;
-    });
+    setBookmarkedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
   }, []);
 
   const isBookmarked = useCallback(
