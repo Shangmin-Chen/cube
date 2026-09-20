@@ -21,3 +21,5 @@ jobs:
       - run: npm run verify:algs
       - run: npm run verify:trainer
       - run: npm run verify:upstream-pin
+      - run: npm test
+

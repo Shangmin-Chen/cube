@@ -15,6 +15,7 @@ Quality assurance posture, test verification suites, and issue resolution status
 | **Trainer Session** | Yes (CI) | `npm run verify:trainer` | Mastery/learning isolation, round reset, confetti |
 | **Upstream Integrity** | Yes (CI) | `npm run verify:upstream-pin` | Offline SHA-256 lockfile validation for J Perm source |
 | **Build & Typecheck** | Yes (CI) | `npm run build` (`tsc -b && vite build`) | Full TypeScript compilation and production packaging |
+| **Unit & Integration Tests** | Yes (CI) | `npm test` (`vitest run`) | Fast native test runner for session logic, upstream lock, CFOP invariants, cross cases |
 | **Continuous Integration** | Yes | GitHub Actions (`.github/workflows/ci.yml`) | Runs all verification suites on push and PR |
 
 ---
@@ -60,7 +61,8 @@ All functional issues from the initial audit queue have been resolved and merged
 | **#43** | Upstream ingestion unpinned | Pinned jperm.net sources with SHA-256 `upstream.lock.json` | `ca72ed5` (PR #45) |
 | **#48** | Rotation balancer coverage | Balancer searches half-turns and rotation pairs | `285c1f5` (PR #48) |
 | **#55** | Trainer keyboard key-repeat | Added `e.repeat` guard in `useTrainerKeyboard` | `c899ee9` (PR #74) |
-| **#61** | Dead code and unused kit cleanup | Removed dead Vite/Radix kit, dead types/exports, and aligned footer | Working tree |
+| **#61** | Dead code and unused kit cleanup | Removed dead Vite/Radix kit, dead types/exports, and aligned footer | `5bded00` (PR #75) |
+| **#72** | Vitest test runner scaffolding | Configured Vitest and migrated verification suites to `tests/` | Working tree |
 
 
 

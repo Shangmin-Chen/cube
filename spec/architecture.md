@@ -15,8 +15,8 @@ Product architecture at commit `5157ef2` on `main`. Vite Single Page Application
 | 3D Simulation | Three.js 0.185 | `RubiksCube3D.tsx` interactive sticker cube simulator |
 | 2D Diagrams | VisualCube HTTP API | `AlgDiagram.tsx` SVG/PNG plan views |
 | Cubing Engine | `cubing` 0.63 (`alg`, `scramble`, `kpuzzle`) | Alg parsing, inversion, WCA random scrambles, pipeline normalization |
-| Testing / Verification | Node.js test scripts + `oxlint` | Automated semantic & structural invariant checks |
-| Continuous Integration | GitHub Actions (`.github/workflows/ci.yml`) | Automated build, lint, and verification pipeline |
+| Testing / Verification | Vitest 5.0, Node.js scripts, `oxlint` | Unit tests, invariant suites, and static analysis |
+| Continuous Integration | GitHub Actions (`.github/workflows/ci.yml`) | Automated build, lint, verification, and test pipeline |
 | Hosting | Vercel SPA rewrite (`vercel.json`) | Static hosting with path fallback to `index.html` |
 
 ---
@@ -63,6 +63,10 @@ scripts/
     fetcher.mjs            Fetches upstream J Perm library
     upstream-lock.mjs      Lockfile hashing and verification
     upstream.lock.json     Committed SHA-256 digest lockfile
+tests/
+  unit/                    trainerSessionLogic.test.ts, upstreamLock.test.ts
+  integration/             cfopInvariants.test.ts, crossCases.test.ts
+
   pipeline/
     rules.mjs              AUF normalization, rotation balancer, move validation
     transformers.mjs       Case metadata, probability assignments, ID formatting
