@@ -59,7 +59,9 @@ All functional issues from the initial audit queue have been resolved and merged
 | **#27** | WCA official scramble accuracy | Implemented WCA random-state 3x3 scrambles via `cubing/scramble` | `e3f6fc1` (PR #71) |
 | **#43** | Upstream ingestion unpinned | Pinned jperm.net sources with SHA-256 `upstream.lock.json` | `ca72ed5` (PR #45) |
 | **#48** | Rotation balancer coverage | Balancer searches half-turns and rotation pairs | `285c1f5` (PR #48) |
-| **#55** | Trainer keyboard key-repeat | Added `e.repeat` guard in `useTrainerKeyboard` | Working tree |
+| **#55** | Trainer keyboard key-repeat | Added `e.repeat` guard in `useTrainerKeyboard` | `c899ee9` (PR #74) |
+| **#61** | Dead code and unused kit cleanup | Removed dead Vite/Radix kit, dead types/exports, and aligned footer | Working tree |
+
 
 
 ---

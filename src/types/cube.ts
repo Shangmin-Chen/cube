@@ -1,4 +1,4 @@
-export type FaceColor = 'white' | 'yellow' | 'green' | 'blue' | 'red' | 'orange' | 'gray';
+import type { TriggerType } from '../utils/triggerPatterns';
 
 export type AlgCategory = string;
 
@@ -38,7 +38,6 @@ export interface AlgCase {
   group: string;
   primaryAlg: string;
   alternativeAlgs?: string[];
-  setupMoves?: string;
   /**
    * Case probability as a fraction string. Semantics depend on deck type:
    * - **2-look** (e.g. "2/3", "1/6"): unconditional probability within one sub-step; displayed case values plus an implicit skip for that sub-step sum to 1. Multi-sub-step decks (e.g. 2-look PLL) do not sum to 1 across the whole deck.
@@ -61,15 +60,10 @@ export interface SolveRecord {
   session?: string;
 }
 
-export interface TrainerSessionStats {
-  caseId: string;
-  times: number[];
-  mastered: boolean;
-}
-
 export interface TriggerChunk {
   text: string;
   name?: string;
   description?: string;
-  type: 'sexy' | 'wide-sexy' | 'inverse-sexy' | 'left-sexy' | 'sledge' | 'wide-sledge' | 'hedge' | 'sune' | 'palindrome' | 'normal';
+  type: TriggerType;
 }
+
