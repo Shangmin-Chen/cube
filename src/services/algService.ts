@@ -16,12 +16,6 @@ const METHOD_REGISTRY = new Map<string, AlgMethod>();
   METHOD_REGISTRY.set(method.id, method);
 });
 
-/**
- * Register a new method or algorithm collection
- */
-export function registerMethod(method: AlgMethod): void {
-  METHOD_REGISTRY.set(method.id, method);
-}
 
 /**
  * Returns all registered solving methods

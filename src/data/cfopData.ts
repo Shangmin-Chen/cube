@@ -161,6 +161,3 @@ export const CFOP_2LOOK_METHOD: AlgMethod = {
   isAvailable: true,
 };
 
-// Aliases for backwards compatibility and default routing
-export const CFOP_METHOD: AlgMethod = CFOP_4LOOK_METHOD;
-export const ALL_CFOP_CASES: AlgCase[] = CFOP_4LOOK_METHOD.cases;

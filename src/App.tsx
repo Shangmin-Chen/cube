@@ -25,8 +25,8 @@ export function App() {
         {/* Footer */}
         <footer className="border-t border-[#2d2d2d] bg-[#191919] py-6 text-center text-xs text-[#888888]">
           <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 px-4">
-            <p>Cube • Speedcubing Timer & Interactive Algorithm Reference</p>
-            <p className="text-[#888888]">2-Look OLL • 2-Look PLL • Intuitive F2L</p>
+            <p>Cube • Speedcubing & Algorithm Suite</p>
+            <p className="text-[#888888]">Speedsolving Timer • Flashcards • Algorithms</p>
           </div>
         </footer>
       </div>

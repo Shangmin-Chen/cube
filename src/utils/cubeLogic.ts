@@ -5,15 +5,11 @@ import {
   findLongestPalindromeFrom,
   findLongestPatternAt,
   tokenizeAlgMoves,
-  type TriggerType,
 } from './triggerPatterns.ts';
 
-export interface TriggerChunk {
-  text: string;
-  name?: string;
-  description?: string;
-  type: TriggerType;
-}
+import type { TriggerChunk } from '../types/cube';
+
+export type { TriggerChunk };
 
 /** WCA random-state 3x3 scramble via cubing/scramble. */
 export async function generateScramble(): Promise<string> {
