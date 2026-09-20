@@ -304,6 +304,25 @@ export const TimerTab: React.FC = () => {
     [handleTriggerRelease]
   );
 
+  // Unconditionally reset on pointercancel — the browser may fire this
+  // when touch is interrupted (e.g. system dialog, palm rejection) and
+  // the pointerId may not match. Leaving armed/holding without reset
+  // would strand the FSM.
+  const handlePointerCancel = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (spaceHoldActiveRef.current) return;
+      activePointerIdRef.current = null;
+      e.preventDefault();
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+      const state = timerStateRef.current;
+      if (state === 'holding' || state === 'ready') {
+        timerStateRef.current = 'idle';
+        setTimerState('idle');
+      }
+    },
+    []
+  );
+
   // Keyboard events for spacebar timer control (window-level only to avoid double-firing)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -420,15 +439,13 @@ export const TimerTab: React.FC = () => {
 
         {/* Center: Digital Timer with Touch & Mouse support */}
         <Card
-          role="button"
-          tabIndex={0}
           aria-label="Timer press area"
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
           className="lg:col-span-7 flex flex-col items-center justify-center p-10 min-h-[340px] relative select-none cursor-pointer outline-none touch-none"
         >
-          {/* Inspection Mode Toggle */}
+          {/* Inspection Mode Toggle — positioned outside the interactive hit area's semantic tree */}
           <div
             onClick={e => e.stopPropagation()}
             onPointerDown={e => e.stopPropagation()}
@@ -445,6 +462,8 @@ export const TimerTab: React.FC = () => {
           </div>
 
           <div
+            role="timer"
+            aria-label="Solve time"
             className={`font-mono text-6xl md:text-8xl font-extrabold tracking-tight transition-colors ${
               timerState === 'ready'
                 ? 'text-[#4ade80]'
@@ -460,8 +479,11 @@ export const TimerTab: React.FC = () => {
             {displayTime}
           </div>
 
-          {/* Status Instruction */}
-          <p className="text-xs font-medium text-[#888888] mt-6 tracking-wider uppercase">
+          {/* Status Instruction — polite aria-live for phase announcements */}
+          <p
+            aria-live="polite"
+            className="text-xs font-medium text-[#888888] mt-6 tracking-wider uppercase"
+          >
             {timerState === 'idle' && 'Press and Hold Spacebar (or Touch Screen) to Ready'}
             {timerState === 'holding' && 'Hold...'}
             {timerState === 'ready' && 'Release Spacebar to Start!'}
