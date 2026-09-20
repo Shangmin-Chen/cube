@@ -14,6 +14,8 @@
     "verify:trainer": "node --experimental-strip-types scripts/verify-trainer-session.ts",
     "verify:triggers": "node --experimental-strip-types scripts/verify-triggers.ts",
     "verify:upstream-pin": "node scripts/verify-upstream-pin.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true"
   },
   "dependencies": {
@@ -39,6 +41,7 @@
     "@vitejs/plugin-react": "^6.1.0",
     "oxlint": "^1.79.0",
     "typescript": "~6.0.2",
-    "vite": "^8.2.2"
+    "vite": "^8.2.2",
+    "vitest": "^5.0.1"
   }
 }
