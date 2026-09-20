@@ -199,6 +199,8 @@ export const TimerTab: React.FC = () => {
       setElapsedTime(0);
       setTimerState('running');
       startTimeRef.current = performance.now();
+      // Guard: clear any leaked interval before starting a new one
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = setInterval(() => {
         setElapsedTime(performance.now() - startTimeRef.current);
       }, 10);
