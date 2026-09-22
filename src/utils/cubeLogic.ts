@@ -35,7 +35,13 @@ export function parseMoveString(movesStr: string): string[] {
 export function invertMoveString(movesStr: string): string[] {
   try {
     const alg = new Alg(movesStr);
-    const invertedStr = alg.expand().invert().toString().replace(/2'/g, '2');
+    const invertedStr = alg
+      .expand()
+      .invert()
+      .toString()
+      .replace(/2'/g, '2')
+      .replace(/3'/g, '')
+      .replace(/([A-Za-z])3\b/g, "$1'");
     return invertedStr.split(/\s+/).filter(Boolean);
   } catch {
     const parsed = parseMoveString(movesStr);
@@ -44,9 +50,12 @@ export function invertMoveString(movesStr: string): string[] {
       if (!move) return move;
       const isPrime = move.includes("'");
       const isDouble = move.includes('2');
-      const baseMove = move.replace(/['2]/g, '');
+      const isTriple = move.includes('3');
+      const baseMove = move.replace(/['23]/g, '');
 
       if (isDouble) return `${baseMove}2`;
+      // invert of 270° CW (triple) = 90° CW = plain move
+      if (isTriple) return baseMove;
       if (isPrime) return baseMove;
       return `${baseMove}'`;
     });
