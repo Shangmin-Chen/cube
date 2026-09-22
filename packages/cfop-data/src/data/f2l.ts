@@ -1,0 +1,48 @@
+import type { AlgCase } from '../types.ts';
+
+export const F2L_HIGHLIGHTS: AlgCase[] = [
+  {
+    id: 'f2l-basic-1',
+    name: 'Basic Pair in Top Layer',
+    category: 'f2l',
+    subcategory: 'Basic F2L',
+    group: 'Connected Pair',
+    primaryAlg: "U R U' R'",
+    description: 'Corner and edge are connected in top layer.',
+    tips: 'Align pair above slot, then insert.',
+    why: "Direct slot insertion (U R U' R') taking advantage of pre-aligned corner and edge.",
+  },
+  {
+    id: 'f2l-basic-2',
+    name: 'Corner Up, Edge in Top Layer',
+    category: 'f2l',
+    subcategory: 'Basic F2L',
+    group: 'White Up',
+    primaryAlg: "R U2 R' U' R U R'",
+    description: 'White sticker points UP on top layer.',
+    tips: 'Align edge with side center, push corner away, pair & insert.',
+    why: "R U2 R' separates corner and edge, matches side colors, then inserts pair.",
+  },
+  {
+    id: 'f2l-basic-3',
+    name: 'Separated Pair (Different Colors)',
+    category: 'f2l',
+    subcategory: 'Basic F2L',
+    group: 'Different Colors',
+    primaryAlg: "R U R'",
+    description: 'White sticker faces side, different top colors.',
+    tips: 'Hide corner, match edge, bring back.',
+    why: "R U R' hides corner in back slot to match edge orientation before inserting.",
+  },
+  {
+    id: 'f2l-basic-4',
+    name: 'Separated Pair (Same Top Color)',
+    category: 'f2l',
+    subcategory: 'Basic F2L',
+    group: 'Same Colors',
+    primaryAlg: "U' R U2 R' U2 R U' R'",
+    description: 'Both top stickers have SAME color.',
+    tips: 'Form connected pair then insert.',
+    why: "U' R U2 R' sets up connected pair in top layer, then inserts cleanly.",
+  },
+];

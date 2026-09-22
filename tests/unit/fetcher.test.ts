@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseAlgset, validateAlgsetSchema, extractAlgsetAst, astToValue } from '../../scripts/ingest/fetcher.mjs';
+import { parseAlgset, validateAlgsetSchema } from '../../scripts/ingest/fetcher.mjs';
 
 describe('fetcher AST parsing & schema validation', () => {
   it('safely extracts and parses algsetAlgs without eval', () => {

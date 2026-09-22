@@ -1,79 +1,81 @@
-# Task: Issue #63 — Remove vm.runInContext from ingest pipeline
+# Task: Issue #63 — Decouple Ingest to Monorepo Workspace Package (@cube/cfop-data)
 
 ## Status: In Progress
 
 ## Problem Summary
 
-`scripts/ingest/fetcher.mjs` fetches JavaScript source from `jperm.net` (e.g.,
-`https://jperm.net/lib/oll.js`) and executes it via `vm.runInContext`, relying on
-the Node.js `vm` module as if it were a sandbox. Node `vm` is **not** a security
-boundary — any fetched code runs with full process privileges, making `npm run sync:algs`
-equivalent to remote code execution.
+Historically, `scripts/ingest/fetcher.mjs` fetched JavaScript bundles from `jperm.net` and executed them via `vm.runInContext`, creating a remote code execution vulnerability (Finding P-09 from the 2026-09-13 code-quality audit at `850768c`).
 
-Finding ID: P-09 from the 2026-09-13 code-quality audit at `850768c`.
+Rather than wrapping this fragile HTTP scraper in complex defensive machinery (lockfile verification, AST traversals, and custom package-manager recreations), we adopt a formal **monorepo workspace package architecture** (`@cube/cfop-data`).
+
+This moves the algorithm dataset into an isolated, typed, publication-ready workspace package (`packages/cfop-data/`), establishing a strict architectural boundary, eliminating network-based code execution, and making builds 100% offline and deterministic.
 
 ## Related Issues
 
 - Parent: #2
-- Sibling: #43 (content-hash pinning — separate from this issue)
+- Sibling: #43 (unpinned upstream fetch — obsoleted by vendored workspace package)
+- Sibling: #62 (pipeline fail-closed rules)
 
-## Acceptance Criteria (from issue)
+## Acceptance Criteria
 
-1. `sync:algs` does not call `vm.runInContext`, `eval`, or `Function` on live network bytes.
-2. Ingest fails with an explicit error if `algsetAlgs` does not match the schema
-   `{ name: string, alg: string[], group?: string, prob?: number }[]`.
-3. Fetcher JSDoc does not describe Node `vm` as a sandbox.
+1. **Zero Remote Code Execution:** Neither `vm.runInContext`, `eval`, nor `Function` is executed on network bytes.
+2. **Workspace Package Boundary:** Algorithm datasets are packaged into an internal workspace package `@cube/cfop-data` under `packages/cfop-data/`.
+3. **Type Safety & Strict Schema:** Datasets are strictly typed against `AlgCase` and verified against runtime schemas.
+4. **100% Offline & Deterministic:** Dataset loading and compilation require 0 network calls.
+5. **Preserve Invariants:** All existing CFOP semantic invariants (center preservation, probability sums, Cross simulation, trigger patterns) continue to pass.
+6. **Zero JSDoc Misrepresentations:** Remove references to Node `vm` as a sandbox.
 
-## Data Schema (from transformers.mjs)
+## Target Architecture
 
-Each entry in `algsetAlgs` must satisfy:
-- `name`: string (required) — case name e.g. `"Sune"`, `"1"`, `"aa"`
-- `alg`: string[] (required) — array of algorithm notation strings
-- `group`: string (optional) — grouping label e.g. `"Edges"`, `"Cross"`
-- `prob`: number (optional) — probability multiplier (1, 2, or 4)
+```text
+cube/
+├── package.json                   # Root package with "workspaces": ["packages/*"]
+├── packages/
+│   └── cfop-data/                 # Decoupled dataset package (@cube/cfop-data v1.0.0)
+│       ├── package.json           # Self-contained package manifest
+│       ├── tsconfig.json          # Package TypeScript configuration
+│       ├── README.md              # Documentation, attribution, and schema guide
+│       └── src/
+│           ├── index.ts           # Public API entry point
+│           ├── types.ts           # Typed domain schemas (AlgCase, CFOPStep, etc.)
+│           └── data/              # Clean algorithm datasets (OLL, PLL, Cross, F2L)
+└── src/
+    └── data/
+        └── cfopData.ts            # Consumes @cube/cfop-data for the main web application
+```
 
-## Approach: TypeScript AST Parsing (Option B — Compiler-Grade AST Traversal)
+## Migration & Implementation Plan
 
-Instead of fetching JS and executing it or using brittle regexes, we:
+1. **Initialize Workspace Package:**
+   - Configure `"workspaces": ["packages/*"]` in root `package.json`.
+   - Create `packages/cfop-data/package.json` with name `@cube/cfop-data`, version `1.0.0`, type `module`.
+   - Create `packages/cfop-data/tsconfig.json` extending composite project settings.
+   - Reference `packages/cfop-data` in root `tsconfig.json`.
 
-1. Fetch the raw JS text from jperm.net (still needed for SHA-256 integrity check via #43 upstream-lock).
-2. Parse the code with `typescript`'s AST parser (`ts.createSourceFile(..., ts.ScriptTarget.Latest, false)`), which builds an AST purely in memory without code execution.
-3. Traverse the AST to locate the `algsetAlgs` variable declaration or assignment.
-4. Recursively map data literals (`StringLiteral`, `NumericLiteral`, `ArrayLiteralExpression`, `ObjectLiteralExpression`, booleans) into standard JavaScript objects, ignoring non-literal expressions (such as `pageDetails.arrows.scale` or function calls) and guarding against prototype pollution.
-5. Validate the parsed array against the explicit schema (`validateAlgsetSchema`).
-6. Fail hard if `algsetAlgs` is missing, unparseable, or fails schema validation.
+2. **Populate Dataset & Types:**
+   - Define canonical types in `packages/cfop-data/src/types.ts`.
+   - Export OLL (2-Look and Full), PLL (2-Look and Full), Cross, and F2L data from `packages/cfop-data/src/index.ts`.
+   - Validate datasets against runtime schema.
 
-This eliminates all JavaScript execution of network bytes while preserving:
-- The upstream lock / SHA-256 integrity check (`assertOrUpdatePin`)
-- The existing `fetchAlgset` API signature (no changes to `sync-algorithms.mjs`)
-- 0 new external dependencies (TypeScript is already in devDependencies)
+3. **Integrate with Application:**
+   - Update `src/data/cfopData.ts` to consume `@cube/cfop-data`.
+   - Re-export data to maintain backward compatibility for existing UI components and hooks.
 
-## Files to Modify
+4. **Retire Legacy Ingestion Scraping Machinery:**
+   - Clean up `scripts/ingest/fetcher.mjs` and remove `vm.runInContext`.
+   - Update `scripts/sync-algorithms.mjs` to work offline with `@cube/cfop-data`.
 
-- `scripts/ingest/fetcher.mjs` — replace `vm.runInContext` with TypeScript AST traversal + schema validation
-  - Import `ts from 'typescript'`
-  - Implement `astToValue(node)` and `extractAlgsetAst(code)`
-  - Rewrite `parseAlgset(code, url)` to extract AST literals and validate
-  - Add `validateAlgsetSchema(algs, url)` schema validator
-  - Update JSDoc: do not call `vm` a sandbox
-
-## Files NOT Modified
-
-- `scripts/sync-algorithms.mjs` — no changes (API unchanged)
-- `scripts/ingest/upstream-lock.mjs` — no changes
-- `scripts/ingest/upstream.lock.json` — no changes
-- All `src/` frontend files — untouched per instructions
-- All `scripts/pipeline/` files — untouched
+5. **Verification & Invariant Checks:**
+   - Run `npm test` across all unit and integration tests.
+   - Run all mandatory invariant scripts (`verify:algs`, `verify:triggers`, `verify:trainer`, `verify:upstream-pin`).
+   - Run `npm run lint` and `npm run build`.
 
 ## Verification Checklist
 
+- [ ] `npm test` — all tests pass
 - [ ] `npm run lint` — 0 errors, 0 warnings
 - [ ] `npm run verify:algs` — 0 errors, 0 warnings
 - [ ] `npm run verify:triggers` — 0 errors, 0 warnings
 - [ ] `npm run verify:trainer` — 0 errors, 0 warnings
 - [ ] `npm run verify:upstream-pin` — 0 errors, 0 warnings
 - [ ] `npm run build` — 0 errors, 0 warnings
-
-## Completion Notes
-
-_(filled in upon completion)_
