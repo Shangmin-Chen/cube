@@ -129,4 +129,21 @@ describe('trainerSessionLogic', () => {
     const emptyOutcome = applyCardOutcome(emptyState, 'mastered', 'ghost-card');
     expect(emptyOutcome.shouldFireConfetti).toBe(false);
   });
+
+  it('skipping all cards marks all as learning and never fires confetti', () => {
+    const sixCards = ['x1', 'x2', 'x3', 'x4', 'x5'].map(makeMockCase);
+    let skipState = initRoundState(sixCards, false, 1);
+    const confettiEvents: boolean[] = [];
+
+    for (const c of sixCards) {
+      const { nextState, shouldFireConfetti } = applyCardOutcome(skipState, 'learning', c.id);
+      skipState = nextState;
+      confettiEvents.push(shouldFireConfetti);
+    }
+
+    expect(skipState.isRoundFinished).toBe(true);
+    expect(skipState.learningIds.size).toBe(sixCards.length);
+    expect(skipState.masteredIds.size).toBe(0);
+    expect(confettiEvents.every(f => !f)).toBe(true);
+  });
 });
