@@ -68,8 +68,9 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
     const isWide = cleanMove.includes('w') || /^[a-z]$/.test(cleanMove[0]);
     const isPrime = cleanMove.includes("'");
     const isDouble = cleanMove.includes('2');
+    const isTriple = cleanMove.includes('3');
 
-    let angle = isDouble ? Math.PI : Math.PI / 2;
+    let angle = isDouble ? Math.PI : isTriple ? (3 * Math.PI) / 2 : Math.PI / 2;
     if (isPrime) angle = -angle;
 
     let axis = new THREE.Vector3(0, 1, 0);
@@ -760,7 +761,7 @@ export const RubiksCube3D: FC<RubiksCube3DProps> = ({
       </div>
 
       {/* Interactive Clickable Formula Move Tokens Bar */}
-      {moves.length > 0 && (
+      {showControls && moves.length > 0 && (
         <div className="w-full flex flex-col gap-1.5 bg-[#191919] border border-[#2d2d2d] rounded-lg p-2 mt-2 text-xs font-mono">
           <div className="flex items-center justify-between">
             <span className="text-[10px] text-[#eab308] font-sans font-bold">
