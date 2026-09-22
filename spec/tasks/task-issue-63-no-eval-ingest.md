@@ -32,26 +32,28 @@ Each entry in `algsetAlgs` must satisfy:
 - `group`: string (optional) — grouping label e.g. `"Edges"`, `"Cross"`
 - `prob`: number (optional) — probability multiplier (1, 2, or 4)
 
-## Approach: Regex Text-Parse (No eval, No fixture files needed)
+## Approach: TypeScript AST Parsing (Option B — Compiler-Grade AST Traversal)
 
-Instead of fetching JS and executing it, we:
+Instead of fetching JS and executing it or using brittle regexes, we:
 
 1. Fetch the raw JS text from jperm.net (still needed for SHA-256 integrity check via #43 upstream-lock).
-2. Extract the `algsetAlgs = [...]` array literal using a targeted regex.
-3. Transform the extracted text to valid JSON (single→double quotes, trailing commas, etc.).
-4. Parse with `JSON.parse`.
-5. Validate the parsed array against the explicit schema.
-6. Fail hard if regex extraction, JSON parse, or schema validation fails.
+2. Parse the code with `typescript`'s AST parser (`ts.createSourceFile(..., ts.ScriptTarget.Latest, false)`), which builds an AST purely in memory without code execution.
+3. Traverse the AST to locate the `algsetAlgs` variable declaration or assignment.
+4. Recursively map data literals (`StringLiteral`, `NumericLiteral`, `ArrayLiteralExpression`, `ObjectLiteralExpression`, booleans) into standard JavaScript objects, ignoring non-literal expressions (such as `pageDetails.arrows.scale` or function calls) and guarding against prototype pollution.
+5. Validate the parsed array against the explicit schema (`validateAlgsetSchema`).
+6. Fail hard if `algsetAlgs` is missing, unparseable, or fails schema validation.
 
 This eliminates all JavaScript execution of network bytes while preserving:
 - The upstream lock / SHA-256 integrity check (`assertOrUpdatePin`)
 - The existing `fetchAlgset` API signature (no changes to `sync-algorithms.mjs`)
+- 0 new external dependencies (TypeScript is already in devDependencies)
 
 ## Files to Modify
 
-- `scripts/ingest/fetcher.mjs` — replace `vm.runInContext` with regex parse + schema validation
-  - Remove `import vm from 'node:vm'`
-  - Rewrite `parseAlgset(code, url)` to extract and JSON-parse the array
+- `scripts/ingest/fetcher.mjs` — replace `vm.runInContext` with TypeScript AST traversal + schema validation
+  - Import `ts from 'typescript'`
+  - Implement `astToValue(node)` and `extractAlgsetAst(code)`
+  - Rewrite `parseAlgset(code, url)` to extract AST literals and validate
   - Add `validateAlgsetSchema(algs, url)` schema validator
   - Update JSDoc: do not call `vm` a sandbox
 

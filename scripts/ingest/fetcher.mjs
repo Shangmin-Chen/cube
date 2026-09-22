@@ -1,3 +1,4 @@
+import ts from 'typescript';
 import { assertOrUpdatePin } from './upstream-lock.mjs';
 
 /**
@@ -16,60 +17,88 @@ async function fetchRaw(url) {
 }
 
 /**
- * Extract balanced array bracket substring following a prefix identifier.
+ * Recursively convert a TypeScript AST literal expression into a plain JS value.
+ * Non-literal expressions (identifiers, function calls, property access) return undefined.
+ *
+ * @param {import('typescript').Node} node
+ * @returns {any}
+ */
+export function astToValue(node) {
+  if (!node) return undefined;
+  switch (node.kind) {
+    case ts.SyntaxKind.StringLiteral:
+    case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
+      return node.text;
+    case ts.SyntaxKind.NumericLiteral:
+      return Number(node.text);
+    case ts.SyntaxKind.TrueKeyword:
+      return true;
+    case ts.SyntaxKind.FalseKeyword:
+      return false;
+    case ts.SyntaxKind.NullKeyword:
+      return null;
+    case ts.SyntaxKind.PrefixUnaryExpression:
+      if (node.operator === ts.SyntaxKind.MinusToken && node.operand.kind === ts.SyntaxKind.NumericLiteral) {
+        return -Number(node.operand.text);
+      }
+      if (node.operator === ts.SyntaxKind.ExclamationToken && node.operand.kind === ts.SyntaxKind.NumericLiteral) {
+        return !Number(node.operand.text);
+      }
+      return undefined;
+    case ts.SyntaxKind.ArrayLiteralExpression:
+      return node.elements.map(astToValue);
+    case ts.SyntaxKind.ObjectLiteralExpression: {
+      const obj = {};
+      for (const prop of node.properties) {
+        if (ts.isPropertyAssignment(prop)) {
+          const key = prop.name.text || (ts.isIdentifier(prop.name) ? prop.name.text : undefined);
+          if (key && key !== '__proto__' && key !== 'constructor' && key !== 'prototype') {
+            const val = astToValue(prop.initializer);
+            if (val !== undefined) {
+              obj[key] = val;
+            }
+          }
+        }
+      }
+      return obj;
+    }
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Extract the algsetAlgs array literal from JavaScript source code using TypeScript AST.
  *
  * @param {string} code - Full source code text
- * @param {string} prefix - Identifier before array literal (e.g. "algsetAlgs")
- * @returns {string | null}
+ * @returns {Array<any> | null}
  */
-export function extractBalancedArray(code, prefix) {
-  const startIdx = code.indexOf(prefix);
-  if (startIdx === -1) return null;
-  const bracketStart = code.indexOf('[', startIdx + prefix.length);
-  if (bracketStart === -1) return null;
+export function extractAlgsetAst(code) {
+  const sf = ts.createSourceFile('upstream.js', code, ts.ScriptTarget.Latest, false);
+  let result = null;
 
-  let depth = 0;
-  let inString = false;
-  let stringChar = '';
-  let isEscaped = false;
+  function visit(node) {
+    if (result) return;
 
-  for (let i = bracketStart; i < code.length; i++) {
-    const ch = code[i];
-
-    if (isEscaped) {
-      isEscaped = false;
-      continue;
+    // Match: var algsetAlgs = [...] or const/let algsetAlgs = [...]
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === 'algsetAlgs' && node.initializer) {
+      result = astToValue(node.initializer);
+      return;
     }
 
-    if (ch === '\\') {
-      isEscaped = true;
-      continue;
-    }
-
-    if (inString) {
-      if (ch === stringChar) {
-        inString = false;
-      }
-      continue;
-    }
-
-    if (ch === '"' || ch === "'") {
-      inString = true;
-      stringChar = ch;
-      continue;
-    }
-
-    if (ch === '[') {
-      depth++;
-    } else if (ch === ']') {
-      depth--;
-      if (depth === 0) {
-        return code.slice(bracketStart, i + 1);
+    // Match: algsetAlgs = [...]
+    if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
+      if (ts.isIdentifier(node.left) && node.left.text === 'algsetAlgs') {
+        result = astToValue(node.right);
+        return;
       }
     }
+
+    ts.forEachChild(node, visit);
   }
 
-  return null;
+  visit(sf);
+  return result;
 }
 
 /**
@@ -105,33 +134,16 @@ export function validateAlgsetSchema(algs, url) {
 
 /**
  * Extract and safely parse the algsetAlgs array from fetched script source text.
- * Does not execute code in any runtime or VM context.
+ * Uses the TypeScript compiler AST parser to extract data literals without executing code.
  *
  * @param {string} code
  * @param {string} url
  * @returns {Array<{ name: string | number, alg: string[], group?: string, prob?: number }>}
  */
 export function parseAlgset(code, url) {
-  const arrStr = extractBalancedArray(code, 'algsetAlgs');
-  if (!arrStr) {
+  const parsed = extractAlgsetAst(code);
+  if (!parsed) {
     throw new Error(`No algsetAlgs array found in ${url}`);
-  }
-
-  // Convert JS object literal array into valid JSON:
-  // 1. Replace identifier references such as pageDetails.* with null
-  let jsonStr = arrStr.replace(/pageDetails(?:\.[a-zA-Z0-9_$]+)*/g, 'null');
-  // 2. Replace JS boolean shortcuts !0 and !1
-  jsonStr = jsonStr.replace(/!0/g, 'true').replace(/!1/g, 'false');
-  // 3. Quote unquoted property names: name:, alg:, group:, prob:, etc.
-  jsonStr = jsonStr.replace(/([{,]\s*)([a-zA-Z0-9_$]+)\s*:/g, '$1"$2":');
-  // 4. Remove trailing commas before closing braces/brackets
-  jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
-
-  let parsed;
-  try {
-    parsed = JSON.parse(jsonStr);
-  } catch (err) {
-    throw new Error(`Failed to parse algsetAlgs from ${url}: ${err.message}`);
   }
 
   validateAlgsetSchema(parsed, url);
