@@ -1,18 +1,14 @@
 import type { AlgCase, AlgMethod, DeckOption, StepOption } from '../types/cube';
-import {
-  CFOP_4LOOK_METHOD,
-  CFOP_3LOOK_METHOD,
-  CFOP_2LOOK_METHOD,
-} from '../data/cfopData';
-import { BUILTIN_METHODS } from '../data/methodsData';
+import { BUILTIN_METHODS, CFOP_4LOOK_METHOD } from '../data/methodsData';
 
 /**
  * Universal Speedcubing Method Registry
  */
 const METHOD_REGISTRY = new Map<string, AlgMethod>();
 
-// Register default built-in methods (4-Look, 3-Look, and 2-Look CFOP)
-[CFOP_4LOOK_METHOD, CFOP_3LOOK_METHOD, CFOP_2LOOK_METHOD, ...BUILTIN_METHODS].forEach(method => {
+// Register default built-in methods (4-Look, 3-Look, and 2-Look CFOP).
+// BUILTIN_METHODS already contains all three; do not register them twice.
+BUILTIN_METHODS.forEach(method => {
   METHOD_REGISTRY.set(method.id, method);
 });
 
@@ -90,7 +86,13 @@ export function getSteps(
     method = getMethod(methodOrCases);
     cases = method.cases;
   } else {
-    method = CFOP_4LOOK_METHOD;
+    if (methodOrCases.some(c => c.subcategory === 'Full OLL')) {
+      method = getMethod('cfop-2look');
+    } else if (methodOrCases.some(c => c.subcategory === 'Full PLL')) {
+      method = getMethod('cfop-3look');
+    } else {
+      method = CFOP_4LOOK_METHOD;
+    }
     cases = methodOrCases;
   }
 
@@ -188,7 +190,7 @@ export function getDecks(
     ...dynamicSubcategoryDecks,
     {
       id: 'all',
-      label: 'All Algorithms',
+      label: 'Last Layer Algorithms',
       cases: llCases,
     },
   ];

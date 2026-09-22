@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AlgDiagram } from './AlgDiagram';
 import { RubiksCube3D } from './RubiksCube3D';
@@ -46,6 +46,12 @@ export const AlgReferenceTab: React.FC = () => {
     }
     return steps[0]?.id || 'oll';
   }, [routeStep, selectedMethod, bookmarkedIds, steps]);
+
+  useEffect(() => {
+    if (routeStep && !isValidStep(routeStep, selectedMethod, bookmarkedIds)) {
+      navigate(`/algs/${steps[0]?.id || 'cross'}`, { replace: true });
+    }
+  }, [routeStep, selectedMethod, bookmarkedIds, steps, navigate]);
 
   const [prevRouteCaseId, setPrevRouteCaseId] = useState(routeCaseId);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(routeCaseId || null);
@@ -329,17 +335,19 @@ export const AlgReferenceTab: React.FC = () => {
         </div>
 
         {/* Quick Flashcard Drill CTA */}
-        <button
-          type="button"
-          onClick={() => {
-            const targetDeck = getDeckForStep(activeStep, selectedMethod, bookmarkedIds);
-            navigate(`/train?deck=${targetDeck}&method=${selectedMethod}`);
-          }}
-          className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#eab308]/15 hover:bg-[#eab308]/25 border border-[#eab308]/40 text-[#eab308] text-xs font-bold transition-colors cursor-pointer"
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Train in Flashcards</span>
-        </button>
+        {activeStep !== 'cross' && activeStep !== 'f2l' && !(activeStep === 'bookmarked' && bookmarkedIds.length === 0) && (
+          <button
+            type="button"
+            onClick={() => {
+              const targetDeck = getDeckForStep(activeStep, selectedMethod, bookmarkedIds);
+              navigate(`/train?deck=${targetDeck}&method=${selectedMethod}`);
+            }}
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#eab308]/15 hover:bg-[#eab308]/25 border border-[#eab308]/40 text-[#eab308] text-xs font-bold transition-colors cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Train in Flashcards</span>
+          </button>
+        )}
       </div>
 
       {/* Main Master-Detail Workspace Grid */}
