@@ -1,6 +1,6 @@
 # Task: Issue #63 — Decouple Ingest to Monorepo Workspace Package (@cube/cfop-data)
 
-## Status: In Progress
+## Status: Completed
 
 ## Problem Summary
 
@@ -62,20 +62,27 @@ cube/
    - Re-export data to maintain backward compatibility for existing UI components and hooks.
 
 4. **Retire Legacy Ingestion Scraping Machinery:**
-   - Clean up `scripts/ingest/fetcher.mjs` and remove `vm.runInContext`.
-   - Update `scripts/sync-algorithms.mjs` to work offline with `@cube/cfop-data`.
+   - Deleted `scripts/ingest/` entirely (`fetcher.mjs`, `upstream-lock.mjs`, `upstream.lock.json`).
+   - Deleted `scripts/verify-upstream-pin.mjs` and related test files (`fetcher.test.ts`, `upstreamLock.test.ts`).
+   - Refactored `scripts/sync-algorithms.mjs` to work offline using `@cube/cfop-data`.
+   - Added unit tests for `@cube/cfop-data` in `tests/unit/cfopDataPackage.test.ts`.
 
 5. **Verification & Invariant Checks:**
-   - Run `npm test` across all unit and integration tests.
-   - Run all mandatory invariant scripts (`verify:algs`, `verify:triggers`, `verify:trainer`, `verify:upstream-pin`).
-   - Run `npm run lint` and `npm run build`.
+   - Ran `npm test` across all unit and integration tests (23/23 pass).
+   - Ran all mandatory invariant scripts (`verify:algs`, `verify:triggers`, `verify:trainer`).
+   - Ran `npm run lint` (0 errors, 0 warnings) and `npm run build` (clean production bundle).
 
 ## Verification Checklist
 
-- [ ] `npm test` — all tests pass
-- [ ] `npm run lint` — 0 errors, 0 warnings
-- [ ] `npm run verify:algs` — 0 errors, 0 warnings
-- [ ] `npm run verify:triggers` — 0 errors, 0 warnings
-- [ ] `npm run verify:trainer` — 0 errors, 0 warnings
-- [ ] `npm run verify:upstream-pin` — 0 errors, 0 warnings
-- [ ] `npm run build` — 0 errors, 0 warnings
+- [x] `npm test` — 23/23 tests pass
+- [x] `npm run lint` — 0 errors, 0 warnings
+- [x] `npm run verify:algs` — 0 errors, 0 warnings
+- [x] `npm run verify:triggers` — 0 errors, 0 warnings
+- [x] `npm run verify:trainer` — 0 errors, 0 warnings
+- [x] `npm run build` — 0 errors, 0 warnings
+
+## Completion Notes
+
+- Closes Issue #63: Remote code execution risk via `vm.runInContext` is completely eliminated by removing the HTTP scraper.
+- The algorithm dataset is cleanly isolated in the `@cube/cfop-data` workspace package.
+- Removed all obsolete lockfile checking and live network scraping machinery.
