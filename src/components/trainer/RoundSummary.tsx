@@ -47,9 +47,9 @@ export const RoundSummary: React.FC<RoundSummaryProps> = ({
             : `${masteredCount} of ${totalCards} Mastered`}
         </h2>
         <p className="text-xs text-[#888888] max-w-md">
-          {learningCount > 0
-            ? `You have ${learningCount} case${learningCount > 1 ? 's' : ''} to reinforce in the next round.`
-            : 'You answered every algorithm accurately in this round!'}
+          {masteredCount === totalCards
+            ? 'You answered every algorithm accurately in this round!'
+            : `You have ${learningCount || (totalCards - masteredCount)} case${(learningCount || (totalCards - masteredCount)) > 1 ? 's' : ''} to reinforce in the next round.`}
         </p>
       </div>
 

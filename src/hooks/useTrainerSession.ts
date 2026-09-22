@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import type { AlgCase } from '../types/cube';
 import { getAllCases, getDeckById } from '../services/algService';
@@ -24,6 +24,7 @@ export function useTrainerSession(deckId: string, bookmarkedIds: string[], metho
   const [masteredIds, setMasteredIds] = useState<Set<string>>(new Set());
   const [learningIds, setLearningIds] = useState<Set<string>>(new Set());
   const [copiedType, setCopiedType] = useState<'setup' | 'solve' | null>(null);
+  const copiedTypeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const allCases = useMemo(() => getAllCases(methodId), [methodId]);
 
@@ -137,12 +138,19 @@ export function useTrainerSession(deckId: string, bookmarkedIds: string[], metho
   );
 
   const next = useCallback(() => {
+    if (!currentCase) return;
+    const isGraded = masteredIds.has(currentCase.id) || learningIds.has(currentCase.id);
+    if (!isGraded) {
+      advanceWithOutcome('learning');
+      return;
+    }
+
     if (currentIndex + 1 < activeQueue.length) {
       setCurrentIndex(prev => prev + 1);
       setIsFlipped(false);
       setShowHint(false);
     }
-  }, [currentIndex, activeQueue.length]);
+  }, [currentIndex, activeQueue.length, currentCase, masteredIds, learningIds, advanceWithOutcome]);
 
   const prev = useCallback(() => {
     const prior: TrainerRoundState = {
@@ -204,19 +212,29 @@ export function useTrainerSession(deckId: string, bookmarkedIds: string[], metho
     initRound(baseCases, isShuffled, 1);
   }, [baseCases, isShuffled, initRound]);
 
-  // Shuffle toggle
+  // Shuffle toggle — reorders current queue in place
   const toggleShuffle = useCallback(() => {
     const nextShuffle = !isShuffled;
     setIsShuffled(nextShuffle);
-    initRound(baseCases, nextShuffle, roundNumber);
-  }, [isShuffled, baseCases, roundNumber, initRound]);
+    initRound(activeQueue, nextShuffle, roundNumber);
+  }, [isShuffled, activeQueue, roundNumber, initRound]);
 
-  // Clipboard copy
-  const handleCopy = useCallback((text: string, type: 'setup' | 'solve', e?: React.MouseEvent) => {
+  // Clipboard copy — awaits clipboard write and prevents timeout race
+  const handleCopy = useCallback(async (text: string, type: 'setup' | 'solve', e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    navigator.clipboard.writeText(text);
-    setCopiedType(type);
-    setTimeout(() => setCopiedType(null), 1800);
+    try {
+      await navigator.clipboard.writeText(text);
+      if (copiedTypeTimeoutRef.current !== null) {
+        clearTimeout(copiedTypeTimeoutRef.current);
+      }
+      setCopiedType(type);
+      copiedTypeTimeoutRef.current = setTimeout(() => {
+        setCopiedType(null);
+        copiedTypeTimeoutRef.current = null;
+      }, 1800);
+    } catch {
+      // Suppress toast on clipboard failure
+    }
   }, []);
 
   const progressPercent = computeProgressPercent(currentIndex, activeQueue.length);
