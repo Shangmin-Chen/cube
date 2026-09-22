@@ -10,8 +10,7 @@ export function formatWCARule(algStr) {
   try {
     return new Alg(algStr).toString();
   } catch (err) {
-    console.warn(`Warning: Could not format algorithm "${algStr}": ${err.message}`);
-    return algStr.trim();
+    throw new Error(`formatWCARule: Failed to format algorithm "${algStr}": ${err.message}`);
   }
 }
 
@@ -75,7 +74,7 @@ export function balanceRotationsRule(algStr, kpuzzle) {
     }
   }
 
-  return formatted;
+  throw new Error(`balanceRotationsRule: Failed to restore centers to identity for algorithm "${algStr}"`);
 }
 
 /**
@@ -111,7 +110,7 @@ export function alignEdgesOnlyAUFRule(algStr, kpuzzle) {
     }
   }
 
-  return formatted;
+  throw new Error(`alignEdgesOnlyAUFRule: Failed to align corners to identity for edges-only algorithm "${algStr}"`);
 }
 
 /**
@@ -149,7 +148,7 @@ export function alignAdjacentCornerAUFRule(algStr, kpuzzle) {
     }
   }
 
-  return formatted;
+  throw new Error(`alignAdjacentCornerAUFRule: Failed to achieve pure adjacent 2-swap for algorithm "${algStr}"`);
 }
 
 /**
