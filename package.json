@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -13,12 +16,12 @@
     "verify:cross": "node scripts/verify-cross-cases.mjs",
     "verify:trainer": "node --experimental-strip-types scripts/verify-trainer-session.ts",
     "verify:triggers": "node --experimental-strip-types scripts/verify-triggers.ts",
-    "verify:upstream-pin": "node scripts/verify-upstream-pin.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true"
   },
   "dependencies": {
+    "@cube/cfop-data": "*",
     "@radix-ui/react-dialog": "^1.1.23",
     "@tailwindcss/vite": "^4.3.3",
     "canvas-confetti": "^1.9.4",
