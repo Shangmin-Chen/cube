@@ -381,9 +381,85 @@ async function runVerification() {
   }
   console.log('✓ Invariant 6: no 2-look case displays a probability from another deck\'s denominator');
 
+  // 7. Look-2 OLL (Corners): algorithms must orient all top-layer corners
+  const look2OllCases = oll2Look.filter(c => c.group === 'Corners (Look 2)');
+  let invariant7Count = 0;
+  for (const c of look2OllCases) {
+    const caseTransf = kpuzzle.algToTransformation(new Alg(c.primaryAlg)).invert();
+    const casePattern = kpuzzle.defaultPattern().applyTransformation(caseTransf);
+
+    for (const alg of getAllAlgs(c)) {
+      const algTransf = kpuzzle.algToTransformation(new Alg(alg));
+      const res = casePattern.applyTransformation(algTransf);
+
+      let cornersOriented = false;
+      for (const y of ['', "y'", 'y', 'y2']) {
+        const pattern = y ? res.applyTransformation(kpuzzle.algToTransformation(new Alg(y))) : res;
+        const cOri = pattern.patternData.CORNERS.orientation.slice(0, 4);
+        if (cOri.every(v => v === 0)) {
+          cornersOriented = true;
+          break;
+        }
+      }
+
+      if (!cornersOriented) {
+        throw new Error(`Semantic invariant failure: Look-2 OLL algorithm did not orient top corners for ${c.id} (${alg})`);
+      }
+      invariant7Count++;
+    }
+  }
+  console.log(`✓ Invariant 7: ${invariant7Count} Look-2 OLL corner algorithm variations orient all top corners`);
+
+  // 8. Full OLL: algorithms must orient both top corners and top edges
+  let invariant8Count = 0;
+  for (const c of ollFull) {
+    const caseTransf = kpuzzle.algToTransformation(new Alg(c.primaryAlg)).invert();
+    const casePattern = kpuzzle.defaultPattern().applyTransformation(caseTransf);
+
+    for (const alg of getAllAlgs(c)) {
+      const algTransf = kpuzzle.algToTransformation(new Alg(alg));
+      const res = casePattern.applyTransformation(algTransf);
+
+      let fullyOriented = false;
+      for (const y of ['', "y'", 'y', 'y2']) {
+        const pattern = y ? res.applyTransformation(kpuzzle.algToTransformation(new Alg(y))) : res;
+        const cOri = pattern.patternData.CORNERS.orientation.slice(0, 4);
+        const eOri = pattern.patternData.EDGES.orientation.slice(0, 4);
+        if (cOri.every(v => v === 0) && eOri.every(v => v === 0)) {
+          fullyOriented = true;
+          break;
+        }
+      }
+
+      if (!fullyOriented) {
+        throw new Error(`Semantic invariant failure: Full OLL algorithm did not orient all top corners/edges for ${c.id} (${alg})`);
+      }
+      invariant8Count++;
+    }
+  }
+  console.log(`✓ Invariant 8: ${invariant8Count} Full OLL algorithm variations orient all top corners and edges`);
+
+  // 9. PLL Case Identity: Diagonal Corner Swap algorithms must swap diagonal corners
+  const diagonalPllIds = ['pll-y', 'pll-v', 'pll-na', 'pll-nb', 'pll-2look-yperm'];
+  let invariant9Count = 0;
+  for (const id of diagonalPllIds) {
+    const c = allPllCases.find(item => item.id === id);
+    if (!c) throw new Error(`Missing expected diagonal corner swap PLL case: ${id}`);
+    const transf = kpuzzle.algToTransformation(new Alg(c.primaryAlg));
+    const cp = transf.transformationData.CORNERS.permutation.slice(0, 4);
+    const movedCorners = [0, 1, 2, 3].filter(i => cp[i] !== i);
+
+    const hasDiagonalSwap = movedCorners.some(i => Math.abs(i - cp[i]) === 2);
+    if (!hasDiagonalSwap) {
+      throw new Error(`Semantic invariant failure: PLL ${id} primary does not perform a diagonal corner swap. Got cp: ${JSON.stringify(cp)}`);
+    }
+    invariant9Count++;
+  }
+  console.log(`✓ Invariant 9: ${invariant9Count} diagonal PLL algorithms verify diagonal corner swap permutation`);
+
   console.log(`✓ Total algorithm variations parse-simulated: ${totalSimulated}`);
   console.log(
-    `✓ Semantic invariants checked on ${invariant1Count + invariant2Count + look1Primaries + look1Alternatives} algorithm variations plus ${look1OllCases.length} hold descriptions (primaries + alternatives, group-scoped)`,
+    `✓ Semantic invariants checked on ${invariant1Count + invariant2Count + look1Primaries + look1Alternatives + invariant7Count + invariant8Count + invariant9Count} algorithm variations plus ${look1OllCases.length} hold descriptions (primaries + alternatives, group-scoped)`,
   );
   console.log('--- All verifications and semantic invariant checks passed! ---');
 }
