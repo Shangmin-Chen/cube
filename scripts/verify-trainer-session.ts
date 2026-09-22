@@ -144,6 +144,22 @@ function runVerification(): void {
   assert(!emptyOutcome.shouldFireConfetti, 'Repro 5: an empty round must not fire confetti');
   console.log('Repro 5: no confetti for an empty round');
 
+  // Repro 6: navigation-as-implicit-learning — skipping cards must populate
+  // learningIds and must not fire confetti when round finishes.
+  const sixCards = ['x1', 'x2', 'x3', 'x4', 'x5'].map(makeMockCase);
+  let skipState = initRoundState(sixCards, false, 1);
+  const skipConfettiEvents: boolean[] = [];
+  for (const c of sixCards) {
+    const { nextState, shouldFireConfetti } = applyCardOutcome(skipState, 'learning', c.id);
+    skipState = nextState;
+    skipConfettiEvents.push(shouldFireConfetti);
+  }
+  assert(skipState.isRoundFinished, 'Repro 6: round should finish after skipping all cards');
+  assert(skipState.learningIds.size === sixCards.length, 'Repro 6: all skipped cards must be in learningIds');
+  assert(skipState.masteredIds.size === 0, 'Repro 6: masteredIds must be empty when all cards skipped');
+  assert(skipConfettiEvents.every(f => !f), 'Repro 6: confetti must not fire when all cards skipped');
+  console.log('Repro 6: navigation-as-implicit-learning: all skipped -> all learning, no confetti');
+
   console.log('\nAll trainer session verification checks passed.');
 }
 
