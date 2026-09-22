@@ -98,15 +98,14 @@ export function transform2LookOLL(rawAlgs, kpuzzle) {
 
   for (const item of rawAlgs) {
     const rawName = String(item.name).trim();
-    const meta = OLL_2LOOK_META[rawName] || {
-      id: `oll-2look-${rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-      name: rawName,
-      group: item.group?.includes('Edges') ? 'Edges (Look 1)' : 'Corners (Look 2)',
-      // No fabricated probability: an unrecognised upstream case must fail
-      // verify:algs rather than ship a made-up figure (see issue #19).
-      description: `2-Look OLL ${rawName}`,
-      why: `Orient ${item.group?.includes('Edges') ? 'edges' : 'corners'} into solved orientation.`,
-    };
+    const meta = OLL_2LOOK_META[rawName];
+    if (!meta) {
+      throw new Error(
+        `transform2LookOLL: unknown upstream case name "${item.name}". ` +
+        `Add a mapping for this case to OLL_2LOOK_META or fix upstream dataset. ` +
+        `Known names: ${Object.keys(OLL_2LOOK_META).join(', ')}`
+      );
+    }
 
     const primaryAlg = applyAlgRules(item.alg[0], kpuzzle);
     validateAlg(kpuzzle, primaryAlg, meta.id);
@@ -217,15 +216,14 @@ export function transform2LookPLL(rawAlgs, kpuzzle) {
 
   for (const item of rawAlgs) {
     const rawName = String(item.name).trim();
-    const meta = PLL_2LOOK_META[rawName] || {
-      id: `pll-2look-${rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-      name: rawName,
-      group: item.group?.includes('Corners') ? 'Corners (Look 1)' : 'Edges (Look 2)',
-      // No fabricated probability: an unrecognised upstream case must fail
-      // verify:algs rather than ship a made-up figure (see issue #19).
-      description: `2-Look PLL ${rawName}`,
-      why: `Permute ${item.group?.includes('Corners') ? 'corners' : 'edges'} into solved position.`,
-    };
+    const meta = PLL_2LOOK_META[rawName];
+    if (!meta) {
+      throw new Error(
+        `transform2LookPLL: unknown upstream case name "${item.name}". ` +
+        `Add a mapping for this case to PLL_2LOOK_META or fix upstream dataset. ` +
+        `Known names: ${Object.keys(PLL_2LOOK_META).join(', ')}`
+      );
+    }
 
     const isEdgesOnly = meta.group.includes('Edges');
     const isAdjacentCornerSwap = rawName === 'Headlights' || meta.id.includes('tperm');
@@ -301,6 +299,12 @@ export function transformFullOLL(rawAlgs, kpuzzle) {
 
   for (const item of rawAlgs) {
     const caseNum = Number(item.name);
+    if (!Number.isFinite(caseNum) || !Number.isInteger(caseNum) || caseNum <= 0) {
+      throw new Error(
+        `transformFullOLL: upstream case name "${item.name}" is not a valid positive integer case number. ` +
+        `Fix the upstream dataset or the ingestion mapping.`
+      );
+    }
     const id = `oll-${caseNum}`;
     const name = `OLL ${caseNum}`;
     const group = item.group || 'Full OLL';
@@ -384,11 +388,14 @@ export function transformFullPLL(rawAlgs, kpuzzle) {
   for (const item of rawAlgs) {
     const rawKey = String(item.name).trim().toLowerCase();
     const id = `pll-${rawKey}`;
-    const meta = PLL_META[rawKey] || {
-      name: `${item.name} Permutation`,
-      group: item.group || 'Full PLL',
-      why: 'Swaps or cycles the permuted top-layer corners and edges into solved position without changing their orientation.',
-    };
+    const meta = PLL_META[rawKey];
+    if (!meta) {
+      throw new Error(
+        `transformFullPLL: unknown upstream case name "${item.name}" (key "${rawKey}"). ` +
+        `Add a mapping for this key to PLL_META or fix the upstream dataset. ` +
+        `Known keys: ${Object.keys(PLL_META).join(', ')}`
+      );
+    }
 
     // Probability: prob 4 -> 4/72 = 1/18, prob 2 -> 2/72 = 1/36, prob 1 -> 1/72
     const probStr = item.prob === 4 ? '1/18' : item.prob === 2 ? '1/36' : '1/72';
