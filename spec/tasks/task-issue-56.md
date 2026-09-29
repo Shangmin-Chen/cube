@@ -9,6 +9,8 @@
 - **Edit:** `src/hooks/useBookmarks.ts` — move side effects out of setState updater, validate string[]
 - **Edit:** `src/hooks/useTrainerSession.ts` — queue surgery on bookmark changes, re-init only on deck/method change
 - **Edit:** `src/components/TrainerTab.tsx` — default deck to first non-bookmarks deck
+- **Add:** `tests/unit/useBookmarks.test.ts` — unit tests for bookmark persistence, validation, toggling, and storage sync
+- **Add:** `tests/unit/trainerBookmarksSurgery.test.ts` — unit tests for queue surgery, round preservation, mastery pruning/retention, and re-init triggers
 
 ## Invariants
 - Trainer session state machine (mastered/learning sets, round number) preserved
@@ -18,4 +20,16 @@
 1. Fix `useBookmarks.ts`: compute next state in updater, persist in a useEffect on bookmarkedIds
 2. Fix `useTrainerSession.ts`: split sync effect — full re-init only on deckId/methodId change, queue surgery on bookmark membership changes
 3. Fix `TrainerTab.tsx`: default deckParam to first non-bookmarks deck
-4. Write tests
+4. Write tests:
+   - `tests/unit/useBookmarks.test.ts`: test loading bookmarks from localStorage (filtering non-string entries), toggling bookmarks, localStorage update & 'cube:bookmarks_updated' event dispatch, and cross-tab storage event syncing.
+   - `tests/unit/trainerBookmarksSurgery.test.ts`: test bookmarks deck queue surgery mid-round (preserving roundNumber, preserving masteredIds and learningIds for remaining cards, pruning unbookmarked cards from activeQueue and mastery sets, appending newly bookmarked cards, clamping currentIndex safely) and full re-init on deckId or methodId changes.
+
+## Verification
+```bash
+npm run lint
+npm run verify:algs
+npm run verify:triggers
+npm run verify:trainer
+npm test
+npm run build
+```

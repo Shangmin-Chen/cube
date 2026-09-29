@@ -1,7 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 const STORAGE_KEY = 'cfop_bookmarks';
 const UPDATE_EVENT = 'cube:bookmarks_updated';
+
+function areStringArraysEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
 
 /**
  * Parse and validate stored bookmarks as a string array.
@@ -20,10 +28,15 @@ function loadBookmarks(): string[] {
 
 export function useBookmarks() {
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(loadBookmarks);
+  const prevBookmarkedIdsRef = useRef<string[]>(bookmarkedIds);
 
   // Persist bookmarks to localStorage after each state commit (not inside the updater).
-  // This avoids side effects during React StrictMode double-invocation of updaters.
+  // Avoid writing to localStorage on initial mount if state has not changed.
   useEffect(() => {
+    if (areStringArraysEqual(prevBookmarkedIdsRef.current, bookmarkedIds)) {
+      return;
+    }
+    prevBookmarkedIdsRef.current = bookmarkedIds;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(bookmarkedIds));
       window.dispatchEvent(new Event(UPDATE_EVENT));
@@ -32,9 +45,12 @@ export function useBookmarks() {
     }
   }, [bookmarkedIds]);
 
-  // Sync from other tabs or windows
+  // Sync from other tabs, windows, or intra-window hook instances.
+  // Guarded by array equality check to prevent infinite loop cycles between instances.
   const syncBookmarks = useCallback(() => {
-    setBookmarkedIds(loadBookmarks());
+    const loaded = loadBookmarks();
+    prevBookmarkedIdsRef.current = loaded;
+    setBookmarkedIds(prev => (areStringArraysEqual(prev, loaded) ? prev : loaded));
   }, []);
 
   useEffect(() => {
@@ -44,8 +60,10 @@ export function useBookmarks() {
       }
     };
     window.addEventListener('storage', handleStorage);
+    window.addEventListener(UPDATE_EVENT, syncBookmarks);
     return () => {
       window.removeEventListener('storage', handleStorage);
+      window.removeEventListener(UPDATE_EVENT, syncBookmarks);
     };
   }, [syncBookmarks]);
 
