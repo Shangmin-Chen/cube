@@ -40,6 +40,46 @@ function look1CaseSolvedModuloRotation(kpuzzle: any, resultTransf: any): boolean
   return false;
 }
 
+function f2lIsIntact(transf: any): boolean {
+  const cp = transf.transformationData.CORNERS.permutation.slice(4);
+  const co = transf.transformationData.CORNERS.orientationDelta.slice(4);
+  const ep = transf.transformationData.EDGES.permutation.slice(4);
+  const eo = transf.transformationData.EDGES.orientationDelta.slice(4);
+
+  return (
+    cp.every((val: number, idx: number) => val === idx + 4) &&
+    co.every((val: number) => val === 0) &&
+    ep.every((val: number, idx: number) => val === idx + 4) &&
+    eo.every((val: number) => val === 0)
+  );
+}
+
+function patternF2LIsIntact(pattern: any): boolean {
+  const cp = pattern.patternData.CORNERS.pieces.slice(4);
+  const co = pattern.patternData.CORNERS.orientation.slice(4);
+  const ep = pattern.patternData.EDGES.pieces.slice(4);
+  const eo = pattern.patternData.EDGES.orientation.slice(4);
+
+  return (
+    cp.every((val: number, idx: number) => val === idx + 4) &&
+    co.every((val: number) => val === 0) &&
+    ep.every((val: number, idx: number) => val === idx + 4) &&
+    eo.every((val: number) => val === 0)
+  );
+}
+
+function isDiagonalCornerSwap(kpuzzle: any, algStr: string): boolean {
+  for (const auf of ['', 'U', 'U2', "U'"]) {
+    const transf = kpuzzle.algToTransformation(new Alg(algStr + (auf ? ' ' + auf : '')));
+    const cp = transf.transformationData.CORNERS.permutation.slice(0, 4);
+    const movedCorners = [0, 1, 2, 3].filter((i: number) => cp[i] !== i);
+    if (movedCorners.length === 2 && Math.abs(movedCorners[0] - cp[movedCorners[0]]) === 2) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function deriveUEdgeSlots(kp: any): string[] {
   const faceOf: Record<number, string[]> = {};
   for (const face of ['U', 'F', 'R', 'B', 'L']) {
@@ -164,11 +204,13 @@ describe('CFOP Invariants', () => {
     const byId = Object.fromEntries(look1OllCases.map(c => [c.id, c]));
     const dotCase = byId['oll-2look-dot'];
     const lineCase = byId['oll-2look-line'];
+    const lshapeCase = byId['oll-2look-lshape'];
     const suneAlg = oll2Look.find(c => c.id === 'oll-2look-sune')?.primaryAlg ?? "R U R' U R U2 R'";
 
     const controls = [
       { caseAlg: dotCase.primaryAlg, alg: lineCase.primaryAlg },
       { caseAlg: dotCase.primaryAlg, alg: suneAlg },
+      { caseAlg: lineCase.primaryAlg, alg: lshapeCase.primaryAlg },
     ];
 
     for (const { caseAlg, alg } of controls) {
@@ -243,5 +285,223 @@ describe('CFOP Invariants', () => {
       const [, den] = parseFraction(c.probability, c.id);
       expect(TWO_LOOK_DENOMINATORS.has(den)).toBe(true);
     }
+  });
+
+  it('OLL F2L invariant: all 67 OLL algorithms leave bottom two layers intact', () => {
+    const allOllCases = [...oll2Look, ...ollFull];
+    let count = 0;
+    for (const c of allOllCases) {
+      for (const alg of getAllAlgs(c)) {
+        const transf = kpuzzle.algToTransformation(new Alg(alg));
+        expect(f2lIsIntact(transf)).toBe(true);
+        count++;
+      }
+    }
+    expect(count).toBe(115);
+  });
+
+  it('Invariant 7: Look-2 OLL corner algorithms orient all top corners', () => {
+    const look2OllCases = oll2Look.filter(c => c.group === 'Corners (Look 2)');
+    expect(look2OllCases.length).toBe(7);
+
+    // Negative controls:
+    // 1. Look-1 alg (flips edges) on Look-2 corner case (e.g. Sune)
+    const suneCase = look2OllCases.find(c => c.id === 'oll-2look-sune')!;
+    const suneCaseTransf = kpuzzle.algToTransformation(new Alg(suneCase.primaryAlg)).invert();
+    const suneCasePattern = kpuzzle.defaultPattern().applyTransformation(suneCaseTransf);
+
+    const lineCase = oll2Look.find(c => c.id === 'oll-2look-line')!;
+    const lineTransf = kpuzzle.algToTransformation(new Alg(lineCase.primaryAlg));
+    expect(lineTransf.transformationData.EDGES.orientationDelta.slice(0, 4).every((v: number) => v === 0)).toBe(false);
+
+    const lineRes = suneCasePattern.applyTransformation(lineTransf);
+    let lineOrientsCorners = false;
+    for (const y of ['', "y'", 'y', 'y2']) {
+      const p = y ? lineRes.applyTransformation(kpuzzle.algToTransformation(new Alg(y))) : lineRes;
+      if (p.patternData.CORNERS.orientation.slice(0, 4).every((v: number) => v === 0)) {
+        lineOrientsCorners = true;
+        break;
+      }
+    }
+    expect(lineOrientsCorners).toBe(false);
+
+    // 2. PLL alg (T-perm) on Look-2 corner case
+    const tCase = pll2Look.find(c => c.id === 'pll-2look-tperm')!;
+    const tTransf = kpuzzle.algToTransformation(new Alg(tCase.primaryAlg));
+    expect(tTransf.transformationData.CORNERS.orientationDelta.slice(0, 4).some((v: number) => v !== 0)).toBe(false);
+
+    const tRes = suneCasePattern.applyTransformation(tTransf);
+    let tOrientsCorners = false;
+    for (const y of ['', "y'", 'y', 'y2']) {
+      const p = y ? tRes.applyTransformation(kpuzzle.algToTransformation(new Alg(y))) : tRes;
+      if (p.patternData.CORNERS.orientation.slice(0, 4).every((v: number) => v === 0)) {
+        tOrientsCorners = true;
+        break;
+      }
+    }
+    expect(tOrientsCorners).toBe(false);
+
+    // Invariant check on all 7 cases and 11 variations
+    let invariant7Count = 0;
+    for (const c of look2OllCases) {
+      const caseTransf = kpuzzle.algToTransformation(new Alg(c.primaryAlg)).invert();
+      const casePattern = kpuzzle.defaultPattern().applyTransformation(caseTransf);
+
+      // Case state invariant: top edges already oriented, top corners misoriented.
+      // Note: primaryAlg solves casePattern by construction (X^-1 * X = I);
+      // setup state discrimination (exact corner counts) and alternative checks are load-bearing.
+      expect(casePattern.patternData.EDGES.orientation.slice(0, 4).every((v: number) => v === 0)).toBe(true);
+      expect(casePattern.patternData.CORNERS.orientation.slice(0, 4).some((v: number) => v !== 0)).toBe(true);
+
+      const orientedCornerCount = casePattern.patternData.CORNERS.orientation
+        .slice(0, 4)
+        .filter((v: number) => v === 0).length;
+      if (c.id === 'oll-2look-sune' || c.id === 'oll-2look-antisune') {
+        expect(orientedCornerCount).toBe(1);
+      } else if (c.id === 'oll-2look-h' || c.id === 'oll-2look-pi') {
+        expect(orientedCornerCount).toBe(0);
+      } else if (
+        c.id === 'oll-2look-headlights' ||
+        c.id === 'oll-2look-chameleon' ||
+        c.id === 'oll-2look-bowtie'
+      ) {
+        expect(orientedCornerCount).toBe(2);
+      } else {
+        throw new Error(`Unexpected Look-2 OLL case: ${c.id}`);
+      }
+
+      for (const alg of getAllAlgs(c)) {
+        const algTransf = kpuzzle.algToTransformation(new Alg(alg));
+
+        // Intrinsic variation properties: preserves top edges, changes corners, preserves F2L
+        expect(algTransf.transformationData.EDGES.orientationDelta.slice(0, 4).every((v: number) => v === 0)).toBe(true);
+        expect(algTransf.transformationData.CORNERS.orientationDelta.slice(0, 4).some((v: number) => v !== 0)).toBe(true);
+        expect(f2lIsIntact(algTransf)).toBe(true);
+
+        const res = casePattern.applyTransformation(algTransf);
+        expect(patternF2LIsIntact(res)).toBe(true);
+
+        let cornersOriented = false;
+        for (const y of ['', "y'", 'y', 'y2']) {
+          const pattern = y ? res.applyTransformation(kpuzzle.algToTransformation(new Alg(y))) : res;
+          const cOri = pattern.patternData.CORNERS.orientation.slice(0, 4);
+          if (cOri.every((v: number) => v === 0)) {
+            cornersOriented = true;
+            break;
+          }
+        }
+        expect(cornersOriented).toBe(true);
+        invariant7Count++;
+      }
+    }
+    expect(invariant7Count).toBe(11);
+  });
+
+  it('Invariant 8: Full OLL algorithms orient both top corners and top edges', () => {
+    expect(ollFull.length).toBe(57);
+
+    // Negative controls:
+    // 1. PLL alg (T-perm) setup has no misoriented pieces
+    const tCase = pll2Look.find(c => c.id === 'pll-2look-tperm')!;
+    const tTransf = kpuzzle.algToTransformation(new Alg(tCase.primaryAlg));
+    const tCasePattern = kpuzzle.defaultPattern().applyTransformation(tTransf.invert());
+    const tMisoriented =
+      tCasePattern.patternData.EDGES.orientation.slice(0, 4).some((v: number) => v !== 0) ||
+      tCasePattern.patternData.CORNERS.orientation.slice(0, 4).some((v: number) => v !== 0);
+    expect(tMisoriented).toBe(false);
+
+    // 2. Applying T-perm to OLL 1 casePattern must fail the full orientation check
+    const oll1Case = ollFull.find(c => c.id === 'oll-1')!;
+    const oll1CaseTransf = kpuzzle.algToTransformation(new Alg(oll1Case.primaryAlg)).invert();
+    const oll1CasePattern = kpuzzle.defaultPattern().applyTransformation(oll1CaseTransf);
+    const oll1Res = oll1CasePattern.applyTransformation(tTransf);
+    let oll1Oriented = false;
+    for (const y of ['', "y'", 'y', 'y2']) {
+      const p = y ? oll1Res.applyTransformation(kpuzzle.algToTransformation(new Alg(y))) : oll1Res;
+      const cOri = p.patternData.CORNERS.orientation.slice(0, 4);
+      const eOri = p.patternData.EDGES.orientation.slice(0, 4);
+      if (cOri.every((v: number) => v === 0) && eOri.every((v: number) => v === 0)) {
+        oll1Oriented = true;
+        break;
+      }
+    }
+    expect(oll1Oriented).toBe(false);
+
+    const dotCaseIds = new Set(['oll-1', 'oll-2', 'oll-3', 'oll-4']);
+    const crossCaseIds = new Set([
+      'oll-21',
+      'oll-22',
+      'oll-23',
+      'oll-24',
+      'oll-25',
+      'oll-26',
+      'oll-27',
+    ]);
+
+    let invariant8Count = 0;
+    for (const c of ollFull) {
+      const caseTransf = kpuzzle.algToTransformation(new Alg(c.primaryAlg)).invert();
+      const casePattern = kpuzzle.defaultPattern().applyTransformation(caseTransf);
+
+      // Case state invariant: at least one top piece is misoriented.
+      // Note: primaryAlg solves casePattern by construction (X^-1 * X = I);
+      // setup state discrimination (Dot/Cross edge counts) and alternative checks are load-bearing.
+      const topMisoriented =
+        casePattern.patternData.EDGES.orientation.slice(0, 4).some((v: number) => v !== 0) ||
+        casePattern.patternData.CORNERS.orientation.slice(0, 4).some((v: number) => v !== 0);
+      expect(topMisoriented).toBe(true);
+
+      const orientedEdgeCount = casePattern.patternData.EDGES.orientation
+        .slice(0, 4)
+        .filter((v: number) => v === 0).length;
+      if (dotCaseIds.has(c.id)) {
+        expect(orientedEdgeCount).toBe(0);
+      }
+      if (crossCaseIds.has(c.id)) {
+        expect(orientedEdgeCount).toBe(4);
+      }
+
+      for (const alg of getAllAlgs(c)) {
+        const algTransf = kpuzzle.algToTransformation(new Alg(alg));
+        expect(f2lIsIntact(algTransf)).toBe(true);
+
+        const res = casePattern.applyTransformation(algTransf);
+        expect(patternF2LIsIntact(res)).toBe(true);
+
+        let fullyOriented = false;
+        for (const y of ['', "y'", 'y', 'y2']) {
+          const pattern = y ? res.applyTransformation(kpuzzle.algToTransformation(new Alg(y))) : res;
+          const cOri = pattern.patternData.CORNERS.orientation.slice(0, 4);
+          const eOri = pattern.patternData.EDGES.orientation.slice(0, 4);
+          if (cOri.every((v: number) => v === 0) && eOri.every((v: number) => v === 0)) {
+            fullyOriented = true;
+            break;
+          }
+        }
+        expect(fullyOriented).toBe(true);
+        invariant8Count++;
+      }
+    }
+    expect(invariant8Count).toBe(98);
+  });
+
+  it('Invariant 9: Diagonal corner swap PLLs perform diagonal corner swap; T-perm on Y-perm fails', () => {
+    const allPllCases = [...pll2Look, ...pllFull];
+    const diagonalPllIds = ['pll-y', 'pll-v', 'pll-na', 'pll-nb', 'pll-2look-yperm'];
+    let invariant9Count = 0;
+
+    for (const id of diagonalPllIds) {
+      const c = allPllCases.find(item => item.id === id);
+      expect(c).toBeDefined();
+      for (const alg of getAllAlgs(c!)) {
+        expect(isDiagonalCornerSwap(kpuzzle, alg)).toBe(true);
+        invariant9Count++;
+      }
+    }
+    expect(invariant9Count).toBe(12);
+
+    // Negative control: T-perm on pll-y must fail the diagonal swap assertion
+    const tCase = allPllCases.find(item => item.id === 'pll-t');
+    expect(isDiagonalCornerSwap(kpuzzle, tCase!.primaryAlg)).toBe(false);
   });
 });
