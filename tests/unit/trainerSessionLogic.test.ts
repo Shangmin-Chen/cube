@@ -129,4 +129,21 @@ describe('trainerSessionLogic', () => {
     const emptyOutcome = applyCardOutcome(emptyState, 'mastered', 'ghost-card');
     expect(emptyOutcome.shouldFireConfetti).toBe(false);
   });
+
+  it('marking every card as learning records all cards in learningIds, leaves masteredIds empty, and never fires confetti', () => {
+    const cases = ['x1', 'x2', 'x3', 'x4', 'x5'].map(makeMockCase);
+    let state = initRoundState(cases, false, 1);
+    const confettiEvents: boolean[] = [];
+
+    for (const c of cases) {
+      const { nextState, shouldFireConfetti } = applyCardOutcome(state, 'learning', c.id);
+      state = nextState;
+      confettiEvents.push(shouldFireConfetti);
+    }
+
+    expect(state.isRoundFinished).toBe(true);
+    expect(state.learningIds.size).toBe(cases.length);
+    expect(state.masteredIds.size).toBe(0);
+    expect(confettiEvents.every(f => !f)).toBe(true);
+  });
 });

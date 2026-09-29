@@ -30,6 +30,7 @@ export const RoundSummary: React.FC<RoundSummaryProps> = ({
   onRestart,
 }) => {
   const accuracyPercent = totalCards > 0 ? Math.round((masteredCount / totalCards) * 100) : 0;
+  const isFlawless = totalCards > 0 && masteredCount === totalCards;
 
   return (
     <div className="p-8 flex flex-col items-center gap-6 bg-[#202020] border border-[#2d2d2d] rounded-3xl shadow-2xl text-center animate-in fade-in zoom-in-95 duration-200">
@@ -42,14 +43,16 @@ export const RoundSummary: React.FC<RoundSummaryProps> = ({
           <Zap className="w-3.5 h-3.5" /> Round {roundNumber} Complete
         </div>
         <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight mt-1">
-          {masteredCount === totalCards
+          {isFlawless
             ? '🎉 Flawless Mastery!'
             : `${masteredCount} of ${totalCards} Mastered`}
         </h2>
         <p className="text-xs text-[#888888] max-w-md">
-          {learningCount > 0
-            ? `You have ${learningCount} case${learningCount > 1 ? 's' : ''} to reinforce in the next round.`
-            : 'You answered every algorithm accurately in this round!'}
+          {isFlawless
+            ? 'You answered every algorithm accurately in this round!'
+            : totalCards === 0
+              ? 'No cards in this round.'
+              : `You have ${learningCount || (totalCards - masteredCount)} case${(learningCount || (totalCards - masteredCount)) > 1 ? 's' : ''} to reinforce in the next round.`}
         </p>
       </div>
 
@@ -71,14 +74,14 @@ export const RoundSummary: React.FC<RoundSummaryProps> = ({
 
       {/* Action CTAs */}
       <div className="flex flex-wrap items-center justify-center gap-3">
-        {learningCount > 0 && (
+        {((learningCount > 0) || (totalCards > 0 && masteredCount < totalCards)) && (
           <button
             type="button"
             onClick={onReviewMissed}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#eab308] hover:bg-[#facc15] text-black font-bold text-xs transition-all shadow-md cursor-pointer"
           >
             <Flame className="w-4 h-4" />
-            <span>Drill {learningCount} Missed Cases (Round {roundNumber + 1})</span>
+            <span>Drill {learningCount || (totalCards - masteredCount)} Missed Cases (Round {roundNumber + 1})</span>
           </button>
         )}
 
