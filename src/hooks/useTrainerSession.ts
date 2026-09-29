@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import type { AlgCase } from '../types/cube';
 import { getAllCases, getDeckById } from '../services/algService';
@@ -70,13 +70,73 @@ export function useTrainerSession(deckId: string, bookmarkedIds: string[], metho
   );
 
   const isBookmarksDeck = deckId === 'bookmarks';
-  const bookmarkKey = isBookmarksDeck ? bookmarkedIds.join(',') : '';
 
-  // Sync active queue when deck selection changes, method changes, or bookmarks change on bookmarks deck
+  // Track previous deck/method to distinguish full re-init from bookmark membership changes
+  const prevDeckMethodRef = useRef(`${deckId}::${methodId}`);
+  const prevBookmarkedIdsRef = useRef<string[]>(bookmarkedIds);
+
+  // Full re-init when deck or method changes
   useEffect(() => {
+    const key = `${deckId}::${methodId}`;
+    if (prevDeckMethodRef.current !== key) {
+      prevDeckMethodRef.current = key;
+      prevBookmarkedIdsRef.current = bookmarkedIds;
+      // oxlint-disable-next-line react/set-state-in-effect
+      initRound(baseCases, isShuffled, 1);
+    }
+  }, [deckId, methodId, baseCases, isShuffled, initRound, bookmarkedIds]);
+
+  // Queue surgery when bookmarks change on the bookmarks deck —
+  // removes unstarred cards and adds newly starred ones without resetting
+  // roundNumber, masteredIds, or learningIds for remaining cards.
+  useEffect(() => {
+    if (!isBookmarksDeck) {
+      prevBookmarkedIdsRef.current = bookmarkedIds;
+      return;
+    }
+
+    const prevIds = prevBookmarkedIdsRef.current;
+    const prevSet = new Set(prevIds);
+    const currSet = new Set(bookmarkedIds);
+
+    const addedIds = bookmarkedIds.filter(id => !prevSet.has(id));
+    const removedIds = new Set(prevIds.filter(id => !currSet.has(id)));
+
+    prevBookmarkedIdsRef.current = bookmarkedIds;
+
+    if (addedIds.length === 0 && removedIds.size === 0) {
+      return;
+    }
+
+    const currentCardId = activeQueue[currentIndex]?.id;
+    const filtered = activeQueue.filter(c => !removedIds.has(c.id));
+    const newCases = addedIds
+      .map(id => allCases.find(c => c.id === id))
+      .filter((c): c is AlgCase => c !== undefined);
+    const nextQueue = [...filtered, ...newCases];
+
     // oxlint-disable-next-line react/set-state-in-effect
-    initRound(baseCases, isShuffled, 1);
-  }, [deckId, methodId, bookmarkKey]); // eslint-disable-line react-hooks/exhaustive-deps
+    setActiveQueue(nextQueue);
+
+    if (removedIds.size > 0) {
+      setMasteredIds(prev => {
+        const next = new Set([...prev].filter(id => !removedIds.has(id)));
+        return next.size === prev.size ? prev : next;
+      });
+      setLearningIds(prev => {
+        const next = new Set([...prev].filter(id => !removedIds.has(id)));
+        return next.size === prev.size ? prev : next;
+      });
+    }
+
+    if (currentCardId && nextQueue.some(c => c.id === currentCardId)) {
+      setCurrentIndex(nextQueue.findIndex(c => c.id === currentCardId));
+    } else {
+      setCurrentIndex(idx => Math.min(idx, Math.max(0, nextQueue.length - 1)));
+      setIsFlipped(false);
+      setShowHint(false);
+    }
+  }, [isBookmarksDeck, bookmarkedIds, allCases, activeQueue, currentIndex]);
 
   const currentCase = activeQueue[currentIndex] as AlgCase | undefined;
 
