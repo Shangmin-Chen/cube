@@ -130,20 +130,20 @@ describe('trainerSessionLogic', () => {
     expect(emptyOutcome.shouldFireConfetti).toBe(false);
   });
 
-  it('skipping all cards marks all as learning and never fires confetti', () => {
-    const sixCards = ['x1', 'x2', 'x3', 'x4', 'x5'].map(makeMockCase);
-    let skipState = initRoundState(sixCards, false, 1);
+  it('marking every card as learning records all cards in learningIds, leaves masteredIds empty, and never fires confetti', () => {
+    const cases = ['x1', 'x2', 'x3', 'x4', 'x5'].map(makeMockCase);
+    let state = initRoundState(cases, false, 1);
     const confettiEvents: boolean[] = [];
 
-    for (const c of sixCards) {
-      const { nextState, shouldFireConfetti } = applyCardOutcome(skipState, 'learning', c.id);
-      skipState = nextState;
+    for (const c of cases) {
+      const { nextState, shouldFireConfetti } = applyCardOutcome(state, 'learning', c.id);
+      state = nextState;
       confettiEvents.push(shouldFireConfetti);
     }
 
-    expect(skipState.isRoundFinished).toBe(true);
-    expect(skipState.learningIds.size).toBe(sixCards.length);
-    expect(skipState.masteredIds.size).toBe(0);
+    expect(state.isRoundFinished).toBe(true);
+    expect(state.learningIds.size).toBe(cases.length);
+    expect(state.masteredIds.size).toBe(0);
     expect(confettiEvents.every(f => !f)).toBe(true);
   });
 });

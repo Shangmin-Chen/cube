@@ -144,21 +144,23 @@ function runVerification(): void {
   assert(!emptyOutcome.shouldFireConfetti, 'Repro 5: an empty round must not fire confetti');
   console.log('Repro 5: no confetti for an empty round');
 
-  // Repro 6: navigation-as-implicit-learning — skipping cards must populate
-  // learningIds and must not fire confetti when round finishes.
-  const sixCards = ['x1', 'x2', 'x3', 'x4', 'x5'].map(makeMockCase);
-  let skipState = initRoundState(sixCards, false, 1);
-  const skipConfettiEvents: boolean[] = [];
-  for (const c of sixCards) {
-    const { nextState, shouldFireConfetti } = applyCardOutcome(skipState, 'learning', c.id);
-    skipState = nextState;
-    skipConfettiEvents.push(shouldFireConfetti);
+  // Repro 6: pure logic: marking every card as learning records all in
+  // learningIds, leaves masteredIds empty, and does not fire confetti.
+  // Note: the hook-level auto-advance next() behavior is tested in
+  // tests/unit/trainerSessionScoring.test.ts.
+  const cards = ['x1', 'x2', 'x3', 'x4', 'x5'].map(makeMockCase);
+  let allLearningState = initRoundState(cards, false, 1);
+  const allLearningConfetti: boolean[] = [];
+  for (const c of cards) {
+    const { nextState, shouldFireConfetti } = applyCardOutcome(allLearningState, 'learning', c.id);
+    allLearningState = nextState;
+    allLearningConfetti.push(shouldFireConfetti);
   }
-  assert(skipState.isRoundFinished, 'Repro 6: round should finish after skipping all cards');
-  assert(skipState.learningIds.size === sixCards.length, 'Repro 6: all skipped cards must be in learningIds');
-  assert(skipState.masteredIds.size === 0, 'Repro 6: masteredIds must be empty when all cards skipped');
-  assert(skipConfettiEvents.every(f => !f), 'Repro 6: confetti must not fire when all cards skipped');
-  console.log('Repro 6: navigation-as-implicit-learning: all skipped -> all learning, no confetti');
+  assert(allLearningState.isRoundFinished, 'Repro 6: round should finish after marking all cards learning');
+  assert(allLearningState.learningIds.size === cards.length, 'Repro 6: all cards must be in learningIds');
+  assert(allLearningState.masteredIds.size === 0, 'Repro 6: masteredIds must be empty when all cards are learning');
+  assert(allLearningConfetti.every(f => !f), 'Repro 6: confetti must not fire when all cards are learning');
+  console.log('Repro 6: all cards marked learning -> all learning, 0 mastered, no confetti');
 
   console.log('\nAll trainer session verification checks passed.');
 }

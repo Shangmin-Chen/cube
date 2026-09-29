@@ -26,6 +26,14 @@ export function useTrainerSession(deckId: string, bookmarkedIds: string[], metho
   const [copiedType, setCopiedType] = useState<'setup' | 'solve' | null>(null);
   const copiedTypeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (copiedTypeTimeoutRef.current !== null) {
+        clearTimeout(copiedTypeTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const allCases = useMemo(() => getAllCases(methodId), [methodId]);
 
   // Raw cases for the dynamically resolved deck
@@ -149,6 +157,15 @@ export function useTrainerSession(deckId: string, bookmarkedIds: string[], metho
       setCurrentIndex(prev => prev + 1);
       setIsFlipped(false);
       setShowHint(false);
+    } else {
+      setIsRoundFinished(true);
+      if (activeQueue.length > 0 && masteredIds.size === activeQueue.length) {
+        try {
+          confetti({ particleCount: 70, spread: 60, origin: { y: 0.7 } });
+        } catch {
+          // Ignore
+        }
+      }
     }
   }, [currentIndex, activeQueue.length, currentCase, masteredIds, learningIds, advanceWithOutcome]);
 
