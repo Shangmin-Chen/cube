@@ -15,7 +15,7 @@ import { TrainerTab } from './components/TrainerTab';
  */
 function AppLayout() {
   const location = useLocation();
-  const isTimerRoute = location.pathname === '/' || location.pathname.startsWith('/timer');
+  const isTimerRoute = location.pathname === '/timer' || location.pathname.startsWith('/timer/');
 
   return (
     <div className="min-h-screen bg-[#191919] text-[#d4d4d4] flex flex-col selection:bg-[#eab308] selection:text-black font-sans">
@@ -24,19 +24,19 @@ function AppLayout() {
       <main className="flex-1 px-4 py-6">
         {/* TimerTab is always mounted; hidden when not on the timer route */}
         <div style={{ display: isTimerRoute ? 'block' : 'none' }}>
-          <TimerTab />
+          <TimerTab active={isTimerRoute} />
         </div>
 
-        {/* Other tabs render via Routes normally */}
-        {!isTimerRoute && (
-          <Routes>
-            <Route path="/train" element={<TrainerTab />} />
-            <Route path="/algs" element={<AlgReferenceTab />} />
-            <Route path="/algs/:step" element={<AlgReferenceTab />} />
-            <Route path="/algs/:step/:caseId" element={<AlgReferenceTab />} />
-            <Route path="*" element={<Navigate to="/timer" replace />} />
-          </Routes>
-        )}
+        {/* Other tabs and redirections render via Routes */}
+        <Routes>
+          <Route path="/" element={<Navigate to="/timer" replace />} />
+          <Route path="/timer" element={null} />
+          <Route path="/train" element={<TrainerTab />} />
+          <Route path="/algs" element={<AlgReferenceTab />} />
+          <Route path="/algs/:step" element={<AlgReferenceTab />} />
+          <Route path="/algs/:step/:caseId" element={<AlgReferenceTab />} />
+          <Route path="*" element={<Navigate to="/timer" replace />} />
+        </Routes>
       </main>
 
       {/* Footer */}

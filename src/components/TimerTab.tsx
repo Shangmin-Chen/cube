@@ -40,7 +40,12 @@ function shouldLetNativeSpaceThrough(target: EventTarget | null): boolean {
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON';
 }
 
-export const TimerTab: React.FC = () => {
+interface TimerTabProps {
+  active?: boolean;
+  initialUseInspection?: boolean;
+}
+
+export const TimerTab: React.FC<TimerTabProps> = ({ active = true, initialUseInspection = false }) => {
   const [scramble, setScramble] = useState<string>('');
   const [scrambleLoading, setScrambleLoading] = useState<boolean>(true);
   const [scrambleError, setScrambleError] = useState<string | null>(null);
@@ -58,7 +63,7 @@ export const TimerTab: React.FC = () => {
   const [timerState, setTimerState] = useState<'idle' | 'holding' | 'ready' | 'inspection' | 'running'>('idle');
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [inspectionElapsed, setInspectionElapsed] = useState<number>(0);
-  const [useInspection, setUseInspection] = useState<boolean>(false);
+  const [useInspection, setUseInspection] = useState<boolean>(initialUseInspection);
 
   const startTimeRef = useRef<number>(0);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -213,7 +218,10 @@ export const TimerTab: React.FC = () => {
     if (timerStateRef.current !== 'running') return;
     timerStateRef.current = 'idle';
 
-    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
     const finalTime = performance.now() - startTimeRef.current;
     setElapsedTime(finalTime);
     setTimerState('idle');
@@ -244,6 +252,7 @@ export const TimerTab: React.FC = () => {
       if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
       timerStateRef.current = 'holding';
       setTimerState('holding');
+      setElapsedTime(0);
       holdTimerRef.current = setTimeout(() => {
         holdTimerRef.current = null;
         timerStateRef.current = 'ready';
@@ -306,8 +315,51 @@ export const TimerTab: React.FC = () => {
     [handleTriggerRelease]
   );
 
-  // Keyboard events for spacebar timer control (window-level only to avoid double-firing)
+  // Keyboard events for spacebar timer control (window-level only to avoid double-firing).
+  // Also coordinates active/inactive transitions: pauses running timer intervals in the background,
+  // cancels active inspection sessions on nav away, resets arming states, and resyncs timers upon return.
   useEffect(() => {
+    if (!active) {
+      if (holdTimerRef.current) {
+        clearTimeout(holdTimerRef.current);
+        holdTimerRef.current = null;
+      }
+      spaceHoldActiveRef.current = false;
+      activePointerIdRef.current = null;
+
+      if (timerStateRef.current === 'holding' || timerStateRef.current === 'ready') {
+        timerStateRef.current = 'idle';
+        setTimerState('idle');
+      }
+
+      if (timerStateRef.current === 'inspection') {
+        clearInspectionTimer();
+        inspectionActiveRef.current = false;
+        inspectionPenaltyRef.current = 'none';
+        setInspectionElapsed(0);
+        attemptScrambleRef.current = '';
+        timerStateRef.current = 'idle';
+        setTimerState('idle');
+      }
+
+      if (timerStateRef.current === 'running') {
+        if (timerIntervalRef.current) {
+          clearInterval(timerIntervalRef.current);
+          timerIntervalRef.current = null;
+        }
+      }
+
+      return;
+    }
+
+    if (timerStateRef.current === 'running') {
+      setElapsedTime(performance.now() - startTimeRef.current);
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = setInterval(() => {
+        setElapsedTime(performance.now() - startTimeRef.current);
+      }, 10);
+    }
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || e.repeat) return;
       if (activePointerIdRef.current !== null) return;
@@ -333,7 +385,7 @@ export const TimerTab: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [handleTriggerPress, handleTriggerRelease]);
+  }, [active, clearInspectionTimer, handleTriggerPress, handleTriggerRelease]);
 
   // Handle Solve Penalties (+2 / DNF / Delete)
   const handlePenalty = (id: string, penalty: 'none' | '+2' | 'DNF') => {
