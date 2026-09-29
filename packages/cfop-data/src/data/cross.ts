@@ -1,0 +1,48 @@
+import type { AlgCase } from '../types.ts';
+
+export const CROSS_CASES: AlgCase[] = [
+  {
+    id: 'cross-top-white-up',
+    name: 'Top Layer, White Facing Up',
+    category: 'cross',
+    subcategory: 'Cross (C)',
+    group: 'Top Layer Insertion',
+    primaryAlg: 'F2',
+    description: 'The front cross edge sits at UF with its white sticker facing up. The other three cross edges are already solved.',
+    tips: 'Turn U until the edge sits directly above its empty slot, then drop it in with a half turn of that face.',
+    why: 'A half turn swaps UF straight into DF, and because it is a 180 degree turn the white sticker stays on the up-down axis and arrives facing down.',
+  },
+  {
+    id: 'cross-top-white-side',
+    name: 'Top Layer, White Facing Out',
+    category: 'cross',
+    subcategory: 'Cross (C)',
+    group: 'Top Layer Insertion',
+    primaryAlg: "R' F R",
+    description: 'The front cross edge sits at UR with its white sticker facing out to the right instead of up.',
+    tips: 'A misoriented top edge needs three moves. Dropping it straight down would leave white facing sideways.',
+    why: "R' lowers the edge from UR into the FR middle slot, F rotates it down into DF with white now facing the floor, and R restores the right layer.",
+  },
+  {
+    id: 'cross-middle-fr',
+    name: 'Trapped in the Front-Right Slot',
+    category: 'cross',
+    subcategory: 'Cross (C)',
+    group: 'Middle Layer Extraction',
+    primaryAlg: "D R' D'",
+    description: 'The front cross edge is trapped in the FR middle-layer slot. The other three cross edges are already solved.',
+    tips: 'Move the finished cross out of the way before extracting, then bring it straight back. Never drop an edge onto a solved cross slot.',
+    why: "D turns the solved cross so its empty slot arrives at DR, R' drops the trapped edge straight down into that slot, and D' rotates the cross back to its original alignment carrying the edge into DF.",
+  },
+  {
+    id: 'cross-bottom-flipped',
+    name: 'In Its Slot but Flipped',
+    category: 'cross',
+    subcategory: 'Cross (C)',
+    group: 'Reorientation',
+    primaryAlg: "D R D' F",
+    description: 'The front cross edge is already in the DF slot but flipped, so its white sticker faces front instead of down.',
+    tips: 'A flipped edge cannot be fixed in place. It has to leave the bottom layer and come back the other way round.',
+    why: "D and R lift the flipped edge out of the bottom layer into the FR middle slot, D' restores the cross alignment, and F rotates the edge into DF the opposite way so white finishes facing down.",
+  },
+];

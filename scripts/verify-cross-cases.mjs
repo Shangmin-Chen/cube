@@ -7,7 +7,10 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
-const CFOP_DATA_PATH = path.join(ROOT_DIR, 'src/data/cfopData.ts');
+const PACKAGE_CROSS_PATH = path.join(ROOT_DIR, 'packages/cfop-data/src/data/cross.ts');
+const CFOP_DATA_PATH = fs.existsSync(PACKAGE_CROSS_PATH)
+  ? PACKAGE_CROSS_PATH
+  : path.join(ROOT_DIR, 'src/data/cfopData.ts');
 
 /**
  * cubing.js 3x3x3 EDGES slot order, derived from which face turn moves which index
