@@ -53,10 +53,72 @@ function look1CaseSolvedModuloRotation(kpuzzle, resultTransf) {
 }
 
 /**
+ * Asserts that an algorithm transformation leaves the bottom two layers (F2L) completely intact:
+ * Corners 4..7 and Edges 4..11 must have identity permutation and 0 orientation delta.
+ *
+ * @param {import('cubing/puzzles').KTransformation} transf
+ * @returns {boolean}
+ */
+function f2lIsIntact(transf) {
+  const cp = transf.transformationData.CORNERS.permutation.slice(4);
+  const co = transf.transformationData.CORNERS.orientationDelta.slice(4);
+  const ep = transf.transformationData.EDGES.permutation.slice(4);
+  const eo = transf.transformationData.EDGES.orientationDelta.slice(4);
+
+  return (
+    cp.every((val, idx) => val === idx + 4) &&
+    co.every(val => val === 0) &&
+    ep.every((val, idx) => val === idx + 4) &&
+    eo.every(val => val === 0)
+  );
+}
+
+/**
+ * Asserts that a cube pattern has the bottom two layers (F2L) completely intact:
+ * Corners 4..7 and Edges 4..11 must be in solved piece positions with orientation 0.
+ *
+ * @param {import('cubing/puzzles').KPattern} pattern
+ * @returns {boolean}
+ */
+function patternF2LIsIntact(pattern) {
+  const cp = pattern.patternData.CORNERS.pieces.slice(4);
+  const co = pattern.patternData.CORNERS.orientation.slice(4);
+  const ep = pattern.patternData.EDGES.pieces.slice(4);
+  const eo = pattern.patternData.EDGES.orientation.slice(4);
+
+  return (
+    cp.every((val, idx) => val === idx + 4) &&
+    co.every(val => val === 0) &&
+    ep.every((val, idx) => val === idx + 4) &&
+    eo.every(val => val === 0)
+  );
+}
+
+/**
+ * Asserts whether an algorithm executes a diagonal corner swap (modulo AUF).
+ *
+ * @param {any} kpuzzle
+ * @param {string} algStr
+ * @returns {boolean}
+ */
+function isDiagonalCornerSwap(kpuzzle, algStr) {
+  for (const auf of ['', 'U', 'U2', "U'"]) {
+    const transf = kpuzzle.algToTransformation(new Alg(algStr + (auf ? ' ' + auf : '')));
+    const cp = transf.transformationData.CORNERS.permutation.slice(0, 4);
+    const movedCorners = [0, 1, 2, 3].filter(i => cp[i] !== i);
+    if (movedCorners.length === 2 && Math.abs(movedCorners[0] - cp[movedCorners[0]]) === 2) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Negative controls: cross-case / wrong-family algs must not pass Look-1 check.
  *
  * @param {any} kpuzzle
  * @param {object[]} look1OllCases
+ * @param {object[]} oll2Look
  */
 function assertLook1NegativeControls(kpuzzle, look1OllCases, oll2Look) {
   const byId = Object.fromEntries(look1OllCases.map(c => [c.id, c]));
@@ -77,6 +139,104 @@ function assertLook1NegativeControls(kpuzzle, look1OllCases, oll2Look) {
     if (look1CaseSolvedModuloRotation(kpuzzle, resultTransf)) {
       throw new Error(`Look-1 negative control failed: ${label} incorrectly passed`);
     }
+  }
+}
+
+/**
+ * Negative controls for OLL & PLL invariants:
+ * 1. Look-1 alg (flips edges) on Look-2 corner case (fails edge preservation & corner solve).
+ * 2. PLL alg (T-perm) on Look-2 corner case (fails corner orientation delta & corner solve).
+ * 3. PLL alg (T-perm) inverted setup (fails Full OLL misorientation check).
+ * 4. PLL alg (T-perm) on Full OLL 1 case (fails Full OLL orientation solve).
+ * 5. T-perm on PLL diagonal swap (fails diagonal corner swap check).
+ *
+ * @param {any} kpuzzle
+ * @param {object[]} oll2Look
+ * @param {object[]} allPllCases
+ * @param {object[]} ollFull
+ */
+function assertOllAndPllNegativeControls(kpuzzle, oll2Look, allPllCases, ollFull) {
+  const defPattern = kpuzzle.defaultPattern();
+  const suneCase = oll2Look.find(c => c.id === 'oll-2look-sune');
+  const suneCaseTransf = kpuzzle.algToTransformation(new Alg(suneCase.primaryAlg)).invert();
+  const suneCasePattern = defPattern.applyTransformation(suneCaseTransf);
+
+  const lineCase = oll2Look.find(c => c.id === 'oll-2look-line');
+  const lineTransf = kpuzzle.algToTransformation(new Alg(lineCase.primaryAlg));
+
+  const tCase = allPllCases.find(c => c.id === 'pll-2look-tperm' || c.id === 'pll-t');
+  const tTransf = kpuzzle.algToTransformation(new Alg(tCase.primaryAlg));
+
+  // Control 1: Look-1 line alg on Look-2 Sune case
+  const linePreservesEdges = lineTransf.transformationData.EDGES.orientationDelta.slice(0, 4).every(v => v === 0);
+  if (linePreservesEdges) {
+    throw new Error('Look-2 negative control failed: Look-1 line alg unexpectedly preserved top edge orientations');
+  }
+  const lineRes = suneCasePattern.applyTransformation(lineTransf);
+  let lineOrientsCorners = false;
+  for (const y of ['', "y'", 'y', 'y2']) {
+    const p = y ? lineRes.applyTransformation(kpuzzle.algToTransformation(new Alg(y))) : lineRes;
+    if (p.patternData.CORNERS.orientation.slice(0, 4).every(v => v === 0)) {
+      lineOrientsCorners = true;
+      break;
+    }
+  }
+  if (lineOrientsCorners) {
+    throw new Error('Look-2 negative control failed: Look-1 line alg unexpectedly oriented Sune corners');
+  }
+
+  // Control 2: PLL T-perm on Look-2 Sune case
+  const tChangesCorners = tTransf.transformationData.CORNERS.orientationDelta.slice(0, 4).some(v => v !== 0);
+  if (tChangesCorners) {
+    throw new Error('Look-2 negative control failed: T-perm unexpectedly changed corner orientation');
+  }
+  const tRes = suneCasePattern.applyTransformation(tTransf);
+  let tOrientsCorners = false;
+  for (const y of ['', "y'", 'y', 'y2']) {
+    const p = y ? tRes.applyTransformation(kpuzzle.algToTransformation(new Alg(y))) : tRes;
+    if (p.patternData.CORNERS.orientation.slice(0, 4).every(v => v === 0)) {
+      tOrientsCorners = true;
+      break;
+    }
+  }
+  if (tOrientsCorners) {
+    throw new Error('Look-2 negative control failed: T-perm unexpectedly oriented Sune corners');
+  }
+
+  // Control 3: T-perm setup has no misoriented pieces (cannot be a Full OLL case)
+  const tCasePattern = defPattern.applyTransformation(tTransf.invert());
+  const tMisoriented =
+    tCasePattern.patternData.EDGES.orientation.slice(0, 4).some(v => v !== 0) ||
+    tCasePattern.patternData.CORNERS.orientation.slice(0, 4).some(v => v !== 0);
+  if (tMisoriented) {
+    throw new Error('Full OLL negative control failed: T-perm setup unexpectedly had misoriented top pieces');
+  }
+
+  // Control 4: T-perm on Full OLL 1 casePattern must fail full orientation solve
+  const oll1Case = ollFull.find(c => c.id === 'oll-1');
+  if (!oll1Case) {
+    throw new Error('Missing expected OLL case: oll-1');
+  }
+  const oll1Transf = kpuzzle.algToTransformation(new Alg(oll1Case.primaryAlg)).invert();
+  const oll1CasePattern = defPattern.applyTransformation(oll1Transf);
+  const oll1Res = oll1CasePattern.applyTransformation(tTransf);
+  let oll1Oriented = false;
+  for (const y of ['', "y'", 'y', 'y2']) {
+    const pattern = y ? oll1Res.applyTransformation(kpuzzle.algToTransformation(new Alg(y))) : oll1Res;
+    const cOri = pattern.patternData.CORNERS.orientation.slice(0, 4);
+    const eOri = pattern.patternData.EDGES.orientation.slice(0, 4);
+    if (cOri.every(v => v === 0) && eOri.every(v => v === 0)) {
+      oll1Oriented = true;
+      break;
+    }
+  }
+  if (oll1Oriented) {
+    throw new Error('Full OLL negative control failed: T-perm unexpectedly oriented all top pieces for OLL 1');
+  }
+
+  // Control 5: T-perm on diagonal corner swap
+  if (isDiagonalCornerSwap(kpuzzle, tCase.primaryAlg)) {
+    throw new Error('PLL diagonal negative control failed: T-perm unexpectedly passed diagonal corner swap check');
   }
 }
 
@@ -381,16 +541,96 @@ async function runVerification() {
   }
   console.log('✓ Invariant 6: no 2-look case displays a probability from another deck\'s denominator');
 
-  // 7. Look-2 OLL (Corners): algorithms must orient all top-layer corners
+  // OLL & PLL negative controls
+  assertOllAndPllNegativeControls(kpuzzle, oll2Look, allPllCases, ollFull);
+  console.log('✓ OLL & PLL negative controls: cross-case and wrong-family algorithms correctly rejected');
+
+  // OLL F2L Invariant: every OLL algorithm (all 10 2-Look and 57 Full OLL cases) leaves F2L intact
+  const allOllCases = [...oll2Look, ...ollFull];
+  let ollF2lCount = 0;
+  for (const c of allOllCases) {
+    for (const alg of getAllAlgs(c)) {
+      const transf = kpuzzle.algToTransformation(new Alg(alg));
+      if (!f2lIsIntact(transf)) {
+        throw new Error(`Semantic invariant failure: F2L not intact for OLL case ${c.id} (${alg})`);
+      }
+      ollF2lCount++;
+    }
+  }
+  console.log(`✓ OLL F2L Invariant: ${ollF2lCount} OLL algorithm variations leave bottom two layers (F2L) intact`);
+
+  // 7. Look-2 OLL (Corners): algorithms must orient all top-layer corners while preserving top edges and F2L.
+  //    Note on test discrimination: Because casePattern is constructed by inverting primaryAlg,
+  //    the primary algorithm returns to solved by construction (X^-1 * X = I).
+  //    Therefore, the case-state setup checks (exact corner orientation counts) together with
+  //    testing alternative algorithms against casePattern and running negative controls are
+  //    what provide load-bearing semantic discrimination for case identity.
   const look2OllCases = oll2Look.filter(c => c.group === 'Corners (Look 2)');
   let invariant7Count = 0;
   for (const c of look2OllCases) {
     const caseTransf = kpuzzle.algToTransformation(new Alg(c.primaryAlg)).invert();
     const casePattern = kpuzzle.defaultPattern().applyTransformation(caseTransf);
 
+    // 1. Verify inverted case state: top edges oriented, top corners misoriented
+    const caseTopEdgesOriented = casePattern.patternData.EDGES.orientation.slice(0, 4).every(v => v === 0);
+    const caseTopCornersMisoriented = casePattern.patternData.CORNERS.orientation.slice(0, 4).some(v => v !== 0);
+
+    if (!caseTopEdgesOriented) {
+      throw new Error(`Semantic invariant failure: Look-2 OLL case ${c.id} setup does not have top edges oriented`);
+    }
+    if (!caseTopCornersMisoriented) {
+      throw new Error(`Semantic invariant failure: Look-2 OLL case ${c.id} setup does not have misoriented corners`);
+    }
+
+    const orientedCornerCount = casePattern.patternData.CORNERS.orientation.slice(0, 4).filter(v => v === 0).length;
+    if (c.id === 'oll-2look-sune' || c.id === 'oll-2look-antisune') {
+      if (orientedCornerCount !== 1) {
+        throw new Error(
+          `Semantic invariant failure: Look-2 OLL case ${c.id} setup expected exactly 1 oriented corner, found ${orientedCornerCount}`,
+        );
+      }
+    } else if (c.id === 'oll-2look-h' || c.id === 'oll-2look-pi') {
+      if (orientedCornerCount !== 0) {
+        throw new Error(
+          `Semantic invariant failure: Look-2 OLL case ${c.id} setup expected exactly 0 oriented corners, found ${orientedCornerCount}`,
+        );
+      }
+    } else if (
+      c.id === 'oll-2look-headlights' ||
+      c.id === 'oll-2look-chameleon' ||
+      c.id === 'oll-2look-bowtie'
+    ) {
+      if (orientedCornerCount !== 2) {
+        throw new Error(
+          `Semantic invariant failure: Look-2 OLL case ${c.id} setup expected exactly 2 oriented corners, found ${orientedCornerCount}`,
+        );
+      }
+    } else {
+      throw new Error(`Semantic invariant failure: unrecognized Look-2 OLL case ${c.id}`);
+    }
+
     for (const alg of getAllAlgs(c)) {
       const algTransf = kpuzzle.algToTransformation(new Alg(alg));
+
+      // 2. Verify algorithm properties: preserves top edges, changes top corners, preserves F2L
+      const topEdgesPreserved = algTransf.transformationData.EDGES.orientationDelta.slice(0, 4).every(v => v === 0);
+      const topCornersChanged = algTransf.transformationData.CORNERS.orientationDelta.slice(0, 4).some(v => v !== 0);
+
+      if (!topEdgesPreserved) {
+        throw new Error(`Semantic invariant failure: Look-2 OLL algorithm did not preserve top edge orientations for ${c.id} (${alg})`);
+      }
+      if (!topCornersChanged) {
+        throw new Error(`Semantic invariant failure: Look-2 OLL algorithm did not change corner orientations for ${c.id} (${alg})`);
+      }
+      if (!f2lIsIntact(algTransf)) {
+        throw new Error(`Semantic invariant failure: Look-2 OLL algorithm disturbed F2L for ${c.id} (${alg})`);
+      }
+
+      // 3. Verify solving: applying alg to casePattern leaves all top corners oriented (modulo y-rotations) and F2L intact
       const res = casePattern.applyTransformation(algTransf);
+      if (!patternF2LIsIntact(res)) {
+        throw new Error(`Semantic invariant failure: Look-2 OLL result disturbed F2L for ${c.id} (${alg})`);
+      }
 
       let cornersOriented = false;
       for (const y of ['', "y'", 'y', 'y2']) {
@@ -408,17 +648,60 @@ async function runVerification() {
       invariant7Count++;
     }
   }
-  console.log(`✓ Invariant 7: ${invariant7Count} Look-2 OLL corner algorithm variations orient all top corners`);
+  console.log(`✓ Invariant 7: ${invariant7Count} Look-2 OLL corner algorithm variations orient all top corners (edges preserved, F2L intact)`);
 
-  // 8. Full OLL: algorithms must orient both top corners and top edges
+  // 8. Full OLL: algorithms must orient both top corners and top edges while preserving F2L.
+  //    Note on test discrimination: Since casePattern is defined as invert(primaryAlg),
+  //    the primary algorithm solves casePattern by construction (tautology on identity).
+  //    Load-bearing discrimination is provided by case-state setup checks (e.g. Dot vs Cross
+  //    edge orientation counts), alternative algorithm verification, and negative controls.
+  const dotCaseIds = new Set(['oll-1', 'oll-2', 'oll-3', 'oll-4']);
+  const crossCaseIds = new Set([
+    'oll-21',
+    'oll-22',
+    'oll-23',
+    'oll-24',
+    'oll-25',
+    'oll-26',
+    'oll-27',
+  ]);
   let invariant8Count = 0;
   for (const c of ollFull) {
     const caseTransf = kpuzzle.algToTransformation(new Alg(c.primaryAlg)).invert();
     const casePattern = kpuzzle.defaultPattern().applyTransformation(caseTransf);
 
+    // 1. Verify inverted case state: at least one top piece is misoriented
+    const topMisoriented =
+      casePattern.patternData.EDGES.orientation.slice(0, 4).some(v => v !== 0) ||
+      casePattern.patternData.CORNERS.orientation.slice(0, 4).some(v => v !== 0);
+
+    if (!topMisoriented) {
+      throw new Error(`Semantic invariant failure: Full OLL case ${c.id} setup has no misoriented top pieces`);
+    }
+
+    const orientedEdgeCount = casePattern.patternData.EDGES.orientation.slice(0, 4).filter(v => v === 0).length;
+    if (dotCaseIds.has(c.id) && orientedEdgeCount !== 0) {
+      throw new Error(
+        `Semantic invariant failure: Full OLL Dot case ${c.id} setup expected 0 oriented top edges, found ${orientedEdgeCount}`,
+      );
+    }
+    if (crossCaseIds.has(c.id) && orientedEdgeCount !== 4) {
+      throw new Error(
+        `Semantic invariant failure: Full OLL Cross case ${c.id} setup expected 4 oriented top edges, found ${orientedEdgeCount}`,
+      );
+    }
+
     for (const alg of getAllAlgs(c)) {
       const algTransf = kpuzzle.algToTransformation(new Alg(alg));
+
+      if (!f2lIsIntact(algTransf)) {
+        throw new Error(`Semantic invariant failure: Full OLL algorithm disturbed F2L for ${c.id} (${alg})`);
+      }
+
       const res = casePattern.applyTransformation(algTransf);
+      if (!patternF2LIsIntact(res)) {
+        throw new Error(`Semantic invariant failure: Full OLL result disturbed F2L for ${c.id} (${alg})`);
+      }
 
       let fullyOriented = false;
       for (const y of ['', "y'", 'y', 'y2']) {
@@ -437,7 +720,7 @@ async function runVerification() {
       invariant8Count++;
     }
   }
-  console.log(`✓ Invariant 8: ${invariant8Count} Full OLL algorithm variations orient all top corners and edges`);
+  console.log(`✓ Invariant 8: ${invariant8Count} Full OLL algorithm variations orient all top corners and edges (F2L intact)`);
 
   // 9. PLL Case Identity: Diagonal Corner Swap algorithms must swap diagonal corners
   const diagonalPllIds = ['pll-y', 'pll-v', 'pll-na', 'pll-nb', 'pll-2look-yperm'];
@@ -445,23 +728,24 @@ async function runVerification() {
   for (const id of diagonalPllIds) {
     const c = allPllCases.find(item => item.id === id);
     if (!c) throw new Error(`Missing expected diagonal corner swap PLL case: ${id}`);
-    const transf = kpuzzle.algToTransformation(new Alg(c.primaryAlg));
-    const cp = transf.transformationData.CORNERS.permutation.slice(0, 4);
-    const movedCorners = [0, 1, 2, 3].filter(i => cp[i] !== i);
-
-    const hasDiagonalSwap = movedCorners.some(i => Math.abs(i - cp[i]) === 2);
-    if (!hasDiagonalSwap) {
-      throw new Error(`Semantic invariant failure: PLL ${id} primary does not perform a diagonal corner swap. Got cp: ${JSON.stringify(cp)}`);
+    for (const alg of getAllAlgs(c)) {
+      if (!isDiagonalCornerSwap(kpuzzle, alg)) {
+        throw new Error(
+          `Semantic invariant failure: PLL ${id} algorithm (${alg}) does not perform a diagonal corner swap`,
+        );
+      }
+      invariant9Count++;
     }
-    invariant9Count++;
   }
   console.log(`✓ Invariant 9: ${invariant9Count} diagonal PLL algorithms verify diagonal corner swap permutation`);
 
   console.log(`✓ Total algorithm variations parse-simulated: ${totalSimulated}`);
   console.log(
-    `✓ Semantic invariants checked on ${invariant1Count + invariant2Count + look1Primaries + look1Alternatives + invariant7Count + invariant8Count + invariant9Count} algorithm variations plus ${look1OllCases.length} hold descriptions (primaries + alternatives, group-scoped)`,
+    `✓ Semantic invariants checked on ${invariant1Count + invariant2Count + look1Primaries + look1Alternatives + ollF2lCount + invariant7Count + invariant8Count + invariant9Count} algorithm variations plus ${look1OllCases.length} hold descriptions (primaries + alternatives, group-scoped)`,
   );
-  console.log('--- All verifications and semantic invariant checks passed! ---');
+  console.log(
+    '--- All verifications passed (parse-sim + semantic invariants: PLL centers/corners/diagonal, OLL F2L/edges/corners, probability sums) ---',
+  );
 }
 
 runVerification().catch(err => {
